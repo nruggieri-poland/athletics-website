@@ -1,8 +1,8 @@
 // Thin REST wrapper around the Payload CMS API (apps/cms). Payload populates
 // first-level relationships by default (depth=1), so `team` on a Game or
 // `sport` on a Team already come back as full objects, not just IDs.
-//
-// (Auto-deploy test comment — safe to remove once verified.)
+
+import { sanitizeUrl } from "./sanitize-url";
 
 const PAYLOAD_URL = import.meta.env.PAYLOAD_URL || "http://localhost:3000";
 
@@ -126,7 +126,7 @@ export interface Article {
 // news index, every sport hub page) funnels through this one function so
 // the three link types only need to be handled correctly in one place.
 export function articleHref(article: Article): string {
-  if (article.linkType === "external" && article.externalUrl) return article.externalUrl;
+  if (article.linkType === "external" && article.externalUrl) return sanitizeUrl(article.externalUrl);
   if (article.linkType === "pdf" && article.pdfFile) return mediaUrl(article.pdfFile);
   return `/news/${article.slug}`;
 }
@@ -152,7 +152,7 @@ export interface DocumentAsset {
 }
 
 export function documentHref(doc: DocumentAsset): string {
-  if (doc.fileType === "link" && doc.externalUrl) return doc.externalUrl;
+  if (doc.fileType === "link" && doc.externalUrl) return sanitizeUrl(doc.externalUrl);
   if (doc.file) return mediaUrl(doc.file);
   return "#";
 }
