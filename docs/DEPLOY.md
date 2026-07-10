@@ -435,7 +435,56 @@ machine that has them, then run:
 npm run attach:logos --workspace=apps/cms
 ```
 
-## 13. Cutover
+## 13. Auto-deploy on push (recommended if nobody on the dev side has SSH access)
+
+`scripts/deploy.sh` (§12's sibling — pulls, installs deps if needed, runs
+migrations if needed, rebuilds/restarts whatever changed) can run itself
+automatically after every push to `main`, via
+`.github/workflows/deploy.yml`. This means whoever writes code never needs
+their own SSH access to the server — only whoever does this **one-time**
+setup does, and after that, `git push` alone is enough.
+
+The SSH key GitHub Actions uses is deliberately restricted server-side to
+only ever run `scripts/deploy.sh`, regardless of what command is actually
+sent over that connection — so even if the key stored in GitHub ever leaked,
+it couldn't be used to do anything except trigger a deploy of code that's
+already been reviewed and merged. It can't get an interactive shell, run
+arbitrary commands, forward ports, or touch anything else on the server.
+
+**One-time setup (needs someone with real server access — IT/tech
+director):**
+
+1. Generate a dedicated keypair just for this (don't reuse the deploy key
+   from §3 — that one's for git clone/pull, this one's for triggering
+   deploys, different purposes deserve different keys):
+   ```bash
+   ssh-keygen -t ed25519 -C "github-actions-deploy" -f ./deploy_key -N ""
+   ```
+2. On the server, add the **public** key to `~/.ssh/authorized_keys` with a
+   forced command restricting what it can do — this is the important part,
+   don't skip the `command=`/`no-*` prefix:
+   ```
+   command="/var/www/athletics-website/scripts/deploy.sh",no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty ssh-ed25519 AAAA...rest-of-the-public-key... github-actions-deploy
+   ```
+3. In the GitHub repo: **Settings → Secrets and variables → Actions → New
+   repository secret**, add three:
+   - `PROD_DEPLOY_SSH_KEY` — the **private** key's full contents (the
+     `deploy_key` file from step 1, not `deploy_key.pub`).
+   - `PROD_HOST` — the server's IP or hostname.
+   - `PROD_SSH_USER` — whatever user owns `/var/www/athletics-website` on
+     that server (`root` in this runbook's own setup, though a dedicated
+     non-root deploy user is a reasonable further hardening step if
+     available).
+4. Delete the local `deploy_key`/`deploy_key.pub` files once both halves are
+   placed — don't leave a private key sitting on a laptop.
+
+That's it. From here, every push to `main` triggers `.github/workflows/
+deploy.yml`, which SSHes in using that restricted key — the server-side
+forced command runs `scripts/deploy.sh` no matter what the workflow
+actually sends. Check the **Actions** tab on GitHub after a push to see it
+run (or fail, with output, if something goes wrong).
+
+## 14. Cutover
 
 1. QA the new site fully on a staging subdomain first (e.g.
    `athleticstest.<some-other-domain>` — this was the actual pattern used to
