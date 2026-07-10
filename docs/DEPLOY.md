@@ -2,13 +2,16 @@
 
 Self-hosted, no Docker: one long-lived Node process (Payload/Next.js,
 managed by PM2), Postgres installed directly on the box, nginx serving the
-static Astro build directly from disk and reverse-proxying the CMS, TLS via
-Let's Encrypt (certbot). Written from an actual from-scratch deployment —
-every command here was run in order against a fresh Ubuntu 24.04 droplet and
-verified working, not written speculatively.
+static Astro build directly from disk and reverse-proxying the CMS,
+Cloudflare in front for DNS, TLS, caching, and WAF. Written from an actual
+from-scratch deployment — every command in §1-§7 and §9-§12 was run in order
+against a fresh Ubuntu 24.04 droplet and verified working (on a test domain);
+§8's Cloudflare setup is the recommended production path but wasn't
+exercised live in that trial run, so treat its commands as correct-per-docs
+rather than battle-tested — sanity-check each step as you go.
 
-Replace `<domain>` and `<cms-domain>` below with your real domains
-(e.g. `polandbulldogs.org` and `cms.polandbulldogs.org`).
+Target domains: `polandbulldogs.org` (main site) and
+`cms.polandbulldogs.org` (CMS admin/API). Substitute your own if different.
 
 ## 1. Server prerequisites
 
@@ -83,7 +86,7 @@ key** → paste it in → leave "Allow write access" **unchecked** (read-only).
 ssh-keyscan -H github.com >> ~/.ssh/known_hosts
 sudo mkdir -p /var/www
 sudo chown $(whoami) /var/www
-git clone git@github.com:<org>/athletics-website.git /var/www/athletics-website
+git clone git@github.com:nruggieri-poland/athletics-website.git /var/www/athletics-website
 cd /var/www/athletics-website
 ```
 
@@ -96,16 +99,13 @@ Never commit `.env` files — create them directly on the server.
 DATABASE_URI=postgresql://athletics_app:<password-from-step-1>@localhost:5432/athletics
 PAYLOAD_SECRET=<random 32+ char string — e.g. `openssl rand -base64 32`>
 PAYLOAD_SYNC_API_KEY=<random string — e.g. `openssl rand -base64 24` — shared with scripts/schedule-sync/.env>
-```
-Optional, only if using Cloudflare in front (see note in §7):
-```
-CF_ZONE_ID=<Cloudflare zone id>
-CF_API_TOKEN=<Cloudflare token, scoped to Zone.Cache Purge only>
+CF_ZONE_ID=<Cloudflare zone id — see §8>
+CF_API_TOKEN=<Cloudflare token, scoped to Zone.Cache Purge only — see §8>
 ```
 
 **apps/web/.env**
 ```
-PAYLOAD_URL=https://<cms-domain>
+PAYLOAD_URL=https://cms.polandbulldogs.org
 ```
 This **must** be the public HTTPS URL of the CMS, not `http://127.0.0.1:3000`.
 It's used both for the build-time API fetch (fine either way, same box) and
@@ -198,13 +198,12 @@ symlink once the build finishes successfully. nginx's `root` points at
 concurrent load test — 200/200 requests succeeded through a full
 rebuild-and-swap cycle.
 
-## 8. nginx + TLS
+## 8. nginx + Cloudflare (DNS, TLS, caching, WAF)
 
-Copy `docs/nginx.conf.example` (or `docs/nginx-athleticstest.conf` for a
-reference of the exact config used for the test deployment) to
-`/etc/nginx/sites-available/athletics`, set the real `server_name`s, and
-**make sure `root` points at `apps/web/current`, not `apps/web/dist`** (see
-§7 for why). Then:
+Copy `docs/nginx.conf.example` to `/etc/nginx/sites-available/athletics`,
+confirm the `server_name`s match `polandbulldogs.org`/`cms.polandbulldogs.org`,
+and **make sure `root` points at `apps/web/current`, not `apps/web/dist`**
+(see §7 for why). Then:
 
 ```bash
 sudo ln -sf /etc/nginx/sites-available/athletics /etc/nginx/sites-enabled/athletics
@@ -212,32 +211,150 @@ sudo rm -f /etc/nginx/sites-enabled/default
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
-Issue real certificates with certbot (requires DNS for both domains already
-pointing at this server's IP — `dig <domain> +short` and `dig <cms-domain>
-+short` should both return this server's IP before running this):
+### 8a. Cloudflare DNS
+
+Add `polandbulldogs.org` to Cloudflare (Cloudflare will give you two
+nameservers to set at your domain registrar — do that first, wait for it to
+show "Active" in the Cloudflare dashboard, then continue). Add these DNS
+records, both **proxied** (orange cloud, not grey/DNS-only):
+
+```
+Type: A    Name: @      Content: <droplet-ip>    Proxy: Proxied
+Type: A    Name: www    Content: <droplet-ip>    Proxy: Proxied
+Type: A    Name: cms    Content: <droplet-ip>    Proxy: Proxied
+```
+
+### 8b. Origin certificate
+
+With Cloudflare proxying, visitors' browsers only ever talk TLS to
+Cloudflare — but Cloudflare still needs to talk TLS to this server. Use a
+Cloudflare **Origin Certificate** instead of Let's Encrypt: it's free,
+valid for 15 years (no renewal cron to babysit), and — usefully — only
+trusted by Cloudflare itself, so someone who discovers your droplet's raw IP
+and tries to hit it directly over HTTPS gets a certificate error instead of
+bypassing Cloudflare's WAF/caching entirely.
+
+In the Cloudflare dashboard: **SSL/TLS → Origin Server → Create Certificate**
+(defaults are fine — RSA, includes both `polandbulldogs.org` and
+`*.polandbulldogs.org`, 15 years). It gives you a certificate and a private
+key — save them on the server:
+
+```bash
+sudo mkdir -p /etc/ssl/cloudflare
+sudo nano /etc/ssl/cloudflare/cert.pem   # paste the certificate
+sudo nano /etc/ssl/cloudflare/key.pem    # paste the private key
+sudo chmod 600 /etc/ssl/cloudflare/key.pem
+```
+
+Add `listen 443 ssl;` blocks to `/etc/nginx/sites-available/athletics`
+referencing those two files (`ssl_certificate
+/etc/ssl/cloudflare/cert.pem;` / `ssl_certificate_key
+/etc/ssl/cloudflare/key.pem;`) for both the main-site and CMS server blocks,
+plus a `server { listen 80; return 301 https://$host$request_uri; }` block
+to redirect any stray HTTP request. Then:
+
+```bash
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+In the Cloudflare dashboard: **SSL/TLS → Overview → set mode to "Full
+(strict)"**. This requires the origin to present a valid certificate (which
+it now does) — never use "Flexible" mode, which leaves the Cloudflare-to-
+server hop unencrypted.
+
+### 8c. Firewall: restrict origin access to Cloudflare only
+
+With Cloudflare proxying, nothing should reach this server on 80/443 except
+Cloudflare's own edge servers — this stops anyone from bypassing Cloudflare's
+WAF/rate-limiting by hitting the droplet's IP directly:
+
+```bash
+sudo ufw delete allow 80/tcp
+sudo ufw delete allow 443/tcp
+for ip in $(curl -s https://www.cloudflare.com/ips-v4); do sudo ufw allow from $ip to any port 80,443 proto tcp; done
+for ip in $(curl -s https://www.cloudflare.com/ips-v6); do sudo ufw allow from $ip to any port 80,443 proto tcp; done
+sudo ufw status verbose
+```
+
+Cloudflare's IP ranges change occasionally — re-run this (or automate it
+with a cron job hitting those same URLs) every few months.
+
+### 8d. Caching
+
+The rebuild hook (`apps/cms/src/hooks/rebuildWeb.ts`) already purges
+Cloudflare's cache automatically after every publish (once `CF_ZONE_ID`/
+`CF_API_TOKEN` are set in `apps/cms/.env` — see §4; generate the token under
+**My Profile → API Tokens → Create Token**, scoped to **Zone → Cache
+Purge → polandbulldogs.org only**, nothing broader). That makes it safe to
+cache aggressively:
+
+- **Rules → Cache Rules → Create rule**: match `hostname equals
+  polandbulldogs.org OR hostname equals www.polandbulldogs.org`, set
+  **Eligible for cache** + **Edge TTL: Cache Everything** (Cloudflare
+  doesn't cache HTML by default even with a permissive `Cache-Control`
+  header — this override is what actually caches page loads, not just
+  static assets). Safe here specifically because publish-time purge means
+  stale content never lingers past a rebuild.
+- **Rules → Cache Rules → Create rule**: match `hostname equals
+  cms.polandbulldogs.org`, set **Bypass cache**. The admin UI and API are
+  always dynamic — never cache them.
+
+### 8e. WAF and bot protection
+
+**Security → WAF → Managed Rules**: turn on the free "Cloudflare Managed
+Ruleset" and "Cloudflare OWASP Core Ruleset" — blocks common SQLi/XSS/known-
+exploit patterns before they ever reach the server.
+
+**Security → Bots**: enable "Bot Fight Mode" (free tier) — challenges
+obvious bot/scraper traffic.
+
+**Security → WAF → Rate limiting rules**: add a rule for
+`cms.polandbulldogs.org/api/users/login` (Payload's auth endpoint) — e.g.
+block an IP for 10 minutes after 5 requests in 1 minute. Protects the CMS
+login from brute-force attempts. (Rate limiting rules are available on the
+free plan with a limited rule count as of this writing — confirm current
+Cloudflare plan limits if this rule doesn't save.)
+
+### 8f. Alternative: no Cloudflare
+
+If you'd rather not put Cloudflare in front (e.g. DNS stays pointed directly
+at the droplet), use Let's Encrypt instead — simpler to set up, no account
+needed, but you lose the caching/WAF/DDoS-absorption benefits above:
 
 ```bash
 sudo apt-get install -y certbot python3-certbot-nginx
-sudo certbot --nginx -d <domain> -d <cms-domain> --redirect --agree-tos -m <your-email> --no-eff-email
+sudo certbot --nginx -d polandbulldogs.org -d cms.polandbulldogs.org --redirect --agree-tos -m <your-email> --no-eff-email
+systemctl status certbot.timer --no-pager   # confirm auto-renewal is active
+sudo certbot renew --dry-run                # should end with "Congratulations, all simulated renewals succeeded"
 ```
+In this case, leave the firewall as plain `22/80/443 allow from anywhere`
+(§2) rather than restricting to Cloudflare's ranges (§8c), and leave
+`CF_ZONE_ID`/`CF_API_TOKEN` unset in `apps/cms/.env` — the rebuild hook
+skips the purge step with a warning if they're not set, no error.
 
-This edits the nginx config in place to add the `listen 443 ssl;` blocks and
-an HTTP→HTTPS redirect. Renewal is automatic via a systemd timer certbot
-installs — confirm it's active:
+### 8g. Cookie consent (OneTrust or similar)
 
-```bash
-systemctl status certbot.timer --no-pager
-sudo certbot renew --dry-run   # should end with "Congratulations, all simulated renewals succeeded"
+Not part of getting the site running, but worth flagging before public
+launch: if the site sets any cookies for analytics/tracking (Google
+Analytics, a Facebook pixel, etc. — currently nothing in this codebase does,
+but likely to get added later), most US states and virtually all of Europe
+require a consent banner before those cookies fire, and this being a school
+site makes privacy compliance worth taking seriously regardless of which
+specific law applies. OneTrust (or a lighter-weight alternative like
+Cookiebot/Osano) is a reasonable choice.
+
+This isn't wired into the codebase yet — there's nothing to consent to
+until a tracking script actually gets added. When one does: OneTrust's
+setup gives you a snippet like
+```html
+<script src="https://cdn.cookielaw.org/scripttemplates/otSDKStub.js" data-domain-script="<your-id>"></script>
 ```
-
-**Optional — Cloudflare in front:** if you later put Cloudflare (orange-cloud
-DNS) in front of this server instead of DNS pointing directly at it, set
-`CF_ZONE_ID`/`CF_API_TOKEN` in `apps/cms/.env` (§4) so the rebuild hook
-purges Cloudflare's edge cache after every publish, restrict inbound 80/443
-in step 2's firewall to Cloudflare's published IP ranges
-(https://www.cloudflare.com/ips/), and set Cloudflare's SSL/TLS mode to
-"Full (strict)". Not required — the setup above (direct DNS + certbot) is a
-complete, secure deployment on its own.
+which needs to load as early as possible in `<head>`, before any other
+tracking script — in this codebase, that's the top of
+`apps/web/src/layouts/BaseLayout.astro`'s `<head>` block, right after the
+`<meta charset>` line. Any tracking scripts added after that point should
+be wrapped so they only fire once OneTrust reports consent was given (its
+docs cover the exact API for this — differs by category of cookie).
 
 ## 9. Rebuild-on-publish (already automatic)
 
@@ -302,7 +419,7 @@ npm run seed:navigation     # initial header/footer nav links
 Anything else — Articles, Site Settings (logo, colors, hero video, social
 links, address), individual Sports' hero video IDs, opponent logos — was
 entered by hand in the local dev CMS during development and has to be
-either re-entered in the production admin UI (`https://<cms-domain>/admin`)
+either re-entered in the production admin UI (`https://cms.polandbulldogs.org/admin`)
 or migrated over deliberately. For hero video IDs specifically, there's a
 reusable script — export `Sport,Video ID` CSV rows and run:
 
@@ -320,11 +437,13 @@ npm run attach:logos --workspace=apps/cms
 
 ## 13. Cutover
 
-1. QA the new site fully on a staging subdomain first (this runbook's own
-   trial run used `athleticstest.<domain>` for exactly this).
-2. Point the production domain's DNS at this server.
-3. Re-run the certbot command in §8 for the production domain if it's
-   different from the staging one.
+1. QA the new site fully on a staging subdomain first (e.g.
+   `athleticstest.<some-other-domain>` — this was the actual pattern used to
+   validate this runbook before writing it up for `polandbulldogs.org`).
+2. Add `polandbulldogs.org` to Cloudflare and point its DNS at this server
+   (§8a), rather than reusing whatever DNS setup the staging subdomain used.
+3. Complete §8b-§8e (origin cert, firewall restricted to Cloudflare IPs,
+   caching, WAF) for the production domain.
 4. Keep the old WordPress site + `athletics-plugin` + old `schedules/`
    GitHub Actions workflow available (disabled, not deleted) for a short
    rollback window.
@@ -334,9 +453,10 @@ npm run attach:logos --workspace=apps/cms
 Everything above adds up to this — use it to sanity-check any deployment,
 including ones done differently from this exact runbook:
 
-- [ ] Firewall (`ufw` or equivalent) allows only 22, 80, 443 from the public
-      internet. Postgres (5432) and the CMS's raw Node port (3000) are
-      **not** publicly reachable — only via `localhost`/nginx.
+- [ ] Firewall (`ufw` or equivalent) allows 22/80/443 only from Cloudflare's
+      published IP ranges (§8c) — not "anywhere" — if using Cloudflare (§8f
+      if not). Postgres (5432) and the CMS's raw Node port (3000) are
+      **not** publicly reachable either way — only via `localhost`/nginx.
 - [ ] SSH: key-based auth only. This runbook didn't disable password auth or
       root login explicitly — if that matters for your compliance posture,
       also set `PasswordAuthentication no` and `PermitRootLogin
@@ -348,8 +468,15 @@ including ones done differently from this exact runbook:
       -- '**/.env'` (should return nothing) before ever pushing.
 - [ ] Postgres app role (`athletics_app`) is not a superuser and owns only
       the `athletics` database — the app never connects as `postgres`.
-- [ ] All public traffic is HTTPS (nginx redirects HTTP→HTTPS after certbot
-      runs); certificate auto-renewal (`certbot.timer`) is active.
+- [ ] All public traffic is HTTPS: Cloudflare SSL/TLS mode is "Full
+      (strict)" (never "Flexible" — that leaves Cloudflare-to-origin
+      unencrypted), origin certificate is installed and not expired (15-year
+      validity, but verify it's actually the Cloudflare one and not a
+      leftover self-signed cert), and nginx redirects HTTP→HTTPS.
+- [ ] Cloudflare WAF managed rulesets + Bot Fight Mode are enabled (§8e);
+      cache purge (`CF_ZONE_ID`/`CF_API_TOKEN`) is configured and actually
+      firing — check the CMS logs after a test publish for `[rebuild]
+      Cloudflare cache purged.`.
 - [ ] `PAYLOAD_SECRET` and `PAYLOAD_SYNC_API_KEY` are long random values
       (`openssl rand -base64 32`), not guessable strings.
 - [ ] Nightly database backups are running and have actually produced a
@@ -358,3 +485,5 @@ including ones done differently from this exact runbook:
 - [ ] PM2 survives a reboot (`pm2 startup` + `pm2 save` both run) — test
       this once with an actual `sudo reboot` before considering the
       deployment done.
+- [ ] If any analytics/tracking script gets added to the site later, a
+      cookie consent banner (§8g) goes in *before* it, not after.
