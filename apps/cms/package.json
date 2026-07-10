@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "predev": "bash ../../scripts/sync-prod-db.sh || true",
     "dev": "next dev --turbo",
+    "sync:prod-db": "FORCE_SYNC=1 bash ../../scripts/sync-prod-db.sh",
     "build": "next build",
     "start": "next start",
     "payload": "payload --disable-transpile",
