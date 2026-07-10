@@ -1,6 +1,8 @@
 // Thin REST wrapper around the Payload CMS API (apps/cms). Payload populates
 // first-level relationships by default (depth=1), so `team` on a Game or
 // `sport` on a Team already come back as full objects, not just IDs.
+//
+// (Auto-deploy test comment — safe to remove once verified.)
 
 const PAYLOAD_URL = import.meta.env.PAYLOAD_URL || "http://localhost:3000";
 
