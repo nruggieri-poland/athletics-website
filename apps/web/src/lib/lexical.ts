@@ -4,6 +4,8 @@
 // pulling in @payloadcms/richtext-lexical/react (and therefore a React
 // island) just to render article bodies on an otherwise React-free site.
 
+import { sanitizeUrl } from "./sanitize-url";
+
 interface LexicalNode {
   type: string;
   children?: LexicalNode[];
@@ -70,7 +72,7 @@ function renderNode(node: LexicalNode): string {
     case "quote":
       return `<blockquote>${renderChildren(node)}</blockquote>`;
     case "link": {
-      const url = node.fields?.url ?? node.url ?? "#";
+      const url = sanitizeUrl(node.fields?.url ?? node.url ?? "#");
       const target = node.fields?.newTab || node.newTab ? ' target="_blank" rel="noopener"' : "";
       return `<a href="${escapeHtml(url)}"${target}>${renderChildren(node)}</a>`;
     }
@@ -79,7 +81,7 @@ function renderNode(node: LexicalNode): string {
     case "upload": {
       const url = node.value?.url;
       if (!url) return "";
-      return `<img src="${escapeHtml(url)}" alt="${escapeHtml(node.value?.alt ?? "")}" loading="lazy" />`;
+      return `<img src="${escapeHtml(sanitizeUrl(url))}" alt="${escapeHtml(node.value?.alt ?? "")}" loading="lazy" />`;
     }
     default:
       return renderChildren(node);
