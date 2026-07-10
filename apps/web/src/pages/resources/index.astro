@@ -1,0 +1,87 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getAllPublicDocuments, documentHref } from "../../lib/payload";
+
+const documents = await getAllPublicDocuments();
+
+// Group by folder — a folder with nothing in it (Awards, Conference, etc.)
+// just never produces a group, so no empty cards to hide. Docs with no
+// folder assigned fall into "General."
+const groups = new Map<string, typeof documents>();
+for (const doc of documents) {
+  const label = doc.folder?.name ?? "General";
+  if (!groups.has(label)) groups.set(label, []);
+  groups.get(label)!.push(doc);
+}
+const folderGroups = Array.from(groups.entries()).sort(([a], [b]) => a.localeCompare(b));
+---
+
+<BaseLayout title="Resources" description="Resources from Poland Seminary High School Athletic Department">
+  <section class="mx-auto max-w-content px-6 py-16">
+    <h1 class="mb-2 text-h1 font-bold text-ink-900">Resources</h1>
+    <p class="mb-10 text-ink-500">Forms, tickets, conference info, and more.</p>
+
+    {folderGroups.length > 0 && (
+      <div class="mb-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {folderGroups.map(([folderName, docs]) => (
+          <div class="rounded-xl border border-ink-100 bg-surface p-5">
+            <div class="mb-3 flex items-center gap-2">
+              <svg class="h-4 w-4 text-primary-600" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M2.5 5.5A1.5 1.5 0 0 1 4 4h3.5l1.5 2H16a1.5 1.5 0 0 1 1.5 1.5v6A1.5 1.5 0 0 1 16 15H4a1.5 1.5 0 0 1-1.5-1.5v-8Z" stroke-linejoin="round" />
+              </svg>
+              <h2 class="text-sm font-semibold uppercase tracking-wide text-ink-900">{folderName}</h2>
+            </div>
+            <ul class="space-y-2">
+              {docs.map((doc) => (
+                <li>
+                  <a
+                    href={documentHref(doc)}
+                    target={doc.fileType === "link" ? "_blank" : undefined}
+                    rel={doc.fileType === "link" ? "noopener noreferrer" : undefined}
+                    class="flex items-center gap-2 text-sm text-ink-700 hover:text-primary-600"
+                  >
+                    <svg class="h-4 w-4 shrink-0 text-ink-400" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+                      <path d="M6 2.5h5l3.5 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 4.5 15V4A1.5 1.5 0 0 1 6 2.5Z" stroke-linejoin="round" />
+                    </svg>
+                    {doc.title}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    )}
+
+    <div class="grid gap-6 sm:grid-cols-2">
+      <div class="rounded-xl bg-ink-50 p-6">
+        <svg class="mb-3 h-6 w-6 text-primary-600" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M4 6.5A1.5 1.5 0 0 1 5.5 5h2l1-1.5h3L12.5 5h2A1.5 1.5 0 0 1 16 6.5v7A1.5 1.5 0 0 1 14.5 15h-9A1.5 1.5 0 0 1 4 13.5v-7Z" stroke-linejoin="round" />
+          <circle cx="10" cy="9.5" r="2.5" />
+        </svg>
+        <p class="mb-1 font-semibold text-ink-900">Magic Moments photography</p>
+        <p class="mb-4 text-sm text-ink-500">Official game-day photos from our team photographer.</p>
+        <a href="#" class="inline-flex items-center gap-1 text-sm font-medium text-primary-600 hover:text-primary-700">
+          View gallery &rarr;
+        </a>
+      </div>
+
+      <div class="rounded-xl bg-ink-50 p-6">
+        <svg class="mb-3 h-6 w-6 text-primary-600" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="10" cy="10" r="7" />
+          <path d="M8.5 7.5v5l4-2.5-4-2.5Z" fill="currentColor" stroke="none" />
+        </svg>
+        <p class="mb-1 font-semibold text-ink-900">Watch live</p>
+        <p class="mb-4 text-sm text-ink-500">Stream select home games on Hudl.</p>
+        <a
+          href="https://www.hudl.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center gap-1 text-sm font-medium text-primary-600 hover:text-primary-700"
+        >
+          Open Hudl &rarr;
+        </a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

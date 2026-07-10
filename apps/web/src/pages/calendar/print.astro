@@ -1,0 +1,149 @@
+---
+import "../../styles/global.css";
+import { getSchoolYearGames, getSiteSettings, levelSlug } from "../../lib/payload";
+
+// The full, unfiltered season — a print/PDF view intentionally skips the
+// interactive filters and just gives a clean, dated reference someone can
+// save as a PDF or print and put on a fridge/binder.
+const [games, siteSettings] = await Promise.all([getSchoolYearGames(), getSiteSettings()]);
+const siteName = siteSettings?.siteName || "Poland Seminary Bulldogs";
+
+function formatDate(dateStr: string): string {
+  const d = new Date(`${dateStr.slice(0, 10)}T00:00:00`);
+  return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+}
+
+interface Row {
+  date: string;
+  time: string;
+  homeOrAway: string;
+  opponent: string;
+  location: string;
+  result: string;
+}
+
+interface TeamGroup {
+  key: string;
+  sportName: string;
+  level: string;
+  href: string;
+  rows: Row[];
+}
+
+const groups = new Map<string, TeamGroup>();
+for (const game of games) {
+  const key = `${game.team.sport.name}__${game.team.level}`;
+  if (!groups.has(key)) {
+    groups.set(key, {
+      key,
+      sportName: game.team.sport.name,
+      level: game.team.level,
+      href: `/${game.team.sport.slug}/${levelSlug(game.team.level)}`,
+      rows: [],
+    });
+  }
+  const hasScore = typeof game.homeScore === "number" && typeof game.awayScore === "number";
+  const result = game.isCancelled
+    ? "Cancelled"
+    : game.isPostponed
+      ? "Postponed"
+      : game.result && hasScore
+        ? `${game.result} ${game.homeScore}-${game.awayScore}`
+        : "";
+  groups.get(key)!.rows.push({
+    date: game.date.slice(0, 10),
+    time: game.isTimeTBD || !game.time ? "TBD" : game.time,
+    homeOrAway: game.homeOrAway || "",
+    opponent: `${game.homeOrAway === "Home" ? "vs" : game.homeOrAway === "Away" ? "@" : ""} ${game.opponentName ?? ""}`.trim(),
+    location: game.location ?? "",
+    result,
+  });
+}
+
+const teamGroups = [...groups.values()]
+  .map((g) => ({ ...g, rows: g.rows.sort((a, b) => a.date.localeCompare(b.date)) }))
+  .sort((a, b) => a.sportName.localeCompare(b.sportName) || a.level.localeCompare(b.level));
+
+const generatedOn = new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+---
+
+<!doctype html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Full Schedule (Print) | {siteName}</title>
+    <meta name="robots" content="noindex" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  </head>
+  <body class="mx-auto max-w-content px-6 py-10 text-ink-900 print:px-0 print:py-0">
+    <div class="mb-6 flex items-center justify-between gap-4 print:hidden">
+      <a href="/calendar" class="text-sm font-medium text-primary-600 hover:underline">&larr; Back to Calendar</a>
+      <button
+        type="button"
+        id="print-btn"
+        class="rounded-md bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700"
+      >
+        Print / Save as PDF
+      </button>
+    </div>
+
+    <header class="mb-8 border-b border-ink-200 pb-4">
+      <h1 class="text-2xl font-bold">{siteName} — Full Athletics Schedule</h1>
+      <p class="mt-1 text-sm text-ink-500">Generated {generatedOn} · All teams, current school year</p>
+    </header>
+
+    {teamGroups.length === 0 ? (
+      <p class="text-sm text-ink-400">No games scheduled this season yet.</p>
+    ) : (
+      <div>
+        {teamGroups.map((group) => (
+          <section class="mb-8 break-inside-avoid-page">
+            <h2 class="mb-2 text-base font-bold uppercase tracking-wide text-ink-900">
+              {group.sportName} — {group.level}
+            </h2>
+            <table class="w-full border-collapse text-sm">
+              <thead>
+                <tr class="border-b border-ink-300 text-left text-xs uppercase tracking-wide text-ink-500">
+                  <th scope="col" class="py-1 pr-3 font-semibold">Date</th>
+                  <th scope="col" class="py-1 pr-3 font-semibold">Time</th>
+                  <th scope="col" class="py-1 pr-3 font-semibold">Home/Away</th>
+                  <th scope="col" class="py-1 pr-3 font-semibold">Opponent</th>
+                  <th scope="col" class="py-1 pr-3 font-semibold">Location</th>
+                  <th scope="col" class="py-1 font-semibold">Result</th>
+                </tr>
+              </thead>
+              <tbody>
+                {group.rows.map((row) => (
+                  <tr class="border-b border-ink-100">
+                    <td class="whitespace-nowrap py-1 pr-3">{formatDate(row.date)}</td>
+                    <td class="whitespace-nowrap py-1 pr-3">{row.time}</td>
+                    <td class="whitespace-nowrap py-1 pr-3">{row.homeOrAway}</td>
+                    <td class="py-1 pr-3">{row.opponent}</td>
+                    <td class="py-1 pr-3">{row.location}</td>
+                    <td class="whitespace-nowrap py-1">{row.result}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+        ))}
+      </div>
+    )}
+
+    <script>
+      document.getElementById("print-btn")?.addEventListener("click", () => window.print());
+    </script>
+  </body>
+</html>
+
+<style>
+  @media print {
+    @page {
+      margin: 0.5in;
+    }
+    body {
+      color: #000;
+    }
+  }
+</style>

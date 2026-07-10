@@ -1,0 +1,92 @@
+---
+// Promotional card pointing parents to the EventLink app (subscribe to any
+// team's calendar, get a push notification the moment a game time/location/
+// status changes). Placed under every schedule and calendar module.
+//
+// Deliberately fixed to EventLink's own brand color (#212627), not the
+// site's ink-*/primary-* theme tokens — like the video hero and the games
+// ticker, this is a distinct "partner" surface rather than page chrome, so
+// it should look identical regardless of which theme a visitor has chosen,
+// the same way an embedded ad or a printed logo would.
+//
+// The store badges below are hand-built inline SVG, not hosted images —
+// crisp at any size, no extra network request, and no external asset to
+// keep in sync. Proportioned to match Apple/Google's official badge specs.
+const APP_STORE_URL = "https://apps.apple.com/us/app/eventlink/id505254514";
+const GOOGLE_PLAY_URL = "https://play.google.com/store/apps/details?id=com.sdiinnovations.eventlink&hl=en_US";
+---
+
+<div class="flex flex-col items-start gap-4 rounded-xl border border-white/10 bg-[#212627] p-5 shadow-sm sm:flex-row sm:items-center sm:gap-6 sm:p-6">
+  <img src="/eventlink-logo.svg" alt="EventLink" class="h-6 w-auto shrink-0 sm:h-7" />
+
+  <div class="flex-1">
+    <p class="flex items-center gap-1.5 text-sm font-semibold text-white">
+      <svg class="h-4 w-4 shrink-0 text-[#71BF44]" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+        <path d="M10 2a6 6 0 0 0-6 6v3.09l-1.6 2.4A1 1 0 0 0 3.24 15h13.52a1 1 0 0 0 .84-1.51L16 11.09V8a6 6 0 0 0-6-6Z" />
+        <path d="M8.03 16.5a2 2 0 0 0 3.94 0h-3.94Z" />
+      </svg>
+      Never miss a schedule change
+    </p>
+    <p class="mt-1 text-xs leading-relaxed text-white/70">
+      Subscribe to any Bulldogs team in the free EventLink app and get notified the moment a game time, location, or status changes.
+    </p>
+  </div>
+
+  <div class="flex shrink-0 flex-wrap items-center gap-2.5">
+    <a
+      href={APP_STORE_URL}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="Download EventLink on the App Store"
+      class="block rounded-lg transition hover:opacity-80"
+    >
+      <svg width="135" height="40" viewBox="0 0 135 40" xmlns="http://www.w3.org/2000/svg">
+        <rect width="135" height="40" rx="7" fill="black" />
+        <rect x="0.5" y="0.5" width="134" height="39" rx="6.5" fill="none" stroke="#A6A6A6" stroke-width="0.5" />
+        <g fill="#FFFFFF">
+          <path d="M27.65 20.3c-.03-2.65 2.17-3.93 2.27-4-1.24-1.81-3.17-2.06-3.85-2.09-1.62-.17-3.19.97-4.02.97-.84 0-2.11-.95-3.48-.93-1.76.03-3.41 1.05-4.32 2.63-1.87 3.23-.48 8 1.32 10.62.9 1.28 1.95 2.72 3.33 2.67 1.35-.06 1.85-.86 3.48-.86 1.61 0 2.08.86 3.49.83 1.44-.02 2.35-1.29 3.22-2.59.85-1.28 1.36-2.7 1.38-2.77-.03-.01-2.6-1-2.63-3.98Z" />
+          <path d="M25.02 12.62c.73-.89 1.22-2.11 1.09-3.35-1.05.04-2.37.72-3.13 1.6-.67.77-1.27 2.03-1.11 3.22 1.17.09 2.37-.59 3.15-1.47Z" />
+        </g>
+        <text x="41" y="16.5" fill="#FFFFFF" font-family="Helvetica, Arial, sans-serif" font-size="8">Download on the</text>
+        <text x="41" y="29" fill="#FFFFFF" font-family="Helvetica, Arial, sans-serif" font-size="16.5" font-weight="600">App Store</text>
+      </svg>
+    </a>
+
+    <a
+      href={GOOGLE_PLAY_URL}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="Get EventLink on Google Play"
+      class="block rounded-lg transition hover:opacity-80"
+    >
+      <svg width="135" height="40" viewBox="0 0 135 40" xmlns="http://www.w3.org/2000/svg">
+        <rect width="135" height="40" rx="7" fill="black" />
+        <rect x="0.5" y="0.5" width="134" height="39" rx="6.5" fill="none" stroke="#A6A6A6" stroke-width="0.5" />
+        <defs>
+          <linearGradient id="playBlueGreen" x1="12.5" y1="9" x2="12.5" y2="20.5" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#00A0FF" />
+            <stop offset="1" stop-color="#00E4FF" />
+          </linearGradient>
+          <linearGradient id="playYellow" x1="21.6" y1="20" x2="10.2" y2="20" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#FFE000" />
+            <stop offset="1" stop-color="#FFBD00" />
+          </linearGradient>
+          <linearGradient id="playRed" x1="14.2" y1="21.6" x2="6.5" y2="29.4" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#FF3A44" />
+            <stop offset="1" stop-color="#C31162" />
+          </linearGradient>
+          <linearGradient id="playGreen" x1="6.5" y1="10.6" x2="14.2" y2="18.4" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#32A071" />
+            <stop offset="1" stop-color="#2DA771" />
+          </linearGradient>
+        </defs>
+        <path d="M10.5 9.5c-.35.37-.55.94-.55 1.68v17.64c0 .74.2 1.31.55 1.68l.1.09L20.8 20.3v-.22L10.6 9.4l-.1.1Z" fill="url(#playBlueGreen)" />
+        <path d="M24.25 23.77 20.8 20.3v-.22l3.45-3.47.08.05 4.09 2.32c1.17.66 1.17 1.75 0 2.42l-4.09 2.32-.08.05Z" fill="url(#playYellow)" />
+        <path d="M24.33 23.72 20.8 20.19l-10.2 10.22c.38.4.99.45 1.7.05l12.03-6.74" fill="url(#playRed)" />
+        <path d="M24.33 16.66 12.3 9.92c-.71-.4-1.32-.35-1.7.05l10.2 10.22 3.53-3.53Z" fill="url(#playGreen)" />
+        <text x="41" y="16.5" fill="#FFFFFF" font-family="Helvetica, Arial, sans-serif" font-size="7" letter-spacing="0.5">GET IT ON</text>
+        <text x="41" y="29" fill="#FFFFFF" font-family="Helvetica, Arial, sans-serif" font-size="15" font-weight="500">Google Play</text>
+      </svg>
+    </a>
+  </div>
+</div>

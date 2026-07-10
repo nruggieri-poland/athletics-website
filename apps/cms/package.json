@@ -1,0 +1,36 @@
+{
+  "name": "@athletics/cms",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --turbo",
+    "build": "next build",
+    "start": "next start",
+    "payload": "payload --disable-transpile",
+    "generate:types": "payload generate:types --disable-transpile",
+    "generate:importmap": "payload generate:importmap --disable-transpile",
+    "seed:teams": "payload run --disable-transpile src/seed/seed-teams.ts",
+    "attach:logos": "payload run --disable-transpile src/seed/attach-opponent-logos.ts",
+    "import:hero-videos": "payload run --disable-transpile src/seed/import-hero-videos.ts",
+    "optimize:logos": "payload run --disable-transpile src/seed/optimize-small-logos.ts",
+    "seed:navigation": "payload run --disable-transpile src/seed/seed-navigation.ts"
+  },
+  "dependencies": {
+    "next": "^16.2.10",
+    "react": "^19",
+    "react-dom": "^19",
+    "payload": "3.85.2",
+    "@payloadcms/next": "3.85.2",
+    "@payloadcms/db-postgres": "3.85.2",
+    "@payloadcms/richtext-lexical": "3.85.2",
+    "graphql": "^16.8.1",
+    "sharp": "latest"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3",
+    "@types/node": "^22.10.5",
+    "@types/react": "^19.0.7",
+    "@types/react-dom": "^19.0.3"
+  }
+}

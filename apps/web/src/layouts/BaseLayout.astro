@@ -1,0 +1,72 @@
+---
+import "../styles/global.css";
+import TopBanner from "../components/nav/TopBanner.astro";
+import Header from "../components/nav/Header.astro";
+import Footer from "../components/nav/Footer.astro";
+import { getSports, getTeams, getSiteSettings, getNavigation } from "../lib/payload";
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description = "Poland Seminary Bulldogs Athletics" } = Astro.props;
+
+let sports: Awaited<ReturnType<typeof getSports>> = [];
+let teams: Awaited<ReturnType<typeof getTeams>> = [];
+let siteSettings: Awaited<ReturnType<typeof getSiteSettings>> | null = null;
+let navigation: Awaited<ReturnType<typeof getNavigation>> | null = null;
+
+try {
+  [sports, teams, siteSettings, navigation] = await Promise.all([
+    getSports(),
+    getTeams(),
+    getSiteSettings(),
+    getNavigation(),
+  ]);
+} catch {
+  // CMS unreachable at build time — render the shell with empty nav data
+  // rather than failing the whole build.
+}
+
+const siteName = siteSettings?.siteName || "Poland Seminary Bulldogs";
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title} | {siteName}</title>
+    <meta name="description" content={description} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <script is:inline>
+      // Runs before first paint so a returning visitor's saved theme choice
+      // applies immediately — no flash of the wrong theme. A fresh visitor
+      // with no saved choice gets nothing set here and falls through to the
+      // `prefers-color-scheme` CSS fallback in global.css instead.
+      (function () {
+        try {
+          var stored = localStorage.getItem("theme");
+          if (stored === "dark" || stored === "light") {
+            document.documentElement.setAttribute("data-theme", stored);
+          }
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body class="flex min-h-screen flex-col">
+    <a
+      href="#main-content"
+      class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded focus:bg-primary-600 focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white"
+    >
+      Skip to content
+    </a>
+    <TopBanner address={siteSettings?.address} socialLinks={siteSettings?.socialLinks} />
+    <Header siteName={siteName} sports={sports} teams={teams} navigation={navigation} />
+    <main id="main-content" class="flex-1">
+      <slot />
+    </main>
+    <Footer siteName={siteName} navigation={navigation} />
+  </body>
+</html>

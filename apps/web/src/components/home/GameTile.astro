@@ -1,0 +1,54 @@
+---
+import type { Game } from "../../lib/payload";
+import { mediaUrl, levelSlug } from "../../lib/payload";
+
+interface Props {
+  game: Game;
+}
+
+const { game } = Astro.props;
+
+const vsOrAt = game.homeOrAway === "Home" ? "vs" : game.homeOrAway === "Away" ? "@" : "";
+const dateObj = new Date(`${game.date.slice(0, 10)}T00:00:00`);
+const formattedDate = dateObj.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+const timeLabel = game.isTimeTBD || !game.time ? "TBD" : game.time;
+---
+
+<a
+  href={`/${game.team.sport.slug}/${levelSlug(game.team.level)}`}
+  class="flex w-64 shrink-0 snap-start flex-col justify-between rounded-xl border border-ink-100 bg-surface p-5 shadow-sm transition hover:border-primary-200 hover:shadow-md"
+>
+  <div>
+    <p class="text-xs font-semibold uppercase tracking-wide text-primary-600">
+      {game.team.sport.name} &middot; {game.team.level}
+    </p>
+    <p class="mt-3 text-xs font-medium uppercase tracking-wide text-ink-400">{formattedDate}</p>
+    <div class="mt-1 flex items-center gap-2">
+      <p class="text-lg font-bold leading-tight text-ink-900">
+        <span class="text-ink-400">{vsOrAt}</span> {game.opponentName}
+      </p>
+    </div>
+    {game.opponentMascot && <p class="text-sm text-ink-500">{game.opponentMascot}</p>}
+  </div>
+
+  <div class="mt-4 flex items-center justify-between border-t border-ink-100 pt-3">
+    <span class="text-sm font-semibold text-ink-700">{timeLabel}</span>
+    <div class="flex items-center gap-1.5">
+      {game.homeOrAway && (
+        <span
+          class:list={[
+            "rounded-full px-2 py-0.5 text-xs font-medium uppercase tracking-wide",
+            game.homeOrAway === "Home" && "bg-primary-50 text-primary-700",
+            game.homeOrAway === "Away" && "bg-ink-100 text-ink-600",
+            game.homeOrAway === "Neutral" && "bg-ink-100 text-ink-600",
+          ]}
+        >
+          {game.homeOrAway}
+        </span>
+      )}
+      {game.isConferenceGame && (
+        <span class="rounded-full bg-primary-50 px-2 py-0.5 text-xs font-medium text-primary-700">Conf</span>
+      )}
+    </div>
+  </div>
+</a>

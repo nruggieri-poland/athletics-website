@@ -1,0 +1,87 @@
+---
+import type { Game } from "../../lib/payload";
+import { mediaUrl } from "../../lib/payload";
+
+interface Props {
+  games: Game[];
+}
+
+const { games } = Astro.props;
+
+function formatDate(dateStr: string): string {
+  const dateObj = new Date(`${dateStr.slice(0, 10)}T00:00:00`);
+  return dateObj.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+}
+---
+
+<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+  {games.map((game) => {
+    const vsOrAt = game.homeOrAway === "Home" ? "vs" : game.homeOrAway === "Away" ? "@" : "";
+    const timeLabel = game.isTimeTBD || !game.time ? "TBD" : game.time;
+    const hasScore = typeof game.homeScore === "number" && typeof game.awayScore === "number";
+    const resultLabel = game.result && hasScore ? `${game.result} ${game.homeScore}-${game.awayScore}` : null;
+    const showLocation = game.homeOrAway !== "Home" && game.location;
+    return (
+      <div
+        class:list={[
+          "flex flex-col gap-3 rounded-xl border border-ink-100 bg-surface p-4 shadow-sm",
+          (game.isCancelled || game.isPostponed) && "opacity-60",
+        ]}
+      >
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold uppercase tracking-wide text-ink-400">{formatDate(game.date)}</span>
+          {game.homeOrAway && (
+            <span
+              class:list={[
+                "rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide",
+                game.homeOrAway === "Home" && "bg-primary-50 text-primary-700",
+                game.homeOrAway === "Away" && "bg-ink-100 text-ink-600",
+                game.homeOrAway === "Neutral" && "bg-ink-100 text-ink-600",
+              ]}
+            >
+              {game.homeOrAway}
+            </span>
+          )}
+        </div>
+
+        <div class="flex items-center gap-2">
+          <div class="min-w-0">
+            <p class="truncate text-base font-bold leading-tight text-ink-900">
+              <span class="text-ink-400">{vsOrAt}</span> {game.opponentName}
+            </p>
+            {game.opponentMascot && <p class="truncate text-sm text-ink-500">{game.opponentMascot}</p>}
+          </div>
+        </div>
+
+        <p class="text-xs text-ink-400">
+          {timeLabel}
+          {showLocation ? ` · ${game.location}` : ""}
+        </p>
+
+        <div class="mt-auto flex items-center justify-between border-t border-ink-100 pt-3">
+          {game.isCancelled ? (
+            <span class="text-xs font-medium text-ink-600">Cancelled</span>
+          ) : game.isPostponed ? (
+            <span class="text-xs font-medium text-ink-600">Postponed</span>
+          ) : resultLabel ? (
+            <span
+              class:list={[
+                "text-sm font-semibold",
+                game.result === "W" && "text-green-700",
+                game.result === "L" && "text-red-700",
+                game.result === "T" && "text-ink-600",
+              ]}
+            >
+              {resultLabel}
+            </span>
+          ) : (
+            <span class="text-xs text-ink-300">Upcoming</span>
+          )}
+          {game.isConferenceGame && (
+            <span class="rounded-full bg-primary-50 px-2 py-0.5 text-[11px] font-medium text-primary-700">Conf</span>
+          )}
+        </div>
+      </div>
+    );
+  })}
+</div>

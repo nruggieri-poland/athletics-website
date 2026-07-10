@@ -1,0 +1,135 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import VideoHero from "../../components/shared/VideoHero.astro";
+import GamesCarousel from "../../components/home/GamesCarousel.astro";
+import ScheduleList from "../../components/team/ScheduleList.astro";
+import EventLinkPromo from "../../components/shared/EventLinkPromo.astro";
+import ArticleCard from "../../components/articles/ArticleCard.astro";
+import {
+  getSports,
+  getTeamsBySport,
+  getArticlesForSport,
+  getUpcomingGamesForSport,
+  getSchoolYearGamesForSport,
+  sortTeamsByLevel,
+  levelSlug,
+} from "../../lib/payload";
+import type { Game } from "../../lib/payload";
+
+export async function getStaticPaths() {
+  const sports = await getSports();
+  return Promise.all(
+    sports.map(async (sport) => ({
+      params: { sport: sport.slug },
+      props: {
+        sport,
+        teams: await getTeamsBySport(sport.id),
+        articles: await getArticlesForSport(sport.id, 4),
+        upcomingGames: await getUpcomingGamesForSport(sport.id, 10),
+        seasonGames: await getSchoolYearGamesForSport(sport.id),
+      },
+    })),
+  );
+}
+
+const { sport, teams, articles, upcomingGames, seasonGames } = Astro.props;
+const activeTeams = sortTeamsByLevel(teams.filter((t) => t.isActive));
+
+// One ScheduleList per level, cycled via the tabs below rather than
+// requiring a click-through to each team's own page just to see JV's games.
+const gamesByTeam = new Map<string, Game[]>();
+for (const game of seasonGames) {
+  const key = String(game.team.id);
+  if (!gamesByTeam.has(key)) gamesByTeam.set(key, []);
+  gamesByTeam.get(key)!.push(game);
+}
+---
+
+<BaseLayout title={sport.name} description={`Schedules and news for ${sport.name} at Poland Seminary`}>
+  <VideoHero videoId={sport.heroVideoId} kicker="Poland Seminary High School" heading={sport.name} />
+
+  <section class="mx-auto max-w-content px-6 py-14">
+    <h2 class="mb-6 text-h3 font-semibold text-ink-900">Upcoming Games</h2>
+    {upcomingGames.length > 0 ? (
+      <GamesCarousel games={upcomingGames} />
+    ) : (
+      <p class="text-ink-400">No upcoming games scheduled right now.</p>
+    )}
+  </section>
+
+  {activeTeams.length > 0 ? (
+    <section class="border-t border-ink-100 bg-ink-50">
+      <div class="mx-auto max-w-content px-6 py-14">
+        {activeTeams.length > 1 ? (
+          <>
+            <div role="group" aria-label="Team level" class="mb-6 flex w-fit flex-wrap rounded-md border border-ink-200 bg-surface p-0.5">
+              {activeTeams.map((team, i) => (
+                <button
+                  type="button"
+                  data-level-tab={team.id}
+                  aria-pressed={i === 0 ? "true" : "false"}
+                  class="rounded px-3 py-1.5 text-sm font-medium text-ink-600 aria-pressed:bg-primary-600 aria-pressed:text-white"
+                >
+                  {team.level}
+                </button>
+              ))}
+            </div>
+            <div data-level-panels>
+              {activeTeams.map((team, i) => (
+                <div data-level-panel={team.id} class:list={[i !== 0 && "hidden"]}>
+                  <ScheduleList
+                    games={gamesByTeam.get(String(team.id)) ?? []}
+                    printHref={`/${sport.slug}/${levelSlug(team.level)}/print`}
+                  />
+                </div>
+              ))}
+            </div>
+          </>
+        ) : (
+          <ScheduleList
+            games={gamesByTeam.get(String(activeTeams[0].id)) ?? []}
+            printHref={`/${sport.slug}/${levelSlug(activeTeams[0].level)}/print`}
+          />
+        )}
+        <div class="mt-8">
+          <EventLinkPromo />
+        </div>
+      </div>
+    </section>
+  ) : (
+    <section class="mx-auto max-w-content px-6 py-14">
+      <p class="text-ink-400">No teams found for this sport yet.</p>
+    </section>
+  )}
+
+  {articles.length > 0 && (
+    <section class="mx-auto max-w-content px-6 py-14">
+      <h2 class="mb-6 text-h3 font-semibold text-ink-900">{sport.name} News</h2>
+      <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        {articles.map((article) => <ArticleCard article={article} />)}
+      </div>
+    </section>
+  )}
+</BaseLayout>
+
+<script>
+  // Level tabs — same show/hide-by-data-attribute pattern used elsewhere on
+  // the site (the mega menu's High School/Junior High toggle, the calendar
+  // page's view switch): one click swaps which level's full ScheduleList is
+  // visible, no page navigation or re-fetch needed since every level's
+  // schedule is already server-rendered on this page, just hidden.
+  document.querySelectorAll<HTMLElement>("[data-level-tab]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const group = btn.closest('[role="group"]');
+      const panelsRoot = group?.parentElement?.querySelector("[data-level-panels]");
+      if (!group || !panelsRoot) return;
+      const target = btn.dataset.levelTab;
+      group.querySelectorAll<HTMLElement>("[data-level-tab]").forEach((b) => {
+        b.setAttribute("aria-pressed", String(b.dataset.levelTab === target));
+      });
+      panelsRoot.querySelectorAll<HTMLElement>("[data-level-panel]").forEach((panel) => {
+        panel.classList.toggle("hidden", panel.dataset.levelPanel !== target);
+      });
+    });
+  });
+</script>

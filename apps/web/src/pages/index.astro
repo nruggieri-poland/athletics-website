@@ -1,0 +1,67 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import GamesTicker from "../components/home/GamesTicker.astro";
+import VideoHero from "../components/shared/VideoHero.astro";
+import GamesCarousel from "../components/home/GamesCarousel.astro";
+import ArticleCard from "../components/articles/ArticleCard.astro";
+import { getUpcomingGames, getArticles, getSiteSettings } from "../lib/payload";
+
+let upcomingGames: Awaited<ReturnType<typeof getUpcomingGames>> = [];
+let articles: Awaited<ReturnType<typeof getArticles>>["docs"] = [];
+let siteSettings: Awaited<ReturnType<typeof getSiteSettings>> | null = null;
+
+try {
+  [upcomingGames, { docs: articles }, siteSettings] = await Promise.all([
+    getUpcomingGames(10),
+    getArticles(3, 1),
+    getSiteSettings(),
+  ]);
+} catch {
+  // CMS unreachable at build time
+}
+
+const heroHeading = siteSettings?.heroHeading || "Bulldogs Athletics";
+const heroTagline =
+  siteSettings?.heroTagline || "Schedules, scores, and news for every Poland Seminary team.";
+---
+
+<BaseLayout title="Home">
+  <GamesTicker games={upcomingGames} />
+
+  <VideoHero
+    videoId={siteSettings?.heroVideoId}
+    kicker="Poland Seminary High School"
+    heading={heroHeading}
+    tagline={heroTagline}
+    ctaHref="/teams"
+    ctaLabel="Browse Sports"
+  />
+
+  <section class="mx-auto max-w-content px-6 py-16">
+    <div class="mb-6 flex items-center justify-between">
+      <h2 class="text-h3 font-semibold text-ink-900">Upcoming Games</h2>
+      <a href="/teams" class="text-sm font-medium text-primary-600">View all sports &rarr;</a>
+    </div>
+    {upcomingGames.length > 0 ? (
+      <GamesCarousel games={upcomingGames} />
+    ) : (
+      <p class="text-ink-400">No upcoming games scheduled right now.</p>
+    )}
+  </section>
+
+  <section class="border-t border-ink-100 bg-ink-50">
+    <div class="mx-auto max-w-content px-6 py-16">
+      <div class="mb-6 flex items-center justify-between">
+        <h2 class="text-h3 font-semibold text-ink-900">Latest News</h2>
+        <a href="/news" class="text-sm font-medium text-primary-600">View all news &rarr;</a>
+      </div>
+      {articles.length > 0 ? (
+        <div class="grid gap-6 md:grid-cols-3">
+          {articles.map((article) => <ArticleCard article={article} />)}
+        </div>
+      ) : (
+        <p class="text-ink-400">No articles published yet.</p>
+      )}
+    </div>
+  </section>
+</BaseLayout>

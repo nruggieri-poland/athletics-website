@@ -1,0 +1,53 @@
+---
+import type { Sport, Team, TeamLevel } from "../../lib/payload";
+import { mediaUrl, levelSlug } from "../../lib/payload";
+
+interface Props {
+  sport: Sport;
+  teams: Team[];
+}
+
+const { sport, teams } = Astro.props;
+
+// Shorthand label so "Junior Varsity" doesn't force-wrap in the footer strip.
+function levelLabel(level: TeamLevel): string {
+  return level === "Junior Varsity" ? "JV" : level;
+}
+---
+
+<div
+  class="group relative flex aspect-[4/5] w-full flex-col overflow-hidden rounded-xl bg-[#101114]
+    transition-[scale,box-shadow] duration-300 ease-out motion-reduce:transition-none
+    hover:z-10 hover:scale-[1.06] hover:shadow-2xl
+    focus-within:z-10 focus-within:scale-[1.06] focus-within:shadow-2xl"
+>
+  <a href={`/${sport.slug}`} class="relative flex flex-1 items-center justify-center overflow-hidden p-4">
+    {sport.coverImage ? (
+      <img
+        src={mediaUrl(sport.coverImage, "card")}
+        alt=""
+        class="absolute inset-0 -z-10 h-full w-full object-cover"
+        loading="lazy"
+      />
+    ) : (
+      <div class="absolute inset-0 -z-10 bg-gradient-to-br from-[#3a3c48] to-[#101114]"></div>
+    )}
+    <div class="absolute inset-0 -z-10 bg-gradient-to-b from-black/10 via-black/10 to-black/70"></div>
+    <span class="relative text-center text-2xl font-black uppercase leading-tight tracking-tight text-white">
+      {sport.name}
+    </span>
+  </a>
+
+  {teams.length > 0 && (
+    <div class="flex flex-wrap justify-center gap-x-2.5 gap-y-1 bg-black px-3 py-2.5">
+      {teams.map((team) => (
+        <a
+          href={`/${sport.slug}/${levelSlug(team.level)}`}
+          class="text-[11px] font-medium uppercase tracking-wide text-white/70 hover:text-white hover:underline"
+        >
+          {levelLabel(team.level)}
+        </a>
+      ))}
+    </div>
+  )}
+</div>

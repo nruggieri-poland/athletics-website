@@ -1,0 +1,21 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+apps/web/.astro/
+apps/cms/build/
+apps/cms/.next/
+.claude/
+
+# Payload's own uploaded-file storage — runtime data that belongs on the
+# server's disk, not in version control (also true for anything editors
+# upload through the CMS admin, not just the items below).
+apps/cms/media/
+
+# Raw opponent logo source files, staged locally for future bulk-import into
+# Payload's Media library. Large (hundreds of files), not meant to be
+# tracked — keep them on disk only until a real import script wires them up.
+scripts/opponent-logos/

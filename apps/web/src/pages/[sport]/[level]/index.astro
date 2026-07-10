@@ -1,0 +1,38 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import ScheduleList from "../../../components/team/ScheduleList.astro";
+import EventLinkPromo from "../../../components/shared/EventLinkPromo.astro";
+import { getTeams, getGamesForTeam, levelSlug } from "../../../lib/payload";
+
+export async function getStaticPaths() {
+  const teams = await getTeams();
+  return teams
+    .filter((team) => team.isActive)
+    .map((team) => ({
+      params: { sport: team.sport.slug, level: levelSlug(team.level) },
+      props: { team },
+    }));
+}
+
+const { team } = Astro.props;
+const games = await getGamesForTeam(team.id);
+---
+
+<BaseLayout title={team.displayName} description={`Schedule for ${team.displayName}`}>
+  <section class="border-b border-ink-100 bg-ink-50">
+    <div class="mx-auto max-w-content px-6 py-12">
+      <p class="text-sm font-medium uppercase tracking-wide text-primary-600">
+        <a href={`/${team.sport.slug}`} class="underline decoration-primary-300 underline-offset-2 hover:decoration-primary-600">{team.sport.name}</a>
+        &middot; {team.gender}
+      </p>
+      <h1 class="mt-1 text-h1 font-bold text-ink-900">{team.displayName}</h1>
+    </div>
+  </section>
+
+  <section class="mx-auto max-w-content px-6 py-12">
+    <ScheduleList games={games} printHref={`/${team.sport.slug}/${levelSlug(team.level)}/print`} />
+    <div class="mt-8">
+      <EventLinkPromo />
+    </div>
+  </section>
+</BaseLayout>

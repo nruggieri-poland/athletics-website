@@ -1,0 +1,41 @@
+---
+import type { Navigation, NavLink } from "../../lib/payload";
+import ThemeToggle from "./ThemeToggle.astro";
+
+interface Props {
+  siteName: string;
+  navigation: Navigation | null;
+}
+
+const { siteName, navigation } = Astro.props;
+const year = new Date().getFullYear();
+
+// Independent from the header's link set — an admin can show a link in one,
+// the other, both, or neither via the Navigation global's per-link
+// showInHeader/showInFooter checkboxes.
+const DEFAULT_LINKS: NavLink[] = [
+  { label: "Calendar", url: "/calendar", showInHeader: true, showInFooter: true },
+  { label: "News", url: "/news", showInHeader: true, showInFooter: true },
+];
+const navLinks = navigation?.links?.length ? navigation.links : DEFAULT_LINKS;
+const links = navLinks.filter((link) => link.showInFooter !== false);
+---
+
+<footer class="border-t border-ink-100 bg-ink-50">
+  <div class="mx-auto max-w-content px-6 py-12">
+    <div class="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+      <p class="text-sm font-semibold text-ink-900">{siteName}</p>
+      <div class="flex flex-wrap items-center gap-6">
+        <ul class="flex flex-wrap gap-6">
+          {links.map((link) => (
+            <li>
+              <a href={link.url} class="text-sm text-ink-600 hover:text-primary-600">{link.label}</a>
+            </li>
+          ))}
+        </ul>
+        <ThemeToggle class="text-ink-600 hover:bg-ink-100" />
+      </div>
+    </div>
+    <p class="mt-8 text-xs text-ink-400">&copy; {year} {siteName}. All rights reserved.</p>
+  </div>
+</footer>

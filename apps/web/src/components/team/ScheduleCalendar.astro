@@ -1,0 +1,155 @@
+---
+import type { Game } from "../../lib/payload";
+import { mediaUrl } from "../../lib/payload";
+
+interface Props {
+  games: Game[];
+}
+
+const { games } = Astro.props;
+
+const MONTH_NAMES = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+const WEEKDAY_LABELS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+
+function monthKey(dateStr: string): string {
+  const d = new Date(`${dateStr.slice(0, 10)}T00:00:00`);
+  return `${d.getFullYear()}-${d.getMonth()}`;
+}
+
+const gamesByMonth = new Map<string, Game[]>();
+for (const game of games) {
+  const key = monthKey(game.date);
+  if (!gamesByMonth.has(key)) gamesByMonth.set(key, []);
+  gamesByMonth.get(key)!.push(game);
+}
+
+const monthKeys = [...gamesByMonth.keys()].sort((a, b) => {
+  const [ay, am] = a.split("-").map(Number);
+  const [by, bm] = b.split("-").map(Number);
+  return ay !== by ? ay - by : am - bm;
+});
+
+interface DayCell {
+  day: number | null;
+  games: Game[];
+}
+
+function buildMonthCells(year: number, month: number, monthGames: Game[]): DayCell[] {
+  const gamesByDay = new Map<number, Game[]>();
+  for (const g of monthGames) {
+    const day = new Date(`${g.date.slice(0, 10)}T00:00:00`).getDate();
+    if (!gamesByDay.has(day)) gamesByDay.set(day, []);
+    gamesByDay.get(day)!.push(g);
+  }
+  const firstWeekday = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const cells: DayCell[] = [];
+  for (let i = 0; i < firstWeekday; i++) cells.push({ day: null, games: [] });
+  for (let d = 1; d <= daysInMonth; d++) cells.push({ day: d, games: gamesByDay.get(d) ?? [] });
+  while (cells.length % 7 !== 0) cells.push({ day: null, games: [] });
+  return cells;
+}
+
+function pillLabel(game: Game): string {
+  const vsOrAt = game.homeOrAway === "Home" ? "vs" : game.homeOrAway === "Away" ? "@" : "";
+  return `${vsOrAt} ${game.opponentName}`.trim();
+}
+
+function resultLabel(game: Game): string | null {
+  const hasScore = typeof game.homeScore === "number" && typeof game.awayScore === "number";
+  return game.result && hasScore ? `${game.result} ${game.homeScore}-${game.awayScore}` : null;
+}
+
+// Second line under the opponent name — whichever's more useful: the final
+// score once played, otherwise the scheduled time.
+function pillSecondLine(game: Game): string {
+  if (game.isCancelled) return "Cancelled";
+  if (game.isPostponed) return "Postponed";
+  return resultLabel(game) ?? (game.isTimeTBD || !game.time ? "TBD" : game.time ?? "");
+}
+
+function pillTitle(game: Game): string {
+  const timeLabel = game.isTimeTBD || !game.time ? "Time TBD" : game.time;
+  const result = resultLabel(game);
+  const status = game.isCancelled ? " (Cancelled)" : game.isPostponed ? " (Postponed)" : "";
+  return `${pillLabel(game)}, ${game.homeOrAway}, ${timeLabel}${result ? ` — ${result}` : ""}${status}${
+    game.location ? `, ${game.location}` : ""
+  }`;
+}
+---
+
+{monthKeys.length > 0 ? (
+  <div class="space-y-10">
+    {monthKeys.map((key) => {
+      const [year, month] = key.split("-").map(Number);
+      const monthGames = gamesByMonth.get(key)!;
+      const cells = buildMonthCells(year, month, monthGames);
+      return (
+        <div>
+          <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-ink-500">
+            {MONTH_NAMES[month]} {year}
+          </h3>
+          <div class="overflow-hidden rounded-lg border border-ink-100">
+            <div class="grid grid-cols-7 border-b border-ink-100 bg-ink-50">
+              {WEEKDAY_LABELS.map((label) => (
+                <div class="px-1 py-1.5 text-center text-[11px] font-semibold uppercase tracking-wide text-ink-400">
+                  {label}
+                </div>
+              ))}
+            </div>
+            <div class="grid grid-cols-7">
+              {cells.map((cell, i) => (
+                <div
+                  class:list={[
+                    "min-h-[5rem] border-b border-r border-ink-100 p-1 [&:nth-child(7n)]:border-r-0",
+                    cell.day === null && "bg-ink-50/50",
+                  ]}
+                  style={i >= cells.length - 7 ? "border-bottom-width: 0" : undefined}
+                >
+                  {cell.day && (
+                    <>
+                      <p class="px-0.5 text-[11px] text-ink-400">{cell.day}</p>
+                      <div class="mt-0.5 space-y-0.5">
+                        {cell.games.map((game) => (
+                          <div
+                            title={pillTitle(game)}
+                            class:list={[
+                              "rounded px-1 py-0.5 text-[10px] font-medium leading-tight",
+                              game.isCancelled || game.isPostponed
+                                ? "bg-ink-100 text-ink-600 line-through"
+                                : game.homeOrAway === "Home"
+                                  ? "bg-primary-50 text-primary-700"
+                                  : "bg-ink-100 text-ink-600",
+                            ]}
+                          >
+                            <div class="flex items-center gap-1">
+                              {game.opponentLogo && (
+                                <img
+                                  src={mediaUrl(game.opponentLogo, "thumbnail")}
+                                  alt=""
+                                  class="h-3 w-3 shrink-0 object-contain"
+                                  loading="lazy"
+                                />
+                              )}
+                              <span class="truncate">{pillLabel(game)}</span>
+                            </div>
+                            <p class="truncate text-[9px]">{pillSecondLine(game)}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    })}
+  </div>
+) : (
+  <p class="text-sm text-ink-400">No games scheduled this season yet.</p>
+)}

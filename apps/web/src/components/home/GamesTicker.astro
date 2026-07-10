@@ -1,0 +1,125 @@
+---
+import type { Game } from "../../lib/payload";
+import { levelSlug } from "../../lib/payload";
+
+interface Props {
+  games: Game[];
+}
+
+const { games } = Astro.props;
+
+function formatEntry(game: Game) {
+  const vsOrAt = game.homeOrAway === "Home" ? "vs" : game.homeOrAway === "Away" ? "@" : "";
+  const dateObj = new Date(`${game.date.slice(0, 10)}T00:00:00`);
+  const date = dateObj.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+  const time = game.isTimeTBD || !game.time ? "TBD" : game.time;
+  return { vsOrAt, date, time };
+}
+---
+
+{games.length > 0 && (
+  <div class="flex items-center gap-3 border-b border-white/10 bg-[#101114] py-2 pl-4 pr-2">
+    <button
+      type="button"
+      data-ticker-toggle
+      aria-pressed="false"
+      class="flex shrink-0 items-center justify-center rounded-full p-2 text-white/70 hover:text-white"
+      aria-label="Pause ticker"
+    >
+      <svg data-icon-pause class="h-3 w-3" viewBox="0 0 12 12" fill="currentColor">
+        <rect x="2" y="1.5" width="2.5" height="9" rx="0.5" />
+        <rect x="7.5" y="1.5" width="2.5" height="9" rx="0.5" />
+      </svg>
+      <svg data-icon-play class="hidden h-3 w-3" viewBox="0 0 12 12" fill="currentColor">
+        <path d="M2.5 1.5v9l7-4.5-7-4.5z" />
+      </svg>
+    </button>
+
+    <div class="overflow-hidden">
+      <div class="ticker-track flex w-max items-center gap-10 whitespace-nowrap" data-ticker-track>
+        {/* Real, screen-reader-visible copy of every game. */}
+        {games.map((game) => {
+          const { vsOrAt, date, time } = formatEntry(game);
+          return (
+            <a
+              href={`/${game.team.sport.slug}/${levelSlug(game.team.level)}`}
+              class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-white/80 hover:text-white"
+            >
+              <span class="text-primary-300">{game.team.shortName || game.team.sport.name}</span>
+              <span>{vsOrAt} {game.opponentName}</span>
+              <span class="text-white/30">&bull;</span>
+              <span class="text-white/60">{date}, {time}</span>
+            </a>
+          );
+        })}
+        {/* Second copy exists only so the CSS animation can loop seamlessly
+            — hidden from assistive tech so keyboard/SR users don't hit the
+            same games twice. */}
+        <div aria-hidden="true" class="flex items-center gap-10">
+          {games.map((game) => {
+            const { vsOrAt, date, time } = formatEntry(game);
+            return (
+              <a
+                href={`/${game.team.sport.slug}/${levelSlug(game.team.level)}`}
+                tabindex="-1"
+                class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-white/80"
+              >
+                <span class="text-primary-300">{game.team.shortName || game.team.sport.name}</span>
+                <span>{vsOrAt} {game.opponentName}</span>
+                <span class="text-white/30">&bull;</span>
+                <span class="text-white/60">{date}, {time}</span>
+              </a>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  </div>
+)}
+
+<style>
+  .ticker-track {
+    animation: ticker-scroll 45s linear infinite;
+  }
+  .ticker-track.is-paused,
+  .ticker-track:hover,
+  .ticker-track:focus-within {
+    animation-play-state: paused;
+  }
+  @keyframes ticker-scroll {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ticker-track {
+      animation: none;
+    }
+  }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLButtonElement>("[data-ticker-toggle]").forEach((toggle) => {
+    const track = toggle.parentElement?.querySelector<HTMLElement>("[data-ticker-track]");
+    const pauseIcon = toggle.querySelector<SVGElement>("[data-icon-pause]");
+    const playIcon = toggle.querySelector<SVGElement>("[data-icon-play]");
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    function setPaused(paused: boolean) {
+      track?.classList.toggle("is-paused", paused);
+      toggle.setAttribute("aria-pressed", String(paused));
+      toggle.setAttribute("aria-label", paused ? "Play ticker" : "Pause ticker");
+      pauseIcon?.classList.toggle("hidden", paused);
+      playIcon?.classList.toggle("hidden", !paused);
+    }
+
+    if (prefersReducedMotion) setPaused(true);
+
+    toggle.addEventListener("click", () => {
+      setPaused(!track?.classList.contains("is-paused"));
+    });
+  });
+</script>

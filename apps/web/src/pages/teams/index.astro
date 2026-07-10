@@ -1,0 +1,43 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import SportPortfolioCard from "../../components/sports/SportPortfolioCard.astro";
+import { getSports, getTeams, sortTeamsByLevel } from "../../lib/payload";
+
+const [sports, teams] = await Promise.all([getSports(), getTeams()]);
+
+const seasonOrder = ["Fall", "Winter", "Spring"] as const;
+const groups = seasonOrder
+  .map((season) => ({
+    season,
+    sports: sports
+      .filter((s) => s.seasonType === season)
+      .map((sport) => ({
+        sport,
+        teams: sortTeamsByLevel(teams.filter((t) => t.isActive && t.sport?.id === sport.id)),
+      }))
+      .filter(({ teams: sportTeams }) => sportTeams.length > 0),
+  }))
+  .filter(({ sports: seasonSports }) => seasonSports.length > 0);
+---
+
+<BaseLayout title="Sports" description="All sports at Poland Seminary High School">
+  <section class="mx-auto max-w-content px-6 py-16">
+    <h1 class="mb-2 text-h1 font-bold text-ink-900">Sports</h1>
+    <p class="mb-10 text-ink-500">Click a sport for its page, or a level below it to jump straight to that team.</p>
+
+    <div class="space-y-14">
+      {groups.map(({ season, sports: seasonSports }) => (
+        <div>
+          <h2 class="mb-5 text-h3 font-semibold text-ink-900">{season}</h2>
+          <div class="flex flex-wrap justify-center gap-4">
+            {seasonSports.map(({ sport, teams: sportTeams }) => (
+              <div class="w-full sm:w-[calc((100%-1rem)/2)] lg:w-[calc((100%-2rem)/3)] xl:w-[calc((100%-3rem)/4)]">
+                <SportPortfolioCard sport={sport} teams={sportTeams} />
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  </section>
+</BaseLayout>

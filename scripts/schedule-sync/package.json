@@ -1,0 +1,8 @@
+{
+  "name": "schedule-sync",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "sync": "node pull-and-sync.js"
+  }
+}

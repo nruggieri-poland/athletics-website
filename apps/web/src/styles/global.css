@@ -1,0 +1,202 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+@theme {
+  /* Bulldogs brand blue (#00328f), white, and a darker blue shade for accents */
+  --color-primary-50: #eef2fb;
+  --color-primary-100: #dbe3f7;
+  --color-primary-200: #b7c7ef;
+  --color-primary-300: #8ba3e2;
+  --color-primary-400: #5877cd;
+  --color-primary-500: #2c4fb0;
+  --color-primary-600: #00328f;
+  --color-primary-700: #002872;
+  --color-primary-800: #001d54;
+  --color-primary-900: #001238;
+
+  --color-ink-50: #f7f7f8;
+  --color-ink-100: #eeeef0;
+  --color-ink-200: #d9dade;
+  --color-ink-300: #b6b8c0;
+  --color-ink-400: #6b7280; /* was #8c8f9c — that failed WCAG AA (3.2:1 on white); this hits ~4.8:1 */
+  --color-ink-500: #6b6e7c;
+  --color-ink-600: #4f5261;
+  --color-ink-700: #3a3c48;
+  --color-ink-800: #1f2129;
+  --color-ink-900: #101114;
+
+  /* Card/panel background — same as white in light mode, so this doesn't
+     change anything today. It only matters once dark mode redefines it
+     below. Kept separate from `white` because a few things (video-hero
+     overlay text, the always-light print pages) must stay literally white
+     regardless of site theme, and can't share this token. */
+  --color-surface: #ffffff;
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  --container-content: 1200px;
+
+  --text-hero: 3.5rem;
+  --text-hero--line-height: 1.05;
+  --text-h1: 2.5rem;
+  --text-h1--line-height: 1.1;
+  --text-h2: 2rem;
+  --text-h2--line-height: 1.15;
+  --text-h3: 1.5rem;
+  --text-h3--line-height: 1.25;
+}
+
+body {
+  @apply bg-surface text-ink-900 font-sans antialiased;
+}
+
+/* Tailwind Typography ships its own fixed gray palette for article body
+   copy, independent of the ink/primary tokens above, so it never reacts to
+   dark mode on its own. This points its custom properties at our tokens
+   instead. Uses important on each value plus a selector matching the real
+   markup, since a plain bare selector here was observed getting dropped
+   during the CSS build instead of overriding the plugin defaults. */
+article.prose,
+article .prose {
+  --tw-prose-body: var(--color-ink-700) !important;
+  --tw-prose-headings: var(--color-ink-900) !important;
+  --tw-prose-lead: var(--color-ink-600) !important;
+  --tw-prose-links: var(--color-primary-600) !important;
+  --tw-prose-bold: var(--color-ink-900) !important;
+  --tw-prose-counters: var(--color-ink-500) !important;
+  --tw-prose-bullets: var(--color-ink-300) !important;
+  --tw-prose-hr: var(--color-ink-200) !important;
+  --tw-prose-quotes: var(--color-ink-900) !important;
+  --tw-prose-quote-borders: var(--color-ink-200) !important;
+  --tw-prose-captions: var(--color-ink-500) !important;
+  --tw-prose-code: var(--color-ink-900) !important;
+  --tw-prose-pre-code: var(--color-ink-200) !important;
+  --tw-prose-pre-bg: var(--color-ink-800) !important;
+  --tw-prose-th-borders: var(--color-ink-300) !important;
+  --tw-prose-td-borders: var(--color-ink-200) !important;
+}
+
+/* ── Dark mode ──────────────────────────────────────────────────────────────
+   The site is built almost entirely on the `ink-*`/`surface` semantic color
+   tokens above (utilities like `bg-ink-50` or `text-ink-900` just read these
+   CSS variables) rather than raw Tailwind colors, so re-pointing the
+   variables here re-themes the whole site without touching component
+   markup. `[data-theme="dark"]` is the explicit user choice (toggle button,
+   persisted to localStorage); the media-query block is the fallback for a
+   first-time visitor who hasn't chosen yet and whose OS prefers dark.
+
+   Two things deliberately DON'T get touched: the primary-50/100/700/900
+   "chip" shades (badges like "Conf"/"Home" keep their light tint — that's a
+   normal dark-UI pattern, not a bug), and anything using literal `white`/
+   `black` (video-hero overlay text, the print pages) — those aren't page
+   chrome, they shouldn't react to the site theme at all.
+
+   The one exception needing a direct override: `text-primary-600` is used
+   as plain link-text color directly on the page background in ~20 places.
+   The brand navy (#00328f) is dark enough to be illegible on a dark page,
+   but it can't just be redefined as a variable — that same variable is also
+   `bg-primary-600` (solid button/badge fills), which needs to STAY dark
+   navy so white button text keeps its contrast. So links get a scoped class
+   override to a lighter existing shade instead of a new variable. */
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-surface: #17181c;
+
+  --color-ink-50: #1c1e23;
+  --color-ink-100: #24262c;
+  --color-ink-200: #34363d;
+  --color-ink-300: #494c56;
+  --color-ink-400: #999ca8; /* ~5.3:1 on --color-surface */
+  --color-ink-500: #a7abb8;
+  --color-ink-600: #c2c5d0;
+  --color-ink-700: #dcdee3;
+  --color-ink-800: #ececef;
+  --color-ink-900: #f5f6f8;
+}
+
+[data-theme="dark"] .text-primary-600,
+[data-theme="dark"] .hover\:text-primary-600:hover {
+  color: var(--color-primary-300);
+}
+[data-theme="dark"] .hover\:text-primary-700:hover {
+  color: var(--color-primary-200);
+}
+[data-theme="dark"] article .prose {
+  --tw-prose-links: var(--color-primary-300);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    --color-surface: #17181c;
+
+    --color-ink-50: #1c1e23;
+    --color-ink-100: #24262c;
+    --color-ink-200: #34363d;
+    --color-ink-300: #494c56;
+    --color-ink-400: #999ca8;
+    --color-ink-500: #a7abb8;
+    --color-ink-600: #c2c5d0;
+    --color-ink-700: #dcdee3;
+    --color-ink-800: #ececef;
+    --color-ink-900: #f5f6f8;
+  }
+  :root:not([data-theme="light"]) .text-primary-600,
+  :root:not([data-theme="light"]) .hover\:text-primary-600:hover {
+    color: var(--color-primary-300);
+  }
+  :root:not([data-theme="light"]) .hover\:text-primary-700:hover {
+    color: var(--color-primary-200);
+  }
+  :root:not([data-theme="light"]) article .prose {
+    --tw-prose-links: var(--color-primary-300);
+  }
+}
+
+/* Belt-and-suspenders: if someone hits Ctrl/Cmd+P on a regular (non-print)
+   page while in dark mode, force the light palette back — printing dark
+   backgrounds wastes ink and isn't what "print this page" means. The
+   dedicated /calendar/print and /[sport]/[level]/print pages already pin
+   data-theme="light" directly, this just covers everything else. */
+@media print {
+  :root {
+    color-scheme: light;
+    --color-surface: #ffffff;
+    --color-ink-50: #f7f7f8;
+    --color-ink-100: #eeeef0;
+    --color-ink-200: #d9dade;
+    --color-ink-300: #b6b8c0;
+    --color-ink-400: #6b7280;
+    --color-ink-500: #6b6e7c;
+    --color-ink-600: #4f5261;
+    --color-ink-700: #3a3c48;
+    --color-ink-800: #1f2129;
+    --color-ink-900: #101114;
+  }
+  :root .text-primary-600,
+  :root .hover\:text-primary-600:hover {
+    color: var(--color-primary-600);
+  }
+  :root .hover\:text-primary-700:hover {
+    color: var(--color-primary-700);
+  }
+  :root article .prose {
+    --tw-prose-links: var(--color-primary-600);
+  }
+}
+
+/* Two-tone focus ring: the white outline reads on dark/video backgrounds,
+   the primary-600 shadow ring reads on white/light backgrounds — one rule
+   that stays visible (WCAG 2.4.7) regardless of what it's sitting on. */
+a:focus-visible,
+button:focus-visible,
+select:focus-visible,
+summary:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid white;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px var(--color-primary-600);
+  border-radius: 2px;
+}

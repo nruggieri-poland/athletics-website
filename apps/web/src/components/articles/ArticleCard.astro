@@ -1,0 +1,51 @@
+---
+import type { Article } from "../../lib/payload";
+import { mediaUrl, articleHref, isExternalArticleLink } from "../../lib/payload";
+
+interface Props {
+  article: Article;
+}
+
+const { article } = Astro.props;
+
+const formattedDate = new Date(article.publishedDate).toLocaleDateString("en-US", {
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+});
+
+const href = articleHref(article);
+const external = isExternalArticleLink(article);
+const badgeLabel = article.linkType === "pdf" ? "PDF" : article.linkType === "external" ? "Link" : null;
+---
+
+<a
+  href={href}
+  target={external ? "_blank" : undefined}
+  rel={external ? "noopener noreferrer" : undefined}
+  class="group block"
+>
+  <div class="relative aspect-[4/3] overflow-hidden rounded-lg bg-ink-100">
+    <img
+      src={mediaUrl(article.heroImage, "card")}
+      alt={article.heroImage.alt}
+      class="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+      loading="lazy"
+    />
+    {badgeLabel && (
+      <span class="absolute right-2 top-2 rounded-full bg-black/70 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-white backdrop-blur">
+        {badgeLabel}
+      </span>
+    )}
+  </div>
+  <p class="mt-3 text-xs font-medium uppercase tracking-wide text-ink-400">{formattedDate}</p>
+  <h3 class="mt-1 text-base font-semibold text-ink-900 group-hover:text-primary-600">
+    {article.title}
+    {external && (
+      <span class="sr-only">
+        {article.linkType === "pdf" ? " (opens PDF)" : " (opens external link)"}
+      </span>
+    )}
+  </h3>
+  {article.excerpt && <p class="mt-1 text-sm text-ink-500 line-clamp-2">{article.excerpt}</p>}
+</a>

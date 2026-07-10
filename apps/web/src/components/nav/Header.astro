@@ -1,0 +1,364 @@
+---
+import type { Sport, Team, Navigation, NavLink, TeamLevel } from "../../lib/payload";
+import { sortTeamsByLevel, levelSlug } from "../../lib/payload";
+
+interface Props {
+  siteName: string;
+  sports: Sport[];
+  teams: Team[];
+  navigation: Navigation | null;
+}
+
+const { siteName, sports, teams, navigation } = Astro.props;
+
+const seasonOrder = ["Fall", "Winter", "Spring"] as const;
+
+// One mega-menu column per season, each listing the sports that have at
+// least one active team at the given school level, with that sport's
+// specific team/level links nested underneath (e.g. Football -> Varsity,
+// Junior Varsity, Freshman) so a click goes straight to a team's schedule
+// instead of through an intermediate sport-overview page.
+function buildMenuColumns(schoolLevel: Team["schoolLevel"]) {
+  return seasonOrder
+    .map((season) => {
+      const seasonSports = sports
+        .filter((s) => s.seasonType === season)
+        .map((sport) => ({
+          sport,
+          teams: sortTeamsByLevel(
+            teams.filter((t) => t.isActive && t.sport?.id === sport.id && t.schoolLevel === schoolLevel),
+          ),
+        }))
+        .filter(({ teams: sportTeams }) => sportTeams.length > 0);
+      return { season, seasonSports };
+    })
+    .filter(({ seasonSports }) => seasonSports.length > 0);
+}
+
+const highSchoolColumns = buildMenuColumns("High School");
+const juniorHighColumns = buildMenuColumns("Junior High");
+
+// "Sports" is always first and hardcoded below (it's a data-driven mega
+// menu, not a plain link). Everything else — Calendar, News, or anything an
+// admin adds in the CMS — comes from the Navigation global, in whatever
+// order it's set there, filtered per header/footer visibility. If the CMS
+// has nothing configured yet (or was unreachable at build time), fall back
+// to the same two links this site shipped with.
+const DEFAULT_LINKS: NavLink[] = [
+  { label: "Calendar", url: "/calendar", showInHeader: true, showInFooter: true },
+  { label: "News", url: "/news", showInHeader: true, showInFooter: true },
+];
+const navLinks = navigation?.links?.length ? navigation.links : DEFAULT_LINKS;
+const headerLinks = navLinks.filter((link) => link.showInHeader !== false);
+
+// Shorthand label so "Junior Varsity" doesn't force-wrap inside the menu.
+function levelLabel(level: TeamLevel): string {
+  return level === "Junior Varsity" ? "JV" : level;
+}
+---
+
+<header class="sticky top-0 z-50 border-b border-ink-100 bg-surface/90 backdrop-blur">
+  <div class="mx-auto flex max-w-content items-center justify-between px-6 py-4">
+    <a href="/" class="text-lg font-semibold tracking-tight text-ink-900">
+      {siteName}
+    </a>
+
+    <div class="flex items-center gap-4">
+    <nav class="hidden items-center gap-8 self-stretch md:flex">
+      <div class="group -my-4 flex items-center self-stretch py-4" data-menu-group>
+        <a href="/teams" aria-haspopup="true" aria-expanded="false" data-menu-trigger class="flex items-center gap-1 text-sm font-medium text-ink-700 hover:text-primary-600">
+          Sports
+          <svg class="h-3 w-3" viewBox="0 0 12 12" fill="none">
+            <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+          </svg>
+        </a>
+        <div class="invisible absolute inset-x-0 top-full border-t border-ink-100 bg-surface opacity-0 shadow-lg transition group-focus-within:visible group-focus-within:opacity-100" data-menu-panel>
+          <div class="mx-auto max-w-content px-6 py-6">
+            <div role="group" aria-label="School level" class="mb-5 flex w-fit rounded-md border border-ink-200 p-0.5">
+              <button
+                type="button"
+                data-level-btn="high-school"
+                aria-pressed="true"
+                class="rounded px-3 py-1 text-xs font-semibold uppercase tracking-wide text-ink-600 aria-pressed:bg-primary-600 aria-pressed:text-white"
+              >
+                High School
+              </button>
+              <button
+                type="button"
+                data-level-btn="junior-high"
+                aria-pressed="false"
+                class="rounded px-3 py-1 text-xs font-semibold uppercase tracking-wide text-ink-600 aria-pressed:bg-primary-600 aria-pressed:text-white"
+              >
+                Junior High
+              </button>
+            </div>
+
+            <div data-level-panel="high-school" class="grid grid-cols-3 gap-8">
+              {highSchoolColumns.map(({ season, seasonSports }) => (
+                <div>
+                  <p class="mb-3 text-xs font-semibold uppercase tracking-wide text-ink-400">{season}</p>
+                  <ul class="space-y-2">
+                    {seasonSports.map(({ sport, teams: sportTeams }) => (
+                      <li class="flex flex-wrap items-baseline gap-x-2">
+                        <a href={`/${sport.slug}`} class="text-sm font-semibold text-ink-900 hover:text-primary-600">{sport.name}</a>
+                        <span class="flex flex-wrap gap-x-1.5 text-sm text-ink-400">
+                          {sportTeams.map((team, i) => (
+                            <>
+                              <a href={`/${sport.slug}/${levelSlug(team.level)}`} class="hover:text-primary-600">
+                                {levelLabel(team.level)}
+                              </a>
+                              {i < sportTeams.length - 1 && <span aria-hidden="true">&middot;</span>}
+                            </>
+                          ))}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+
+            <div data-level-panel="junior-high" class="hidden grid grid-cols-3 gap-8">
+              {juniorHighColumns.map(({ season, seasonSports }) => (
+                <div>
+                  <p class="mb-3 text-xs font-semibold uppercase tracking-wide text-ink-400">{season}</p>
+                  <ul class="space-y-2">
+                    {seasonSports.map(({ sport, teams: sportTeams }) => (
+                      <li class="flex flex-wrap items-baseline gap-x-2">
+                        <a href={`/${sport.slug}`} class="text-sm font-semibold text-ink-900 hover:text-primary-600">{sport.name}</a>
+                        <span class="flex flex-wrap gap-x-1.5 text-sm text-ink-400">
+                          {sportTeams.map((team, i) => (
+                            <>
+                              <a href={`/${sport.slug}/${levelSlug(team.level)}`} class="hover:text-primary-600">
+                                {levelLabel(team.level)}
+                              </a>
+                              {i < sportTeams.length - 1 && <span aria-hidden="true">&middot;</span>}
+                            </>
+                          ))}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div class="border-t border-ink-100 bg-ink-50 px-6 py-3 text-center">
+            <a href="/teams" class="text-sm font-medium text-primary-600 hover:text-primary-700">
+              View all sports &rarr;
+            </a>
+          </div>
+        </div>
+      </div>
+
+      {headerLinks.map((link) => (
+        <a href={link.url} class="text-sm font-medium text-ink-700 hover:text-primary-600">
+          {link.label}
+        </a>
+      ))}
+    </nav>
+
+    <button
+      id="mobile-menu-toggle"
+      class="flex h-9 w-9 items-center justify-center rounded-md md:hidden"
+      aria-label="Toggle menu"
+      aria-expanded="false"
+    >
+      <svg class="h-5 w-5" viewBox="0 0 20 20" fill="none">
+        <path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+      </svg>
+    </button>
+    </div>
+  </div>
+
+  <nav id="mobile-menu" class="hidden max-h-[75vh] overflow-y-auto border-t border-ink-100 md:hidden">
+    <details class="group border-b border-ink-100 px-6">
+      <summary class="mobile-menu-summary flex cursor-pointer items-center justify-between py-4 text-sm font-semibold text-ink-900">
+        Sports
+        <svg class="h-3 w-3 shrink-0 text-ink-400 transition-transform group-open:rotate-180" viewBox="0 0 12 12" fill="none">
+          <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+        </svg>
+      </summary>
+      <div class="pb-5">
+        <div role="group" aria-label="School level" class="mb-4 flex w-fit rounded-md border border-ink-200 p-0.5">
+          <button
+            type="button"
+            data-level-btn="high-school"
+            aria-pressed="true"
+            class="rounded px-3 py-1 text-xs font-semibold uppercase tracking-wide text-ink-600 aria-pressed:bg-primary-600 aria-pressed:text-white"
+          >
+            High School
+          </button>
+          <button
+            type="button"
+            data-level-btn="junior-high"
+            aria-pressed="false"
+            class="rounded px-3 py-1 text-xs font-semibold uppercase tracking-wide text-ink-600 aria-pressed:bg-primary-600 aria-pressed:text-white"
+          >
+            Junior High
+          </button>
+        </div>
+
+        <div data-level-panel="high-school" class="space-y-5">
+          {highSchoolColumns.map(({ season, seasonSports }) => (
+            <div>
+              <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-400">{season}</p>
+              <ul class="space-y-3">
+                {seasonSports.map(({ sport, teams: sportTeams }) => (
+                  <li class="flex flex-wrap items-baseline gap-x-2">
+                    <a href={`/${sport.slug}`} class="text-sm font-medium text-ink-900">{sport.name}</a>
+                    <span class="flex flex-wrap gap-x-1.5 text-sm text-ink-500">
+                      {sportTeams.map((team, i) => (
+                        <>
+                          <a href={`/${sport.slug}/${levelSlug(team.level)}`}>{levelLabel(team.level)}</a>
+                          {i < sportTeams.length - 1 && <span aria-hidden="true">&middot;</span>}
+                        </>
+                      ))}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+          <a href="/teams" class="block text-sm font-medium text-primary-600">View all sports &rarr;</a>
+        </div>
+
+        <div data-level-panel="junior-high" class="hidden space-y-5">
+          {juniorHighColumns.map(({ season, seasonSports }) => (
+            <div>
+              <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-400">{season}</p>
+              <ul class="space-y-3">
+                {seasonSports.map(({ sport, teams: sportTeams }) => (
+                  <li class="flex flex-wrap items-baseline gap-x-2">
+                    <a href={`/${sport.slug}`} class="text-sm font-medium text-ink-900">{sport.name}</a>
+                    <span class="flex flex-wrap gap-x-1.5 text-sm text-ink-500">
+                      {sportTeams.map((team, i) => (
+                        <>
+                          <a href={`/${sport.slug}/${levelSlug(team.level)}`}>{levelLabel(team.level)}</a>
+                          {i < sportTeams.length - 1 && <span aria-hidden="true">&middot;</span>}
+                        </>
+                      ))}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+          <a href="/teams" class="block text-sm font-medium text-primary-600">View all sports &rarr;</a>
+        </div>
+      </div>
+    </details>
+
+    <div class="space-y-3 px-6 py-4">
+      {headerLinks.map((link) => (
+        <a href={link.url} class="block text-sm font-medium text-ink-700">{link.label}</a>
+      ))}
+    </div>
+  </nav>
+</header>
+
+<style>
+  /* Hide the native disclosure triangle in WebKit browsers — list-none
+     handles Firefox, but Safari/Chrome render <summary> markers via a
+     separate pseudo-element that list-style doesn't reach. */
+  .mobile-menu-summary::-webkit-details-marker {
+    display: none;
+  }
+  .mobile-menu-summary {
+    list-style: none;
+  }
+
+  /* Mouse-driven open state, set by the hover-intent script below (not
+     Tailwind's group-hover) — see the script comment for why. */
+  [data-menu-group].menu-open > [data-menu-panel] {
+    visibility: visible;
+    opacity: 1;
+  }
+</style>
+
+<script>
+  const toggle = document.getElementById("mobile-menu-toggle");
+  const menu = document.getElementById("mobile-menu");
+  toggle?.addEventListener("click", () => {
+    const isOpen = menu?.classList.toggle("hidden") === false;
+    toggle.setAttribute("aria-expanded", String(isOpen));
+  });
+
+  // Desktop mega menus: deliberately NOT plain CSS group-hover. Two problems
+  // with that: (1) each trigger's hover is independent, so nothing stops
+  // multiple panels being open at once if more are added later; (2) moving
+  // the mouse diagonally from the trigger toward a link on the far side of
+  // the panel can clip the header area between the two triggers, instantly
+  // closing the one you're aiming for. This adds a short open-delay (to
+  // ignore fly-by hovers over the *other* trigger while you're mid-move)
+  // and close-delay (to tolerate the mouse briefly leaving the group on its
+  // way into the panel), plus closes any other open menu the moment one
+  // genuinely opens. Keyboard use still opens/closes instantly via
+  // group-focus-within in the <style> above — focus doesn't have a "diagonal
+  // mouse path" problem, so it doesn't need any of this.
+  const OPEN_DELAY = 80;
+  const CLOSE_DELAY = 300;
+
+  const menuGroups = Array.from(document.querySelectorAll<HTMLElement>("[data-menu-group]"));
+  const timers = new WeakMap<HTMLElement, ReturnType<typeof setTimeout>>();
+
+  function clearTimer(group: HTMLElement) {
+    const t = timers.get(group);
+    if (t) clearTimeout(t);
+    timers.delete(group);
+  }
+
+  function setExpanded(group: HTMLElement, value: boolean) {
+    group.classList.toggle("menu-open", value);
+    group.querySelector("[data-menu-trigger]")?.setAttribute("aria-expanded", String(value));
+  }
+
+  function openNow(group: HTMLElement) {
+    clearTimer(group);
+    menuGroups.forEach((g) => {
+      if (g !== group) {
+        clearTimer(g);
+        setExpanded(g, false);
+      }
+    });
+    setExpanded(group, true);
+  }
+
+  function closeNow(group: HTMLElement) {
+    clearTimer(group);
+    setExpanded(group, false);
+  }
+
+  menuGroups.forEach((group) => {
+    group.addEventListener("mouseenter", () => {
+      clearTimer(group);
+      timers.set(group, setTimeout(() => openNow(group), OPEN_DELAY));
+    });
+    group.addEventListener("mouseleave", () => {
+      clearTimer(group);
+      timers.set(group, setTimeout(() => closeNow(group), CLOSE_DELAY));
+    });
+    group.addEventListener("focusin", () => openNow(group));
+    group.addEventListener("focusout", (e) => {
+      if (!group.contains((e as FocusEvent).relatedTarget as Node)) closeNow(group);
+    });
+  });
+
+  // High School / Junior High toggle inside the (now-single) Sports menu.
+  // Scoped to each button's own panel container so the desktop mega-menu
+  // copy and the mobile accordion copy — which share the same data
+  // attributes — don't fight over each other's state.
+  document.querySelectorAll<HTMLButtonElement>("[data-level-btn]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const root = btn.closest<HTMLElement>("[data-menu-panel], details");
+      if (!root) return;
+      const target = btn.dataset.levelBtn;
+      root.querySelectorAll<HTMLButtonElement>("[data-level-btn]").forEach((b) => {
+        b.setAttribute("aria-pressed", String(b.dataset.levelBtn === target));
+      });
+      root.querySelectorAll<HTMLElement>("[data-level-panel]").forEach((panel) => {
+        panel.classList.toggle("hidden", panel.dataset.levelPanel !== target);
+      });
+    });
+  });
+</script>

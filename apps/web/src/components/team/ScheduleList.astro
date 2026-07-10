@@ -1,0 +1,93 @@
+---
+import type { Game } from "../../lib/payload";
+import ScheduleTable from "./ScheduleTable.astro";
+import ScheduleCalendar from "./ScheduleCalendar.astro";
+import ScheduleCards from "./ScheduleCards.astro";
+
+interface Props {
+  games: Game[];
+  printHref?: string;
+}
+
+// The full current school-year schedule, in order — not split by
+// upcoming/past. A Fall sport's season doesn't disappear once winter hits;
+// the whole season stays visible with results filled in as games are played.
+const { games, printHref } = Astro.props;
+
+// Unique-ish id so multiple ScheduleList instances on one page (shouldn't
+// happen today, but cheap insurance) don't collide on the same select id.
+const uid = Math.random().toString(36).slice(2, 8);
+---
+
+<div class="schedule-list-root">
+  <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+    <h2 class="text-h3 font-semibold text-ink-900">Schedule</h2>
+    <div class="flex items-center gap-3">
+      {games.length > 0 && (
+        <label class="flex items-center gap-2 text-sm text-ink-500">
+          View
+          <select
+            id={`schedule-view-${uid}`}
+            class="schedule-view-select rounded-md border border-ink-200 bg-surface px-2 py-1 text-sm text-ink-700"
+          >
+            <option value="list">List</option>
+            <option value="cards">Cards</option>
+            <option value="calendar">Calendar</option>
+          </select>
+        </label>
+      )}
+      {printHref && games.length > 0 && (
+        <a
+          href={printHref}
+          class="rounded-md border border-ink-200 px-3 py-1.5 text-sm font-medium text-ink-600 hover:bg-ink-50"
+        >
+          Print / PDF
+        </a>
+      )}
+    </div>
+  </div>
+
+  {games.length > 0 ? (
+    <div class="schedule-views" data-uid={uid}>
+      <div data-view="list">
+        <ScheduleTable games={games} />
+      </div>
+      <div data-view="cards" class="hidden">
+        <ScheduleCards games={games} />
+      </div>
+      <div data-view="calendar" class="hidden">
+        <ScheduleCalendar games={games} />
+      </div>
+    </div>
+  ) : (
+    <p class="text-sm text-ink-400">No games scheduled this season yet.</p>
+  )}
+</div>
+
+<script>
+  const STORAGE_KEY = "schedule-view-preference";
+
+  function applyView(container: Element, view: string) {
+    container.querySelectorAll<HTMLElement>("[data-view]").forEach((el) => {
+      el.classList.toggle("hidden", el.dataset.view !== view);
+    });
+  }
+
+  document.querySelectorAll<HTMLSelectElement>(".schedule-view-select").forEach((select) => {
+    const container = select.closest(".schedule-list-root")?.querySelector(".schedule-views");
+    if (!container) return;
+
+    const saved = localStorage.getItem(STORAGE_KEY);
+    // Migrate old stored values from the previous Compact/Detailed toggle.
+    const normalized = saved === "compact" ? "list" : saved === "detailed" ? "calendar" : saved;
+    if (normalized) {
+      select.value = normalized;
+      applyView(container, normalized);
+    }
+
+    select.addEventListener("change", () => {
+      applyView(container, select.value);
+      localStorage.setItem(STORAGE_KEY, select.value);
+    });
+  });
+</script>
