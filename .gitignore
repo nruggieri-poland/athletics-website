@@ -1,5 +1,8 @@
 node_modules/
 dist/
+apps/web/dist-blue/
+apps/web/dist-green/
+apps/web/current
 .env
 .env.*
 !.env.example

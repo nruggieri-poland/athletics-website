@@ -4,11 +4,12 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 // Debounced rebuild-on-publish: Astro is a fully static build (no running
-// server process — nginx serves apps/web/dist directly), so "republish" just
-// means re-running `astro build` and letting Cloudflare know the old cached
-// responses are stale. Runs in-process inside the Payload/Next.js server
-// (apps/cms), which already lives on the same box as apps/web in this
-// self-hosted, no-Docker deployment — no HTTP round-trip needed.
+// server process — nginx serves apps/web/current, a symlink flipped by
+// deploy-build.sh), so "republish" just means running that script and
+// letting Cloudflare know the old cached responses are stale. Runs
+// in-process inside the Payload/Next.js server (apps/cms), which already
+// lives on the same box as apps/web in this self-hosted, no-Docker
+// deployment — no HTTP round-trip needed.
 
 const execAsync = promisify(exec)
 const dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -60,7 +61,12 @@ async function runRebuild(): Promise<void> {
   running = true
   try {
     console.log('[rebuild] Building apps/web...')
-    const { stdout, stderr } = await execAsync('npm run build', { cwd: webDir })
+    // Not `npm run build` — that builds straight into the directory nginx
+    // serves from, which Astro clears at the start of every build, so
+    // visitors would briefly see 404s mid-rebuild. deploy-build.sh builds
+    // into an offline directory and only atomically flips the live symlink
+    // once the build succeeds — see that script's comment for the details.
+    const { stdout, stderr } = await execAsync('./deploy-build.sh', { cwd: webDir })
     if (stderr) console.warn(stderr)
     console.log(stdout.split('\n').slice(-5).join('\n'))
     console.log('[rebuild] Build complete.')

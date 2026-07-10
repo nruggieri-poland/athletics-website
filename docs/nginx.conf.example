@@ -7,12 +7,18 @@
 # apps/cms (Payload/Next.js admin UI + REST/GraphQL API) is the only
 # proxied upstream, on its own subdomain so the admin/API surface is never
 # exposed under the main domain.
+#
+# root points at `current`, a symlink flipped atomically by
+# apps/web/deploy-build.sh after each successful build — NOT at `dist`
+# directly. Astro clears its output directory at the start of every build,
+# so pointing nginx straight at it means visitors see 404s for the few
+# seconds a rebuild takes, every single time content is published.
 
 server {
     listen 80;
     server_name polandbulldogs.org www.polandbulldogs.org;
 
-    root /var/www/athletics-website/apps/web/dist;
+    root /var/www/athletics-website/apps/web/current;
     index index.html;
 
     location / {
