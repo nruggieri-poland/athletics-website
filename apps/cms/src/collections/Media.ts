@@ -36,7 +36,13 @@ export const Media: CollectionConfig = {
     ],
     // Images (team/opponent logos, hero photos) and PDFs (documents, and
     // now PDF-type news articles) share this one upload collection.
-    mimeTypes: ['image/*', 'application/pdf'],
+    // Deliberately an explicit list, not 'image/*' — SVGs can carry inline
+    // <script> tags. The app only ever renders uploads via <img src>, which
+    // browsers don't execute SVG scripts through, but Media has public read
+    // access (raw file URLs are directly browsable), so anyone who opens an
+    // uploaded SVG's URL as a top-level navigation would execute it in the
+    // CMS's own origin. Re-export any existing SVG logo as PNG/WebP instead.
+    mimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf'],
   },
   fields: [
     {

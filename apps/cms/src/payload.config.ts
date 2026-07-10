@@ -20,8 +20,21 @@ import { importFeedHandler } from './endpoints/importFeed.ts'
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
+// Payload only enforces its own cross-origin cookie-auth check against
+// origins listed here — leaving this unset (the default) makes it accept
+// the auth cookie regardless of the request's Origin header, relying
+// entirely on the browser's own SameSite cookie default as the only
+// remaining defense against a malicious site making authenticated
+// state-changing requests using an admin's active session. Comma-separated
+// if the admin is ever reachable from more than one origin.
+const csrfOrigins = (process.env.CSRF_ORIGINS || 'http://localhost:3000')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean)
+
 export default buildConfig({
   secret: process.env.PAYLOAD_SECRET || '',
+  csrf: csrfOrigins,
   admin: {
     user: Users.slug,
     importMap: {

@@ -10,9 +10,25 @@
 # "predev" script) and skips itself if it already ran recently, so starting
 # the dev server repeatedly in one day doesn't repeatedly re-download and
 # restore the whole database. Force a fresh pull with FORCE_SYNC=1.
-set -euo pipefail
+#
+# PROD_DB_HOST is intentionally NOT defaulted/hardcoded here — the server's
+# address doesn't belong in git history (found in a security audit: it was
+# previously hardcoded here as `root@<real-ip>`, meaning production's login
+# and IP were sitting in plaintext for anyone with repo read access, and
+# every developer's routine `npm run dev` depended on a full-privilege root
+# key). Set it once in your own shell profile instead — see
+# docs/DEPLOY.md's "Local database sync" section for the one-time setup,
+# which also uses a read-only Postgres role and a forced-command-restricted
+# key, not root, so this can't be used to write/alter/drop anything even if
+# the key ever leaked.
+if [ -z "${PROD_DB_HOST:-}" ]; then
+  echo "[sync-db] PROD_DB_HOST is not set — skipping sync, using existing local data."
+  echo "[sync-db] Set it in your shell profile (e.g. ~/.zshrc): export PROD_DB_HOST=dbsync@<server>"
+  echo "[sync-db] See docs/DEPLOY.md's 'Local database sync' section for the one-time server-side setup."
+  exit 0
+fi
 
-DROPLET_HOST="${PROD_DB_HOST:-root@134.209.213.16}"
+DROPLET_HOST="$PROD_DB_HOST"
 LOCAL_DB="${LOCAL_DB_NAME:-athletics}"
 MARKER_FILE="$HOME/.athletics-db-last-sync"
 MAX_AGE_HOURS="${SYNC_MAX_AGE_HOURS:-24}"
