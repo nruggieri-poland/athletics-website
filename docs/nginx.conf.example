@@ -21,6 +21,9 @@ server {
     root /var/www/athletics-website/apps/web/current;
     index index.html;
 
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
     location / {
         try_files $uri $uri/index.html =404;
 
@@ -40,6 +43,17 @@ server {
 server {
     listen 80;
     server_name cms.polandbulldogs.org;
+
+    # X-Content-Type-Options matters here more than on the static site:
+    # Media has public read access, so an uploaded file's raw URL is
+    # directly browsable — without nosniff, a browser could reinterpret a
+    # file as a different content type than the one Payload declared.
+    # X-Frame-Options/frame-ancestors stop the admin login/dashboard from
+    # being framed by another site for a clickjacking overlay.
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header Content-Security-Policy "frame-ancestors 'self'" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
 
     location / {
         proxy_pass http://127.0.0.1:3000;

@@ -47,14 +47,26 @@ if [ "$CMS_CHANGED" = true ]; then
   npm run build --workspace=apps/cms
   pm2 restart athletics-cms
   echo "[deploy] Waiting for the CMS to come back up..."
+  CMS_HEALTHY=false
   for i in $(seq 1 15); do
     CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3000/api/sports || true)
     if [ "$CODE" = "200" ]; then
       echo "[deploy] CMS is back up."
+      CMS_HEALTHY=true
       break
     fi
     sleep 1
   done
+  # Without this, a CMS that crash-loops on boot (bad env var, broken
+  # migration, a runtime error not caught at build time) would leave the
+  # deploy silently reporting success — PM2's autorestart keeps bouncing
+  # the broken process, nginx keeps proxying to it, admins see 502s, and
+  # nothing (not this script's exit code, not the GitHub Actions run that
+  # triggered it) signals that anything went wrong.
+  if [ "$CMS_HEALTHY" != true ]; then
+    echo "[deploy] CMS did not come back up after restart — check \`pm2 logs athletics-cms\`."
+    exit 1
+  fi
 fi
 
 if [ "$WEB_CHANGED" = true ] || [ "$CMS_CHANGED" = true ]; then

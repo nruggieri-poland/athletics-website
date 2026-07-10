@@ -497,6 +497,64 @@ run (or fail, with output, if something goes wrong).
    GitHub Actions workflow available (disabled, not deleted) for a short
    rollback window.
 
+## 15. Local database sync
+
+`scripts/sync-prod-db.sh` pulls a fresh production data snapshot into a
+developer's local database (wired as a `predev` hook on `apps/cms`, so it
+runs automatically before `npm run dev`) — so local development has
+realistic data without anyone's laptop connecting to the live database
+directly. Media/uploads are never synced this way (edit those live in the
+CMS, same as any other content).
+
+**Don't reuse the root deploy key from §3/§13 for this.** A prior version of
+this script hardcoded a `root@<droplet-ip>` default, which put the
+production server's address and login in plaintext git history and meant
+every contributor's routine `npm run dev` depended on a full-privilege root
+key being cached on their laptop. Set up a properly scoped alternative
+instead — **one-time setup, needs server access**:
+
+1. Create a **read-only** Postgres role (never grants write/DDL, so this
+   key can't be used to alter or delete anything even if it leaked):
+   ```bash
+   sudo -u postgres psql -c "CREATE ROLE dbsync WITH LOGIN PASSWORD '<generate-a-strong-password>';"
+   sudo -u postgres psql -d athletics -c "GRANT CONNECT ON DATABASE athletics TO dbsync;"
+   sudo -u postgres psql -d athletics -c "GRANT USAGE ON SCHEMA public TO dbsync;"
+   sudo -u postgres psql -d athletics -c "GRANT SELECT ON ALL TABLES IN SCHEMA public TO dbsync;"
+   sudo -u postgres psql -d athletics -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO dbsync;"
+   ```
+2. Store that role's password in a `.pgpass` file so `pg_dump` can
+   authenticate without a password prompt over the forced SSH command below
+   (readable only by whichever OS user runs it):
+   ```bash
+   echo "localhost:5432:athletics:dbsync:<password-from-step-1>" >> ~/.pgpass
+   chmod 600 ~/.pgpass
+   ```
+3. Generate a dedicated keypair (same pattern as §13's auto-deploy key —
+   different purpose, different key):
+   ```bash
+   ssh-keygen -t ed25519 -C "db-sync" -f ./dbsync_key -N ""
+   ```
+4. Add the **public** key to `~/.ssh/authorized_keys` with a forced command
+   that can only ever run a read-only dump as the `dbsync` role — it cannot
+   get a shell, run other commands, or touch anything beyond this one query:
+   ```
+   command="pg_dump --clean --if-exists --no-owner --no-privileges -U dbsync -h localhost athletics",no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty ssh-ed25519 AAAA...rest-of-the-public-key... db-sync
+   ```
+5. Give each developer the private key, and have them set (in their own
+   shell profile, never committed):
+   ```bash
+   export PROD_DB_HOST=dbsync@<server-ip>
+   ```
+   (the forced command ignores the OS login name for privilege purposes —
+   `dbsync` here is just a label; what actually restricts access is the
+   Postgres role tied to the forced command, plus the `authorized_keys`
+   restriction itself)
+6. Delete the local `dbsync_key`/`dbsync_key.pub` files once distributed.
+
+Without `PROD_DB_HOST` set, the sync script skips itself with instructions
+rather than failing `npm run dev` outright — it degrades gracefully on a
+machine that was never set up for this (a new contributor, CI, etc.).
+
 ## Security checklist
 
 Everything above adds up to this — use it to sanity-check any deployment,
@@ -536,3 +594,24 @@ including ones done differently from this exact runbook:
       deployment done.
 - [ ] If any analytics/tracking script gets added to the site later, a
       cookie consent banner (§8g) goes in *before* it, not after.
+- [ ] `CSRF_ORIGINS` in `apps/cms/.env` (§4) is set to the real production
+      CMS URL, not left at the `localhost:3000` dev default — otherwise
+      Payload accepts its auth cookie regardless of the request's Origin
+      header, the one app-level defense it has against a malicious site
+      making authenticated requests using an admin's active session.
+- [ ] `ecosystem.config.cjs` starts the CMS with `-H 127.0.0.1` (not the
+      Next.js default of all interfaces) — defense in depth so a firewall
+      lapse doesn't leave the admin panel/API directly reachable on the
+      droplet's public IP with no TLS/WAF in front of it.
+- [ ] Local database sync (§15) uses the scoped `dbsync` read-only role and
+      forced-command key, not the root deploy key from §3/§13 — and
+      `scripts/sync-prod-db.sh`'s `PROD_DB_HOST` is never hardcoded/committed
+      anywhere, only set in each developer's own shell profile.
+- [ ] Payload migrations (§5) are written to be backward-compatible with
+      the previously-deployed code — `scripts/deploy.sh` applies a new
+      migration *before* confirming the rebuilt CMS actually boots
+      successfully (§7's health check catches a failed boot and fails the
+      deploy loudly, but there's no automatic schema rollback), so a
+      migration that drops/renames something the currently-running code
+      still references will break that code the instant it's applied, not
+      after the restart.
