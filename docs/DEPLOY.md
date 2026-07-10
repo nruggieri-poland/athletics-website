@@ -8,8 +8,8 @@ Cloudflare in front for DNS/CDN/WAF.
 ## 1. Server prerequisites
 
 ```bash
-# Node (match .nvmrc)
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+# Node (match .nvmrc — must be 22.12.0 or newer; 20.x will fail the build)
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
 sudo apt-get install -y nodejs
 
 # Postgres
@@ -57,14 +57,32 @@ PAYLOAD_SYNC_API_KEY=<same value as apps/cms's PAYLOAD_SYNC_API_KEY>
 
 ```bash
 npm install
+
+# Create the schema first — Payload only auto-pushes schema changes in dev;
+# production requires running the checked-in migration(s) explicitly. Run
+# this against an EMPTY database before anything else, or apps/cms will
+# have no tables and every API request will fail.
+npm run migrate --workspace=apps/cms
+
 npm run build --workspace=apps/cms
 npm run build --workspace=apps/web
 ```
 
-The Payload build also needs to run migrations/generate against Postgres the
-first time — see apps/cms's own README for `payload migrate` if using
-migration-based schema management, or rely on `push: true` schema sync in
-dev only (not recommended for production Postgres).
+**Whenever a collection/global/field changes going forward**, generate a new
+migration locally and commit it before deploying:
+
+```bash
+npm run migrate:create --workspace=apps/cms -- <short_description>
+```
+
+Open the generated file in `apps/cms/src/migrations/` and change the first
+line from `import { MigrateUpArgs, MigrateDownArgs, sql } from '@payloadcms/db-postgres'`
+to two lines — `import type { MigrateUpArgs, MigrateDownArgs } from '@payloadcms/db-postgres'`
+and `import { sql } from '@payloadcms/db-postgres'` — the generator emits a
+combined import that Node's native TypeScript stripping can't resolve at
+runtime (fails with "does not provide an export named 'MigrateDownArgs'").
+Then on the server: `git pull && npm run migrate --workspace=apps/cms` before
+rebuilding.
 
 ## 4. PM2
 

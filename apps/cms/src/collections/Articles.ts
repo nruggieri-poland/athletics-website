@@ -60,7 +60,7 @@ export const Articles: CollectionConfig = {
         condition: (_, siblingData) => siblingData.linkType !== 'external' && siblingData.linkType !== 'pdf',
         description: 'Only used for standard Articles.',
       },
-      validate: (value, { siblingData }: { siblingData: { linkType?: string } }) => {
+      validate: (value: unknown, { siblingData }: { siblingData: { linkType?: string } }) => {
         const data = siblingData ?? {}
         if (data.linkType === 'article' && !value) return 'Body is required for standard Articles.'
         return true
@@ -73,7 +73,7 @@ export const Articles: CollectionConfig = {
         condition: (_, siblingData) => siblingData.linkType === 'external',
         description: 'Full URL, e.g. https://youtube.com/watch?v=... or https://example.com/page',
       },
-      validate: (value, { siblingData }: { siblingData: { linkType?: string } }) => {
+      validate: (value: unknown, { siblingData }: { siblingData: { linkType?: string } }) => {
         const data = siblingData ?? {}
         if (data.linkType === 'external' && !value) return 'External URL is required for External Link articles.'
         return true
@@ -89,7 +89,7 @@ export const Articles: CollectionConfig = {
       admin: {
         condition: (_, siblingData) => siblingData.linkType === 'pdf',
       },
-      validate: (value, { siblingData }: { siblingData: { linkType?: string } }) => {
+      validate: (value: unknown, { siblingData }: { siblingData: { linkType?: string } }) => {
         const data = siblingData ?? {}
         if (data.linkType === 'pdf' && !value) return 'A PDF file is required for PDF articles.'
         return true
