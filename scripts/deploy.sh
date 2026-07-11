@@ -27,8 +27,14 @@ echo "[deploy] Changed files since last deploy:"
 echo "$CHANGED" | sed 's/^/  /'
 
 if echo "$CHANGED" | grep -qE '(^|/)package(-lock)?\.json$'; then
-  echo "[deploy] package.json/lockfile changed — running npm install..."
-  npm install
+  # `npm ci` (not `npm install`) — installs exactly what package-lock.json
+  # says and never rewrites it. `npm install` can regenerate lockfile
+  # metadata slightly differently depending on the exact npm version, which
+  # is what caused a real deploy to fail here: the server's npm produced a
+  # lockfile that differed from git's, so the next `git pull --ff-only`
+  # refused to overwrite those "local changes."
+  echo "[deploy] package.json/lockfile changed — running npm ci..."
+  npm ci
 fi
 
 if echo "$CHANGED" | grep -q '^apps/cms/src/migrations/'; then
