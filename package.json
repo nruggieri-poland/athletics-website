@@ -1,6 +1,7 @@
 {
   "name": "athletics-website",
   "private": true,
+  "type": "module",
   "workspaces": [
     "apps/*",
     "packages/*"
@@ -10,5 +11,20 @@
   },
   "overrides": {
     "tsx": "^4.23.0"
+  },
+  "scripts": {
+    "lint": "eslint apps/web apps/cms scripts eslint.config.js",
+    "format": "prettier --write apps/web/src apps/cms/src scripts",
+    "format:check": "prettier --check apps/web/src apps/cms/src scripts"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "astro-eslint-parser": "^2.1.0",
+    "eslint": "^10.7.0",
+    "eslint-plugin-astro": "^2.1.1",
+    "globals": "^17.7.0",
+    "prettier": "^3.9.5",
+    "prettier-plugin-astro": "^0.14.1",
+    "typescript-eslint": "^8.63.0"
   }
 }

@@ -1,0 +1,23 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    groups:
+      # One PR for routine patch/minor bumps across the whole workspace
+      # instead of a dozen separate ones — security-relevant majors still
+      # get their own PR so they don't get lost in a group.
+      routine-updates:
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: "npm"
+    directory: "/scripts/schedule-sync"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"

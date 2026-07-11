@@ -38,6 +38,7 @@ function slugify(input: string): string {
 }
 
 function parseCsv(text: string): TeamRow[] {
+  // eslint-disable-next-line no-irregular-whitespace -- stripping a real UTF-8 BOM, not a typo
   const lines = text.replace(/^﻿/, '').trim().split(/\r?\n/)
   const header = lines[0].split(',').map((h) => h.trim())
   return lines.slice(1).map((line) => {

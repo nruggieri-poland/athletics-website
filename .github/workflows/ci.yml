@@ -1,0 +1,85 @@
+name: CI
+
+# Runs on every PR into main — this is the check branch protection should
+# require before allowing a merge (Settings -> Branches -> the main rule ->
+# Require status checks -> add "build"). Without this, a PR could merge a
+# broken build and the auto-deploy workflow would only discover that after
+# it's already live.
+#
+# Builds apps/cms against a real (throwaway) Postgres instance and actually
+# starts it, then builds apps/web against that live instance — matching
+# what a real deploy does, not just a type-check in isolation. This is what
+# would have caught, before merge, several of the "works locally, breaks
+# in production build" issues found manually during initial deployment.
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: athletics_app
+          POSTGRES_PASSWORD: ci_password
+          POSTGRES_DB: athletics
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.12.0'
+
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Set up CMS env
+        run: |
+          cat > apps/cms/.env << 'EOF'
+          DATABASE_URI=postgresql://athletics_app:ci_password@localhost:5432/athletics
+          PAYLOAD_SECRET=ci-only-secret-never-used-outside-this-job
+          PAYLOAD_SYNC_API_KEY=ci-only-key-never-used-outside-this-job
+          EOF
+
+      - name: Apply migrations
+        run: npm run migrate --workspace=apps/cms
+
+      - name: Build CMS
+        run: npm run build --workspace=apps/cms
+
+      - name: Start CMS
+        run: |
+          npm run start --workspace=apps/cms &
+          for i in $(seq 1 30); do
+            CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3000/api/sports || true)
+            if [ "$CODE" = "200" ]; then
+              echo "CMS is up."
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "CMS did not come up in time."
+          exit 1
+
+      - name: Set up web env
+        run: echo "PAYLOAD_URL=http://127.0.0.1:3000" > apps/web/.env
+
+      - name: Typecheck web
+        run: npm run astro --workspace=apps/web -- check
+
+      - name: Build web
+        run: npm run build --workspace=apps/web
