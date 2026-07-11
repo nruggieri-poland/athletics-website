@@ -40,7 +40,14 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '22.12.0'
+          # Read from .nvmrc rather than hardcoding a version here — a
+          # hardcoded '22.12.0' is what caused this workflow to fail in the
+          # first place: Payload's migration command imports
+          # payload.config.ts directly via Node's native TypeScript
+          # stripping, which isn't enabled by default until a later 22.x
+          # than that. .nvmrc floats to the latest 22.x, matching what
+          # local dev and the production server actually run.
+          node-version-file: '.nvmrc'
 
       - run: npm ci
 
