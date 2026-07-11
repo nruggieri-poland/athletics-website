@@ -10,9 +10,11 @@ on:
   push:
     branches: [main]
 
-permissions:
-  contents: read
-  pull-requests: write
+permissions: {}
+# Not read/write anything: this workflow never checks out the repo or calls
+# the GitHub API — its only privileged action is SSHing out using
+# secrets.PROD_DEPLOY_SSH_KEY, which isn't gated by GITHUB_TOKEN scope at
+# all. Zero permissions is the correct minimum, not a placeholder.
 
 jobs:
   deploy:
