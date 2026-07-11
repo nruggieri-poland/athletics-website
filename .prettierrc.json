@@ -1,0 +1,25 @@
+{
+  "printWidth": 100,
+  "plugins": ["prettier-plugin-astro"],
+  "overrides": [
+    {
+      "files": "*.astro",
+      "options": {
+        "parser": "astro"
+      }
+    },
+    {
+      "files": "apps/web/**/*.{ts,tsx,astro}",
+      "options": {
+        "singleQuote": false
+      }
+    },
+    {
+      "files": "apps/cms/**/*.ts",
+      "options": {
+        "singleQuote": true,
+        "semi": false
+      }
+    }
+  ]
+}

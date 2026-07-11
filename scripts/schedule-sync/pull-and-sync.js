@@ -20,6 +20,7 @@ const SOURCE_BASE_URL =
 const FETCH_TIMEOUT_MS = 15_000;
 
 function readTeamSlugs() {
+  // eslint-disable-next-line no-irregular-whitespace -- stripping a real UTF-8 BOM, not a typo
   const text = fs.readFileSync(CSV_PATH, 'utf-8').replace(/^﻿/, '').trim();
   const lines = text.split(/\r?\n/);
   const header = lines[0].split(',').map((h) => h.trim());
