@@ -1,10 +1,11 @@
 name: CI
 
-# Runs on every PR into main — this is the check branch protection should
-# require before allowing a merge (Settings -> Branches -> the main rule ->
-# Require status checks -> add "build"). Without this, a PR could merge a
-# broken build and the auto-deploy workflow would only discover that after
-# it's already live.
+# Runs on every push to main and on every PR into main. This project is
+# maintained solo (no second reviewer), so branch protection doesn't
+# require a PR before merging — direct pushes to main are normal. The
+# push trigger is what catches a broken build in that case; the
+# pull_request trigger stays for the rare occasion a PR is actually used
+# (e.g. a larger change worth reviewing before it lands).
 #
 # Builds apps/cms against a real (throwaway) Postgres instance and actually
 # starts it, then builds apps/web against that live instance — matching
@@ -12,6 +13,8 @@ name: CI
 # would have caught, before merge, several of the "works locally, breaks
 # in production build" issues found manually during initial deployment.
 on:
+  push:
+    branches: [main]
   pull_request:
     branches: [main]
 
