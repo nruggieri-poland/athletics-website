@@ -104,6 +104,7 @@ Never commit `.env` files — create them directly on the server.
 DATABASE_URI=postgresql://athletics_app:<password-from-step-1>@localhost:5432/athletics
 PAYLOAD_SECRET=<random 32+ char string — e.g. `openssl rand -base64 32`>
 PAYLOAD_SYNC_API_KEY=<random string — e.g. `openssl rand -base64 24` — shared with scripts/schedule-sync/.env>
+CSRF_ORIGINS=https://cms.polandbulldogs.org
 CF_ZONE_ID=<Cloudflare zone id — see §8>
 CF_API_TOKEN=<Cloudflare token, scoped to Zone.Cache Purge only — see §8>
 ```
@@ -452,9 +453,13 @@ setup does, and after that, `git push` alone is enough.
 The SSH key GitHub Actions uses is deliberately restricted server-side to
 only ever run `scripts/deploy.sh`, regardless of what command is actually
 sent over that connection — so even if the key stored in GitHub ever leaked,
-it couldn't be used to do anything except trigger a deploy of code that's
-already been reviewed and merged. It can't get an interactive shell, run
-arbitrary commands, forward ports, or touch anything else on the server.
+it couldn't be used to do anything except trigger a deploy of whatever's
+currently on `main`. It can't get an interactive shell, run arbitrary
+commands, forward ports, or touch anything else on the server. Note that
+branch protection on this repo doesn't require a PR before merging to
+`main` (solo-maintained, no second reviewer to gate on) — so in practice,
+GitHub write access to the repo is the real gate on what gets deployed, not
+a review step. Keep that collaborator list tight.
 
 **One-time setup (needs someone with real server access — IT/tech
 director):**
