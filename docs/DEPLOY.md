@@ -31,9 +31,14 @@ echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
 Install Node, Postgres, nginx, PM2:
 
 ```bash
-# Node — must be 22.12.0 or newer (matches .nvmrc / package.json engines).
+# Node — must be 22.18.0 or newer (matches .nvmrc / package.json engines).
 # 20.x will fail the CMS build with type errors that only surface under
-# strict production type-checking, not in dev.
+# strict production type-checking, not in dev. Older 22.x point releases
+# (below 22.18.0) will fail differently — `payload migrate`/`payload run`
+# import payload.config.ts directly via Node's native TypeScript stripping,
+# which isn't enabled by default until 22.18.0. The command below always
+# installs the latest 22.x, so this only matters if you ever pin a specific
+# older patch version by hand.
 curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
 sudo apt-get install -y nodejs postgresql nginx
 sudo npm install -g pm2

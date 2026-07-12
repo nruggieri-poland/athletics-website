@@ -1,10 +1,11 @@
 name: CI
 
-# Runs on every PR into main — this is the check branch protection should
-# require before allowing a merge (Settings -> Branches -> the main rule ->
-# Require status checks -> add "build"). Without this, a PR could merge a
-# broken build and the auto-deploy workflow would only discover that after
-# it's already live.
+# Runs on every push to main and on every PR into main. This project is
+# maintained solo (no second reviewer), so branch protection doesn't
+# require a PR before merging — direct pushes to main are normal. The
+# push trigger is what catches a broken build in that case; the
+# pull_request trigger stays for the rare occasion a PR is actually used
+# (e.g. a larger change worth reviewing before it lands).
 #
 # Builds apps/cms against a real (throwaway) Postgres instance and actually
 # starts it, then builds apps/web against that live instance — matching
@@ -12,6 +13,8 @@ name: CI
 # would have caught, before merge, several of the "works locally, breaks
 # in production build" issues found manually during initial deployment.
 on:
+  push:
+    branches: [main]
   pull_request:
     branches: [main]
 
@@ -40,7 +43,14 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '22.12.0'
+          # Read from .nvmrc rather than hardcoding a version here — a
+          # hardcoded '22.12.0' is what caused this workflow to fail in the
+          # first place: Payload's migration command imports
+          # payload.config.ts directly via Node's native TypeScript
+          # stripping, which isn't enabled by default until a later 22.x
+          # than that. .nvmrc floats to the latest 22.x, matching what
+          # local dev and the production server actually run.
+          node-version-file: '.nvmrc'
 
       - run: npm ci
 
