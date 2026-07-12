@@ -14,6 +14,18 @@ cd "$(dirname "$0")/.."
 
 echo "[deploy] Fetching latest..."
 BEFORE=$(git rev-parse HEAD)
+
+# `npm ci` further down is supposed to never touch package-lock.json, but
+# in practice it still does on this server: the lockfile was generated on
+# a Mac, and npm resolving/re-verifying the Linux-specific optional
+# packages (esbuild, sharp, lightningcss) during install can rewrite
+# those platform-specific entries anyway, leaving a local diff. That diff
+# then blocks the next `git pull --ff-only` with "local changes would be
+# overwritten." Nothing on this server ever hand-edits package-lock.json,
+# so it's always safe to discard whatever's there before pulling — the
+# committed version is the only one that matters.
+git checkout -- package-lock.json 2>/dev/null || true
+
 git pull --ff-only
 AFTER=$(git rev-parse HEAD)
 
