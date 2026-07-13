@@ -1,0 +1,128 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import PageHero from "../../../components/resources/PageHero.astro";
+import NextGameSpotlight from "../../../components/resources/NextGameSpotlight.astro";
+import AnnouncementBanner from "../../../components/resources/AnnouncementBanner.astro";
+import InfoTile from "../../../components/resources/InfoTile.astro";
+import LinkList from "../../../components/resources/LinkList.astro";
+import PromoStrip from "../../../components/resources/PromoStrip.astro";
+import PricingTable from "../../../components/resources/PricingTable.astro";
+import MerchGrid from "../../../components/resources/MerchGrid.astro";
+import SupportBand from "../../../components/resources/SupportBand.astro";
+import { getNextHomeGame, getSiteSettings } from "../../../lib/payload";
+
+const [nextGame, siteSettings] = await Promise.all([getNextHomeGame(), getSiteSettings()]);
+
+const followLinks = [
+  { label: "Live Scores & Full Schedule", href: "/calendar" },
+  { label: "Watch Live on Hudl", href: "https://www.hudl.com", external: true },
+  { label: "Magic Moments Photography", href: "#", external: true },
+];
+
+const promos = [
+  { date: "Sep 11", sport: "Football", name: "Youth Night", description: "Free admission for K–6, meet the team pregame." },
+  { date: "Oct 2", sport: "Football", name: "Pink Out", description: "Breast cancer awareness night — proceeds benefit local families." },
+  { date: "Oct 17", sport: "Football", name: "Senior Night", description: "Pregame recognition for every senior athlete." },
+  { date: "Nov 3", sport: "Volleyball", name: "Teacher Appreciation", description: "PSHS staff get in free with a school ID." },
+];
+
+const plans = [
+  { name: "Adult Season Pass", covers: "All home events, all sports", price: "$60" },
+  { name: "Student Season Pass", covers: "All home events, all sports", price: "$35" },
+  { name: "Family Pass (up to 5)", covers: "All home events, all sports", price: "$150" },
+];
+
+const merch = [
+  { name: "Bulldogs Tee", price: "$18" },
+  { name: "Pullover Hoodie", price: "$38" },
+  { name: "Snapback Hat", price: "$22" },
+  { name: "Rally Towel", price: "$8" },
+];
+---
+
+<BaseLayout title="For Fans & Community" description="Tickets, gameday info, and ways to support Poland Seminary Bulldogs Athletics">
+  <div class="mx-auto max-w-content px-6">
+    <PageHero
+      section="Fans & Community"
+      title="For Fans & Community"
+      lede="Tickets, gameday logistics, and ways to support the Bulldogs year-round."
+    />
+
+    <div class="space-y-14 py-14">
+      <section>
+        <NextGameSpotlight game={nextGame} />
+      </section>
+
+      <section>
+        <AnnouncementBanner
+          title="Weather delays & cancellations"
+          body="Posted here and to the team's calendar as soon as a call is made — no need to call the office."
+        />
+      </section>
+
+      <section>
+        <h2 class="mb-5 text-h3 font-bold text-ink-900">Gameday guide</h2>
+        <div class="grid gap-4 sm:grid-cols-2">
+          <InfoTile
+            label="Parking"
+            value="Free lot off Rt. 224"
+            sub="Overflow lot opens for football & playoffs."
+            iconPath="M5 16V6a1 1 0 0 1 1-1h5.5a3.5 3.5 0 1 1 0 7H6m9 4v-4"
+          />
+          <InfoTile
+            label="Admission"
+            value="$6 adults · $4 students"
+            sub="Season passes at the athletic office."
+            iconPath="M4 8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1a1.5 1.5 0 0 0 0 3v1a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-1a1.5 1.5 0 0 0 0-3V8Z"
+          />
+          <InfoTile
+            label="Bag policy"
+            value={`Clear bags only, 12" × 6" × 12"`}
+            sub="Gates open 1 hour before kickoff."
+            iconPath="M6 8V6a4 4 0 1 1 8 0v2m-9 0h10l.7 8.5a1.5 1.5 0 0 1-1.5 1.5H5.8a1.5 1.5 0 0 1-1.5-1.5L5 8Z"
+          />
+          <InfoTile
+            label="Directions"
+            value="Bulldog Stadium"
+            sub={siteSettings.address ?? "142 Bulldog Way, Poland, OH 44514"}
+            iconPath="M10 17.5s5.5-5 5.5-9a5.5 5.5 0 1 0-11 0c0 4 5.5 9 5.5 9Zm0-7a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"
+          />
+        </div>
+      </section>
+
+      <section>
+        <h2 class="mb-1 text-h3 font-bold text-ink-900">Follow along</h2>
+        <LinkList links={followLinks} />
+      </section>
+
+      <section>
+        <h2 class="mb-1 text-h3 font-bold text-ink-900">Theme nights this season</h2>
+        <p class="mb-4 text-sm text-ink-500">Scroll for what's coming up &rarr;</p>
+        <PromoStrip promos={promos} />
+      </section>
+
+      <section>
+        <h2 class="mb-5 text-h3 font-bold text-ink-900">Season tickets & memberships</h2>
+        <PricingTable plans={plans} contactEmail="athletics@polandbulldogs.org" />
+      </section>
+
+      <section>
+        <h2 class="mb-5 text-h3 font-bold text-ink-900">Spirit store</h2>
+        <MerchGrid items={merch} />
+        <p class="mt-3 text-xs text-ink-500">
+          No online store yet — this section is a placeholder for one. In the meantime, contact the
+          <a href="mailto:athletics@polandbulldogs.org?subject=Spirit%20Wear" class="font-semibold text-primary-600 hover:text-primary-700">athletic office</a>.
+        </p>
+      </section>
+
+      <section>
+        <SupportBand
+          title="Support the Bulldogs year-round"
+          body="Booster Club membership funds equipment, transportation, and senior-night gifts across every sport."
+          ctaLabel="Contact the Booster Club"
+          ctaHref="mailto:athletics@polandbulldogs.org?subject=Booster%20Club"
+        />
+      </section>
+    </div>
+  </div>
+</BaseLayout>

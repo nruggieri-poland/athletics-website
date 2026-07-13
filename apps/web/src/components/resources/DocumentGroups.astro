@@ -1,0 +1,63 @@
+---
+import type { DocumentAsset } from "../../lib/payload";
+import { documentHref } from "../../lib/payload";
+
+interface Props {
+  documents: DocumentAsset[];
+  emptyLabel: string;
+}
+
+const { documents, emptyLabel } = Astro.props;
+
+// Group by folder, same pattern as the old flat /resources page — a folder
+// with nothing assigned to it just never produces a group, and anything
+// with no folder falls into "General" rather than disappearing.
+const groups = new Map<string, DocumentAsset[]>();
+for (const doc of documents) {
+  const label = doc.folder?.name ?? "General";
+  if (!groups.has(label)) groups.set(label, []);
+  groups.get(label)!.push(doc);
+}
+const folderGroups = Array.from(groups.entries()).sort(([a], [b]) => a.localeCompare(b));
+
+const FILE_ICON =
+  "M6 2.5h5l3.5 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 4.5 15V4A1.5 1.5 0 0 1 6 2.5Z";
+const LINK_ICON = "M8 12l4-4m-3-2h4a2 2 0 0 1 2 2v0a2 2 0 0 1-2 2h-1m-4 0H7a2 2 0 0 1-2-2v0a2 2 0 0 1 2-2h1";
+---
+
+{folderGroups.length === 0 ? (
+  <p class="text-ink-400">{emptyLabel}</p>
+) : (
+  <div class="space-y-8">
+    {folderGroups.map(([folderName, docs]) => (
+      <div>
+        <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-ink-500">{folderName}</h3>
+        <div class="divide-y divide-ink-100 rounded-xl border border-ink-100 bg-surface">
+          {docs.map((doc) => (
+            <a
+              href={documentHref(doc)}
+              target={doc.fileType === "link" ? "_blank" : undefined}
+              rel={doc.fileType === "link" ? "noopener noreferrer" : undefined}
+              class="flex items-center gap-3 px-4 py-3.5 hover:bg-ink-50"
+            >
+              <span
+                class:list={[
+                  "grid h-8 w-8 shrink-0 place-items-center rounded-lg",
+                  doc.fileType === "link" ? "bg-ink-100 text-ink-600" : "bg-primary-50 text-primary-700",
+                ]}
+              >
+                <svg class="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d={doc.fileType === "link" ? LINK_ICON : FILE_ICON} stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </span>
+              <span class="min-w-0 flex-1">
+                <span class="block text-sm font-semibold text-ink-900">{doc.title}</span>
+                {doc.description && <span class="block text-xs text-ink-500">{doc.description}</span>}
+              </span>
+            </a>
+          ))}
+        </div>
+      </div>
+    ))}
+  </div>
+)}

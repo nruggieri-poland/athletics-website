@@ -1,0 +1,39 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import PageHero from "../../../components/resources/PageHero.astro";
+import DocumentGroups from "../../../components/resources/DocumentGroups.astro";
+import LinkList from "../../../components/resources/LinkList.astro";
+import AnnouncementBanner from "../../../components/resources/AnnouncementBanner.astro";
+import ContactGrid from "../../../components/resources/ContactGrid.astro";
+import { getPublicDocumentsByAudience } from "../../../lib/payload";
+
+const documents = await getPublicDocumentsByAudience("parents");
+
+---
+
+<BaseLayout title="For Parents" description="Registration, physicals, policies, and contacts for Poland Seminary Bulldogs Athletics parents">
+  <div class="mx-auto max-w-content px-6">
+    <PageHero
+      section="Parents"
+      title="For Parents"
+      lede=""
+    />
+
+    <div class="space-y-14 py-14">
+      <section>
+        <h2 class="mb-5 text-h3 font-bold text-ink-900">Documents</h2>
+        <DocumentGroups documents={documents} emptyLabel="No documents published yet — check back soon." />
+      </section>
+
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  /* Same Safari fix as the mobile nav accordion in Header.astro — list-none
+     handles Firefox/Chrome, but Safari renders <summary> markers via a
+     separate pseudo-element that list-style doesn't reach. */
+  .faq-item summary::-webkit-details-marker {
+    display: none;
+  }
+</style>

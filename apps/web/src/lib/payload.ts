@@ -385,6 +385,34 @@ export async function getNavigation(): Promise<Navigation> {
   return payloadFetch<Navigation>("/api/globals/navigation");
 }
 
+// Parents/Coaches resource pages each want only the documents meant for
+// them — "both" documents show on both pages, so this filters the same
+// public set rather than adding a second API shape to keep in sync.
+export async function getPublicDocumentsByAudience(
+  audience: "coaches" | "parents",
+): Promise<DocumentAsset[]> {
+  const documents = await getAllPublicDocuments();
+  return documents.filter((doc) => doc.audience === audience || doc.audience === "both");
+}
+
+// The Fans page's "next home game" spotlight — earliest upcoming Home game
+// across every sport/team, or null if nothing's scheduled. Not scoped to
+// one team, matching how the Fans page isn't scoped to one team either.
+export async function getNextHomeGame(): Promise<Game | null> {
+  const today = new Date().toISOString().slice(0, 10);
+  const data = await payloadFetch<PaginatedDocs<Game>>(
+    `/api/games${toQuery({
+      "where[status][equals]": "active",
+      "where[eventType][equals]": "Game",
+      "where[homeOrAway][equals]": "Home",
+      "where[date][greater_than_equal]": today,
+      sort: "date",
+      limit: 1,
+    })}`,
+  );
+  return data.docs[0] ?? null;
+}
+
 export function mediaUrl(media?: Media, size?: string): string {
   if (!media) return "";
   if (size && media.sizes?.[size]?.url) return `${PAYLOAD_URL}${media.sizes[size]!.url}`;

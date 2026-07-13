@@ -1,0 +1,31 @@
+---
+interface LinkItem {
+  label: string;
+  href: string;
+  external?: boolean;
+}
+
+interface Props {
+  links: LinkItem[];
+}
+
+const { links } = Astro.props;
+---
+
+<ul class="flex flex-col">
+  {links.map((link) => (
+    <li>
+      <a
+        href={link.href}
+        target={link.external ? "_blank" : undefined}
+        rel={link.external ? "noopener noreferrer" : undefined}
+        class="flex items-center gap-2.5 rounded-lg px-2 py-2.5 text-sm font-semibold text-ink-900 hover:bg-ink-50"
+      >
+        <svg class="h-3.5 w-3.5 shrink-0 text-ink-400" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M8 12l4-4m-3-2h4a2 2 0 0 1 2 2v0a2 2 0 0 1-2 2h-1m-4 0H7a2 2 0 0 1-2-2v0a2 2 0 0 1 2-2h1" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        {link.label}
+      </a>
+    </li>
+  ))}
+</ul>

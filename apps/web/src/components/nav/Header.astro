@@ -151,6 +151,52 @@ function levelLabel(level: TeamLevel): string {
         </div>
       </div>
 
+      <div class="group relative -my-4 flex items-center self-stretch py-4" data-menu-group>
+        <a href="/resources" aria-haspopup="true" aria-expanded="false" data-menu-trigger class="flex items-center gap-1 text-sm font-medium text-ink-700 hover:text-primary-600">
+          Resources
+          <svg class="h-3 w-3" viewBox="0 0 12 12" fill="none">
+            <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+          </svg>
+        </a>
+        <div class="invisible absolute right-0 top-full w-80 rounded-xl border border-ink-100 bg-surface opacity-0 shadow-lg transition group-focus-within:visible group-focus-within:opacity-100" data-menu-panel>
+          <div class="flex flex-col gap-0.5 p-2.5">
+            <a href="/resources/parents" class="flex items-center gap-3 rounded-lg p-3 hover:bg-ink-50">
+              <span class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary-50 text-primary-700">
+                <svg class="h-[18px] w-[18px]" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M6.5 9a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Zm7 0a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5ZM2 16c0-2.5 2-4.5 4.5-4.5S11 13.5 11 16m1-4.5c2.2 0 4 1.8 4 4.5" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </span>
+              <span>
+                <span class="block text-sm font-semibold text-ink-900">Parents</span>
+                <span class="block text-xs text-ink-500">Registration, physicals, policies &amp; contacts</span>
+              </span>
+            </a>
+            <a href="/resources/coaches" class="flex items-center gap-3 rounded-lg p-3 hover:bg-ink-50">
+              <span class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary-50 text-primary-700">
+                <svg class="h-[18px] w-[18px]" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M4 16v-1.5A3.5 3.5 0 0 1 7.5 11h5a3.5 3.5 0 0 1 3.5 3.5V16M10 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </span>
+              <span>
+                <span class="block text-sm font-semibold text-ink-900">Coaches</span>
+                <span class="block text-xs text-ink-500">Handbook, required forms &amp; compliance</span>
+              </span>
+            </a>
+            <a href="/resources/fans" class="flex items-center gap-3 rounded-lg p-3 hover:bg-ink-50">
+              <span class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary-50 text-primary-700">
+                <svg class="h-[18px] w-[18px]" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M10 16.5s-6-3.6-6-8.1a3.6 3.6 0 0 1 6-2.7 3.6 3.6 0 0 1 6 2.7c0 4.5-6 8.1-6 8.1Z" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </span>
+              <span>
+                <span class="block text-sm font-semibold text-ink-900">Fans &amp; Community</span>
+                <span class="block text-xs text-ink-500">Tickets, gameday info &amp; ways to support</span>
+              </span>
+            </a>
+          </div>
+        </div>
+      </div>
+
       {headerLinks.map((link) => (
         <a href={link.url} class="text-sm font-medium text-ink-700 hover:text-primary-600">
           {link.label}
@@ -246,6 +292,20 @@ function levelLabel(level: TeamLevel): string {
           ))}
           <a href="/teams" class="block text-sm font-medium text-primary-600">View all sports &rarr;</a>
         </div>
+      </div>
+    </details>
+
+    <details class="group border-b border-ink-100 px-6">
+      <summary class="mobile-menu-summary flex cursor-pointer items-center justify-between py-4 text-sm font-semibold text-ink-900">
+        Resources
+        <svg class="h-3 w-3 shrink-0 text-ink-400 transition-transform group-open:rotate-180" viewBox="0 0 12 12" fill="none">
+          <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+        </svg>
+      </summary>
+      <div class="space-y-3 pb-5">
+        <a href="/resources/parents" class="block text-sm font-medium text-ink-700">Parents</a>
+        <a href="/resources/coaches" class="block text-sm font-medium text-ink-700">Coaches</a>
+        <a href="/resources/fans" class="block text-sm font-medium text-ink-700">Fans &amp; Community</a>
       </div>
     </details>
 

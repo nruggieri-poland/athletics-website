@@ -1,0 +1,22 @@
+---
+interface Item {
+  name: string;
+  price: string;
+}
+
+interface Props {
+  items: Item[];
+}
+
+const { items } = Astro.props;
+---
+
+<div class="grid grid-cols-2 gap-3.5 sm:grid-cols-4">
+  {items.map((item) => (
+    <div class="rounded-xl border border-ink-100 p-4">
+      <div class="aspect-square rounded-lg bg-primary-50"></div>
+      <p class="mt-2.5 text-sm font-semibold text-ink-900">{item.name}</p>
+      <p class="text-xs tabular-nums text-ink-500">{item.price}</p>
+    </div>
+  ))}
+</div>

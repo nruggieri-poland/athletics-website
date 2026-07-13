@@ -1,0 +1,39 @@
+---
+interface Plan {
+  name: string;
+  covers: string;
+  price: string;
+}
+
+interface Props {
+  plans: Plan[];
+  contactEmail: string;
+}
+
+const { plans, contactEmail } = Astro.props;
+---
+
+<div class="overflow-x-auto rounded-xl border border-ink-100">
+  <table class="w-full text-sm">
+    <thead>
+      <tr class="border-b border-ink-100 text-left text-xs font-semibold uppercase tracking-wide text-ink-500">
+        <th class="px-4 py-3">Pass</th>
+        <th class="px-4 py-3">Covers</th>
+        <th class="px-4 py-3">Price</th>
+      </tr>
+    </thead>
+    <tbody>
+      {plans.map((plan) => (
+        <tr class="border-b border-ink-100 last:border-0">
+          <td class="px-4 py-3 font-semibold text-ink-900">{plan.name}</td>
+          <td class="px-4 py-3 text-ink-600">{plan.covers}</td>
+          <td class="px-4 py-3 font-semibold tabular-nums text-ink-900">{plan.price}</td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
+<p class="mt-3 text-xs text-ink-500">
+  To purchase a season pass, contact the athletic office at
+  <a href={`mailto:${contactEmail}`} class="font-semibold text-primary-600 hover:text-primary-700"> {contactEmail}</a>.
+</p>

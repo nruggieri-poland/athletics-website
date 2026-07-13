@@ -1,87 +1,51 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import { getAllPublicDocuments, documentHref } from "../../lib/payload";
 
-const documents = await getAllPublicDocuments();
-
-// Group by folder — a folder with nothing in it (Awards, Conference, etc.)
-// just never produces a group, so no empty cards to hide. Docs with no
-// folder assigned fall into "General."
-const groups = new Map<string, typeof documents>();
-for (const doc of documents) {
-  const label = doc.folder?.name ?? "General";
-  if (!groups.has(label)) groups.set(label, []);
-  groups.get(label)!.push(doc);
-}
-const folderGroups = Array.from(groups.entries()).sort(([a], [b]) => a.localeCompare(b));
+// This page mostly exists as a fallback for direct navigation and no-JS —
+// on desktop, "Resources" is normally reached by hovering the header menu
+// and going straight to one of these three, without landing here first.
+const links = [
+  {
+    href: "/resources/parents",
+    label: "Parents",
+    description: "Registration, physicals, policies & contacts",
+    iconPath:
+      "M6.5 9a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Zm7 0a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5ZM2 16c0-2.5 2-4.5 4.5-4.5S11 13.5 11 16m1-4.5c2.2 0 4 1.8 4 4.5",
+  },
+  {
+    href: "/resources/coaches",
+    label: "Coaches",
+    description: "Handbook, required forms & compliance",
+    iconPath: "M4 16v-1.5A3.5 3.5 0 0 1 7.5 11h5a3.5 3.5 0 0 1 3.5 3.5V16M10 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z",
+  },
+  {
+    href: "/resources/fans",
+    label: "Fans & Community",
+    description: "Tickets, gameday info & ways to support",
+    iconPath: "M10 16.5s-6-3.6-6-8.1a3.6 3.6 0 0 1 6-2.7 3.6 3.6 0 0 1 6 2.7c0 4.5-6 8.1-6 8.1Z",
+  },
+];
 ---
 
-<BaseLayout title="Resources" description="Resources from Poland Seminary High School Athletic Department">
+<BaseLayout title="Resources" description="Resources for parents, coaches, and fans of Poland Seminary Bulldogs Athletics">
   <section class="mx-auto max-w-content px-6 py-16">
     <h1 class="mb-2 text-h1 font-bold text-ink-900">Resources</h1>
-    <p class="mb-10 text-ink-500">Forms, tickets, conference info, and more.</p>
+    <p class="mb-10 text-ink-500">Choose who you are to see what's relevant to you.</p>
 
-    {folderGroups.length > 0 && (
-      <div class="mb-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {folderGroups.map(([folderName, docs]) => (
-          <div class="rounded-xl border border-ink-100 bg-surface p-5">
-            <div class="mb-3 flex items-center gap-2">
-              <svg class="h-4 w-4 text-primary-600" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M2.5 5.5A1.5 1.5 0 0 1 4 4h3.5l1.5 2H16a1.5 1.5 0 0 1 1.5 1.5v6A1.5 1.5 0 0 1 16 15H4a1.5 1.5 0 0 1-1.5-1.5v-8Z" stroke-linejoin="round" />
-              </svg>
-              <h2 class="text-sm font-semibold uppercase tracking-wide text-ink-900">{folderName}</h2>
-            </div>
-            <ul class="space-y-2">
-              {docs.map((doc) => (
-                <li>
-                  <a
-                    href={documentHref(doc)}
-                    target={doc.fileType === "link" ? "_blank" : undefined}
-                    rel={doc.fileType === "link" ? "noopener noreferrer" : undefined}
-                    class="flex items-center gap-2 text-sm text-ink-700 hover:text-primary-600"
-                  >
-                    <svg class="h-4 w-4 shrink-0 text-ink-400" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
-                      <path d="M6 2.5h5l3.5 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 4.5 15V4A1.5 1.5 0 0 1 6 2.5Z" stroke-linejoin="round" />
-                    </svg>
-                    {doc.title}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </div>
-    )}
-
-    <div class="grid gap-6 sm:grid-cols-2">
-      <div class="rounded-xl bg-ink-50 p-6">
-        <svg class="mb-3 h-6 w-6 text-primary-600" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path d="M4 6.5A1.5 1.5 0 0 1 5.5 5h2l1-1.5h3L12.5 5h2A1.5 1.5 0 0 1 16 6.5v7A1.5 1.5 0 0 1 14.5 15h-9A1.5 1.5 0 0 1 4 13.5v-7Z" stroke-linejoin="round" />
-          <circle cx="10" cy="9.5" r="2.5" />
-        </svg>
-        <p class="mb-1 font-semibold text-ink-900">Magic Moments photography</p>
-        <p class="mb-4 text-sm text-ink-500">Official game-day photos from our team photographer.</p>
-        <a href="#" class="inline-flex items-center gap-1 text-sm font-medium text-primary-600 hover:text-primary-700">
-          View gallery &rarr;
+    <div class="grid gap-4 sm:grid-cols-3">
+      {links.map((link) => (
+        <a href={link.href} class="flex flex-col gap-3 rounded-xl border border-ink-100 p-6 hover:border-primary-200 hover:bg-ink-50">
+          <span class="grid h-11 w-11 place-items-center rounded-lg bg-primary-50 text-primary-700">
+            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d={link.iconPath} stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </span>
+          <span>
+            <span class="block text-lg font-bold text-ink-900">{link.label}</span>
+            <span class="mt-1 block text-sm text-ink-500">{link.description}</span>
+          </span>
         </a>
-      </div>
-
-      <div class="rounded-xl bg-ink-50 p-6">
-        <svg class="mb-3 h-6 w-6 text-primary-600" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
-          <circle cx="10" cy="10" r="7" />
-          <path d="M8.5 7.5v5l4-2.5-4-2.5Z" fill="currentColor" stroke="none" />
-        </svg>
-        <p class="mb-1 font-semibold text-ink-900">Watch live</p>
-        <p class="mb-4 text-sm text-ink-500">Stream select home games on Hudl.</p>
-        <a
-          href="https://www.hudl.com"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="inline-flex items-center gap-1 text-sm font-medium text-primary-600 hover:text-primary-700"
-        >
-          Open Hudl &rarr;
-        </a>
-      </div>
+      ))}
     </div>
   </section>
 </BaseLayout>
