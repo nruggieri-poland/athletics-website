@@ -1,5 +1,10 @@
 node_modules/
 dist/
+dist*/
+# Catches "dist 2", "dist copy", etc. — macOS appends a suffix like this to
+# a folder name when it thinks it's resolving a duplicate, which doesn't
+# match a plain `dist/` pattern. A build output folder got committed this
+# way once already.
 apps/web/dist-blue/
 apps/web/dist-green/
 apps/web/current
