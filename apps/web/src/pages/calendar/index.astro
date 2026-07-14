@@ -82,7 +82,13 @@ const sportsJson = JSON.stringify(sportsForFilter).replace(/</g, "\\u003c");
             type="button"
             data-view-btn={label.toLowerCase()}
             aria-pressed={label === "Agenda" ? "true" : "false"}
-            class="rounded px-3 py-1.5 text-sm font-medium text-ink-600 aria-pressed:bg-primary-600 aria-pressed:text-white"
+            class:list={[
+              "rounded px-3 py-1.5 text-sm font-medium text-ink-600 aria-pressed:bg-primary-600 aria-pressed:text-white",
+              // Month is a fixed 7-column grid with no room to shrink —
+              // on a phone it renders as unreadable ~48px-wide cells, so
+              // it isn't offered as an option below that width at all.
+              label === "Month" && "hidden sm:inline-block",
+            ]}
           >
             {label}
           </button>
@@ -240,9 +246,13 @@ const sportsJson = JSON.stringify(sportsForFilter).replace(/</g, "\\u003c");
   }
 
   function buildEventRow(ev: CalEvent): HTMLElement {
+    // Tighter padding + fewer lines than the original 3-line layout, so a
+    // phone screen fits noticeably more games before scrolling — the
+    // Agenda view is the default on mobile (Month isn't offered there),
+    // so it's the one view that most needs to earn its vertical space.
     const row = el(
       "div",
-      "flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-ink-100 bg-surface px-4 py-3" +
+      "flex flex-wrap items-center gap-x-3 gap-y-0.5 rounded-lg border border-ink-100 bg-surface px-3 py-2 sm:px-4 sm:py-3" +
         (ev.isCancelled || ev.isPostponed ? " opacity-60" : ""),
     );
 
@@ -258,13 +268,21 @@ const sportsJson = JSON.stringify(sportsForFilter).replace(/</g, "\\u003c");
     teamLink.href = ev.teamHref;
     main.appendChild(teamLink);
 
+    const oppRow = el("div", "flex min-w-0 flex-wrap items-baseline gap-x-1.5");
+    if (ev.opponentLogoUrl) {
+      const img = el("img", "h-4 w-4 shrink-0 self-center object-contain");
+      img.src = ev.opponentLogoUrl;
+      img.alt = "";
+      img.loading = "lazy";
+      oppRow.appendChild(img);
+    }
     const vsOrAt = ev.homeOrAway === "Home" ? "vs" : ev.homeOrAway === "Away" ? "@" : "";
     const oppText = `${vsOrAt} ${ev.opponentName}${ev.opponentMascot ? " " + ev.opponentMascot : ""}`.trim();
-    main.appendChild(el("p", "text-sm font-medium text-ink-900", oppText));
-
+    oppRow.appendChild(el("p", "truncate text-sm font-medium text-ink-900", oppText));
     const metaBits = [ev.time ?? "TBD"];
     if (ev.location) metaBits.push(ev.location);
-    main.appendChild(el("p", "text-xs text-ink-400", metaBits.join(" · ")));
+    oppRow.appendChild(el("p", "shrink-0 text-xs text-ink-400", `· ${metaBits.join(" · ")}`));
+    main.appendChild(oppRow);
 
     row.appendChild(main);
 

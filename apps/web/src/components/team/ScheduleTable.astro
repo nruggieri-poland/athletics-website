@@ -14,7 +14,74 @@ function formatDate(dateStr: string): string {
 }
 ---
 
-<div class="overflow-x-auto rounded-lg border border-ink-100">
+<!-- Condensed mobile rows — the full table below truncates to Home/Away,
+     Date, Time on a phone-width screen since it can't shrink under 560px,
+     silently cutting off Opponent (the one thing that actually matters)
+     off the right edge with no visible scroll affordance. This is a
+     from-scratch mobile layout, not a shrunk version of the table, so it
+     can put opponent+logo first instead of last. -->
+<div class="divide-y divide-ink-100 rounded-lg border border-ink-100 sm:hidden">
+  {games.map((game) => {
+    const timeLabel = game.isTimeTBD || !game.time ? "TBD" : game.time;
+    const hasScore = typeof game.homeScore === "number" && typeof game.awayScore === "number";
+    const resultLabel =
+      game.result && hasScore ? `${game.result} ${game.homeScore}-${game.awayScore}` : null;
+    const showLocation = game.homeOrAway !== "Home" && game.location;
+    return (
+      <div class:list={["flex items-center gap-2.5 px-3 py-2", (game.isCancelled || game.isPostponed) && "opacity-60"]}>
+        {game.homeOrAway && (
+          <span
+            class:list={[
+              "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+              game.homeOrAway === "Home" && "bg-primary-50 text-primary-700",
+              game.homeOrAway === "Away" && "bg-ink-100 text-ink-600",
+              game.homeOrAway === "Neutral" && "bg-ink-100 text-ink-600",
+            ]}
+          >
+            {game.homeOrAway}
+          </span>
+        )}
+        <div class="min-w-0 flex-1">
+          <div class="flex items-center gap-1.5">
+            {game.opponentLogo && (
+              <img src={mediaUrl(game.opponentLogo, "thumbnail")} alt="" class="h-4 w-4 shrink-0 object-contain" loading="lazy" />
+            )}
+            <span class="truncate text-sm font-semibold text-ink-900">{game.opponentName}</span>
+            {game.isConferenceGame && (
+              <span class="shrink-0 rounded-full bg-primary-50 px-1.5 py-0.5 text-[10px] font-medium text-primary-700">Conf</span>
+            )}
+          </div>
+          <p class="truncate text-xs text-ink-400">
+            {formatDate(game.date)} &middot; {timeLabel}
+            {showLocation ? ` · ${game.location}` : ""}
+          </p>
+        </div>
+        <div class="shrink-0 text-right text-xs">
+          {game.isCancelled ? (
+            <span class="font-medium text-ink-500">Cancelled</span>
+          ) : game.isPostponed ? (
+            <span class="font-medium text-ink-500">Postponed</span>
+          ) : resultLabel ? (
+            <span
+              class:list={[
+                "font-semibold",
+                game.result === "W" && "text-green-700",
+                game.result === "L" && "text-red-700",
+                game.result === "T" && "text-ink-600",
+              ]}
+            >
+              {resultLabel}
+            </span>
+          ) : (
+            <span class="text-ink-300">—</span>
+          )}
+        </div>
+      </div>
+    );
+  })}
+</div>
+
+<div class="hidden overflow-x-auto rounded-lg border border-ink-100 sm:block">
   <table class="w-full min-w-[560px] text-sm">
     <thead>
       <tr class="border-b border-ink-100 bg-ink-50 text-left text-xs uppercase tracking-wide text-ink-400">

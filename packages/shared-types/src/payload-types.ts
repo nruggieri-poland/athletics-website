@@ -83,7 +83,7 @@ export interface Config {
   };
   collectionsJoins: {
     'payload-folders': {
-      documentsAndFolders: 'payload-folders' | 'documents';
+      documentsAndFolders: 'payload-folders' | 'media' | 'documents';
     };
   };
   collectionsSelect: {
@@ -175,6 +175,7 @@ export interface Media {
   id: number;
   alt: string;
   caption?: string | null;
+  folder?: (number | null) | FolderInterface;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -212,6 +213,63 @@ export interface Media {
       filename?: string | null;
     };
   };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-folders".
+ */
+export interface FolderInterface {
+  id: number;
+  name: string;
+  folder?: (number | null) | FolderInterface;
+  documentsAndFolders?: {
+    docs?: (
+      | {
+          relationTo?: 'payload-folders';
+          value: number | FolderInterface;
+        }
+      | {
+          relationTo?: 'media';
+          value: number | Media;
+        }
+      | {
+          relationTo?: 'documents';
+          value: number | Document;
+        }
+    )[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
+  folderType?: ('media' | 'documents')[] | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "documents".
+ */
+export interface Document {
+  id: number;
+  title: string;
+  audience: 'coaches' | 'parents' | 'both';
+  /**
+   * Unchecked documents are saved here but never appear on the public site.
+   */
+  isPublic?: boolean | null;
+  fileType: 'upload' | 'link';
+  file?: (number | null) | Media;
+  /**
+   * Full URL, e.g. https://docs.google.com/...
+   */
+  externalUrl?: string | null;
+  description?: string | null;
+  /**
+   * Lower numbers appear first within a folder.
+   */
+  sortOrder?: number | null;
+  folder?: (number | null) | FolderInterface;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -369,59 +427,6 @@ export interface Article {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "documents".
- */
-export interface Document {
-  id: number;
-  title: string;
-  audience: 'coaches' | 'parents' | 'both';
-  /**
-   * Unchecked documents are saved here but never appear on the public site.
-   */
-  isPublic?: boolean | null;
-  fileType: 'upload' | 'link';
-  file?: (number | null) | Media;
-  /**
-   * Full URL, e.g. https://docs.google.com/...
-   */
-  externalUrl?: string | null;
-  description?: string | null;
-  /**
-   * Lower numbers appear first within a folder.
-   */
-  sortOrder?: number | null;
-  folder?: (number | null) | FolderInterface;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "payload-folders".
- */
-export interface FolderInterface {
-  id: number;
-  name: string;
-  folder?: (number | null) | FolderInterface;
-  documentsAndFolders?: {
-    docs?: (
-      | {
-          relationTo?: 'payload-folders';
-          value: number | FolderInterface;
-        }
-      | {
-          relationTo?: 'documents';
-          value: number | Document;
-        }
-    )[];
-    hasNextPage?: boolean;
-    totalDocs?: number;
-  };
-  folderType?: 'documents'[] | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -552,6 +557,7 @@ export interface UsersSelect<T extends boolean = true> {
 export interface MediaSelect<T extends boolean = true> {
   alt?: T;
   caption?: T;
+  folder?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;

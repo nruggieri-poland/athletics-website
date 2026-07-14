@@ -1,6 +1,6 @@
 ---
 import type { Game } from "../../lib/payload";
-import { levelSlug } from "../../lib/payload";
+import { levelSlug, mediaUrl } from "../../lib/payload";
 
 interface Props {
   game: Game;
@@ -24,7 +24,15 @@ const timeLabel = game.isTimeTBD || !game.time ? "TBD" : game.time;
     </p>
     <p class="mt-3 text-xs font-medium uppercase tracking-wide text-ink-400">{formattedDate}</p>
     <div class="mt-1 flex items-center gap-2">
-      <p class="text-lg font-bold leading-tight text-ink-900">
+      {game.opponentLogo && (
+        <img
+          src={mediaUrl(game.opponentLogo, "thumbnail")}
+          alt=""
+          class="h-7 w-7 shrink-0 object-contain"
+          loading="lazy"
+        />
+      )}
+      <p class="min-w-0 truncate text-lg font-bold leading-tight text-ink-900">
         <span class="text-ink-400">{vsOrAt}</span> {game.opponentName}
       </p>
     </div>

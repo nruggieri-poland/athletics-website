@@ -67,6 +67,13 @@ const uid = Math.random().toString(36).slice(2, 8);
 <script>
   const STORAGE_KEY = "schedule-view-preference";
 
+  // The Calendar view is a fixed 7-column grid that has no room to breathe
+  // on a phone-width screen — cells end up too small to read, let alone tap.
+  // Rather than ship a broken option, it's removed from the picker below
+  // this width, matching the same breakpoint the site already treats as
+  // "mobile" everywhere else (Tailwind's sm: prefix, 640px).
+  const isMobile = window.matchMedia("(max-width: 639px)").matches;
+
   function applyView(container: Element, view: string) {
     container.querySelectorAll<HTMLElement>("[data-view]").forEach((el) => {
       el.classList.toggle("hidden", el.dataset.view !== view);
@@ -77,9 +84,16 @@ const uid = Math.random().toString(36).slice(2, 8);
     const container = select.closest(".schedule-list-root")?.querySelector(".schedule-views");
     if (!container) return;
 
+    if (isMobile) {
+      select.querySelector('option[value="calendar"]')?.remove();
+    }
+
     const saved = localStorage.getItem(STORAGE_KEY);
     // Migrate old stored values from the previous Compact/Detailed toggle.
-    const normalized = saved === "compact" ? "list" : saved === "detailed" ? "calendar" : saved;
+    let normalized = saved === "compact" ? "list" : saved === "detailed" ? "calendar" : saved;
+    // A preference saved from a previous desktop visit on the same device
+    // shouldn't resurrect the calendar view here now that it's unavailable.
+    if (isMobile && normalized === "calendar") normalized = "list";
     if (normalized) {
       select.value = normalized;
       applyView(container, normalized);

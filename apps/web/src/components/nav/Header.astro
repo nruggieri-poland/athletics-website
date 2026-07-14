@@ -404,6 +404,37 @@ function levelLabel(level: TeamLevel): string {
     });
   });
 
+  // Touch devices never fire mouseenter at all, so on a tablet or phone
+  // whose viewport is wide enough to show this desktop nav (an iPad in
+  // portrait is ~768-834px, at or past the md: breakpoint), tapping
+  // "Sports" or "Resources" just followed the link immediately — there's
+  // no hover state for a finger to trigger, so the menu never got a
+  // chance to appear. `(hover: hover)` is the standard test for "this
+  // input can actually hover"; when it's false, the trigger's first tap
+  // opens the panel instead of navigating, and a second tap on the same
+  // trigger (or any link inside the now-open panel) goes through
+  // normally — same "reveal, then commit" pattern as a real touchscreen
+  // menu, instead of relying on browsers' inconsistent legacy behavior of
+  // simulating a hover on the first tap of a link.
+  if (!window.matchMedia("(hover: hover)").matches) {
+    menuGroups.forEach((group) => {
+      const trigger = group.querySelector<HTMLAnchorElement>("[data-menu-trigger]");
+      trigger?.addEventListener("click", (e) => {
+        if (!group.classList.contains("menu-open")) {
+          e.preventDefault();
+          openNow(group);
+        }
+      });
+    });
+    document.addEventListener("click", (e) => {
+      menuGroups.forEach((group) => {
+        if (group.classList.contains("menu-open") && !group.contains(e.target as Node)) {
+          closeNow(group);
+        }
+      });
+    });
+  }
+
   // High School / Junior High toggle inside the (now-single) Sports menu.
   // Scoped to each button's own panel container so the desktop mega-menu
   // copy and the mobile accordion copy — which share the same data

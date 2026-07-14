@@ -1,5 +1,6 @@
 ---
 import type { Game } from "../../lib/payload";
+import { mediaUrl } from "../../lib/payload";
 
 interface Props {
   games: Game[];
@@ -44,6 +45,14 @@ function formatDate(dateStr: string): string {
         </div>
 
         <div class="flex items-center gap-2">
+          {game.opponentLogo && (
+            <img
+              src={mediaUrl(game.opponentLogo, "thumbnail")}
+              alt=""
+              class="h-8 w-8 shrink-0 object-contain"
+              loading="lazy"
+            />
+          )}
           <div class="min-w-0">
             <p class="truncate text-base font-bold leading-tight text-ink-900">
               <span class="text-ink-400">{vsOrAt}</span> {game.opponentName}

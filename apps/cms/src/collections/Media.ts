@@ -10,6 +10,10 @@ export const Media: CollectionConfig = {
   admin: {
     useAsTitle: 'alt',
   },
+  // Native Payload folders, same as Documents — lets an admin drag uploads
+  // into folders ("Opponent Logos", "Hero Photos", "Article Images") from
+  // the media library UI instead of one flat list of everything.
+  folders: true,
   upload: {
     imageSizes: [
       {
