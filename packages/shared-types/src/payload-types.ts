@@ -73,6 +73,7 @@ export interface Config {
     seasons: Season;
     teams: Team;
     games: Game;
+    opponents: Opponent;
     articles: Article;
     documents: Document;
     'payload-kv': PayloadKv;
@@ -93,6 +94,7 @@ export interface Config {
     seasons: SeasonsSelect<false> | SeasonsSelect<true>;
     teams: TeamsSelect<false> | TeamsSelect<true>;
     games: GamesSelect<false> | GamesSelect<true>;
+    opponents: OpponentsSelect<false> | OpponentsSelect<true>;
     articles: ArticlesSelect<false> | ArticlesSelect<true>;
     documents: DocumentsSelect<false> | DocumentsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -380,6 +382,30 @@ export interface Game {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "opponents".
+ */
+export interface Opponent {
+  id: number;
+  /**
+   * The short name Games store, e.g. "Wickliffe" (not "Wickliffe High School").
+   */
+  name: string;
+  mascot?: string | null;
+  /**
+   * Other ways this school's name shows up in the EventLink feed, e.g. "Wickliffe HS", "Wickliffe High School". Add one whenever a game doesn't pick up this logo automatically.
+   */
+  aliases?:
+    | {
+        alias: string;
+        id?: string | null;
+      }[]
+    | null;
+  logo?: (number | null) | Media;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "articles".
  */
 export interface Article {
@@ -472,6 +498,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'games';
         value: number | Game;
+      } | null)
+    | ({
+        relationTo: 'opponents';
+        value: number | Opponent;
       } | null)
     | ({
         relationTo: 'articles';
@@ -671,6 +701,23 @@ export interface GamesSelect<T extends boolean = true> {
   result?: T;
   notes?: T;
   status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "opponents_select".
+ */
+export interface OpponentsSelect<T extends boolean = true> {
+  name?: T;
+  mascot?: T;
+  aliases?:
+    | T
+    | {
+        alias?: T;
+        id?: T;
+      };
+  logo?: T;
   updatedAt?: T;
   createdAt?: T;
 }

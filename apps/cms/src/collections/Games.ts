@@ -1,5 +1,6 @@
 import type { CollectionConfig } from 'payload'
 import { afterChangeTriggerRebuild, afterDeleteTriggerRebuild } from '../hooks/scheduleRebuildHooks.ts'
+import { matchOpponentLogoOnGame } from '../hooks/matchOpponent.ts'
 
 // Modeled directly on the legacy WordPress `wp_pshs_events` table so that an
 // external data-sync process can upsert rows into this collection (keyed on
@@ -15,6 +16,7 @@ export const Games: CollectionConfig = {
     defaultColumns: ['team', 'date', 'opponentName', 'homeOrAway', 'result', 'status'],
   },
   hooks: {
+    beforeChange: [matchOpponentLogoOnGame],
     afterChange: [afterChangeTriggerRebuild],
     afterDelete: [afterDeleteTriggerRebuild],
   },

@@ -11,6 +11,7 @@ import { Sports } from './collections/Sports.ts'
 import { Seasons } from './collections/Seasons.ts'
 import { Teams } from './collections/Teams.ts'
 import { Games } from './collections/Games.ts'
+import { Opponents } from './collections/Opponents.ts'
 import { Articles } from './collections/Articles.ts'
 import { Documents } from './collections/Documents.ts'
 import { SiteSettings } from './globals/SiteSettings.ts'
@@ -42,7 +43,7 @@ export default buildConfig({
     },
   },
   editor: lexicalEditor(),
-  collections: [Users, Media, Sports, Seasons, Teams, Games, Articles, Documents],
+  collections: [Users, Media, Sports, Seasons, Teams, Games, Opponents, Articles, Documents],
   globals: [SiteSettings, Navigation],
   // Public read access on the auto-generated payload-folders collection —
   // without this, folder names never populate on public REST reads (the

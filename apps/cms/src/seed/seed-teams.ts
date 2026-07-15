@@ -13,13 +13,16 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const CSV_PATH = path.resolve(__dirname, '../../../../scripts/schedule-sync/pshs-athletics-teams.csv')
 
 type SeasonType = 'Fall' | 'Winter' | 'Spring'
+type TeamLevel = 'Varsity' | 'Junior Varsity' | 'Freshman' | '8th Grade' | '7th Grade' | 'Junior High'
+type TeamGender = 'Boys' | 'Girls' | 'Co-Ed'
+type TeamSchoolLevel = 'High School' | 'Junior High'
 
 interface TeamRow {
   sport: string
-  level: string
-  gender: string
+  level: TeamLevel
+  gender: TeamGender
   season: SeasonType
-  schoolLevel: string
+  schoolLevel: TeamSchoolLevel
   slug: string
 }
 
@@ -46,10 +49,10 @@ function parseCsv(text: string): TeamRow[] {
     const row = Object.fromEntries(header.map((h, i) => [h, cols[i] ?? '']))
     return {
       sport: row['Sport'],
-      level: row['Levels'],
-      gender: GENDER_ALIASES[row['Gender']] ?? row['Gender'],
+      level: row['Levels'] as TeamLevel,
+      gender: (GENDER_ALIASES[row['Gender']] ?? row['Gender']) as TeamGender,
       season: row['Season'] as SeasonType,
-      schoolLevel: row['School Level'],
+      schoolLevel: row['School Level'] as TeamSchoolLevel,
       slug: row['Slug'],
     }
   })
@@ -83,7 +86,7 @@ async function upsertSport(
 async function upsertTeam(
   payload: Awaited<ReturnType<typeof getPayload>>,
   row: TeamRow,
-  sportId: string | number,
+  sportId: number,
 ) {
   const existing = await payload.find({
     collection: 'teams',
@@ -116,7 +119,7 @@ async function main() {
   const payload = await getPayload({ config })
 
   const sportNames = [...new Set(rows.map((r) => r.sport))]
-  const sportIdByName = new Map<string, string | number>()
+  const sportIdByName = new Map<string, number>()
 
   let sortOrder = 0
   for (const name of sportNames) {

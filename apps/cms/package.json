@@ -19,7 +19,7 @@
     "generate:types": "payload generate:types --disable-transpile",
     "generate:importmap": "payload generate:importmap --disable-transpile",
     "seed:teams": "payload run --disable-transpile src/seed/seed-teams.ts",
-    "attach:logos": "payload run --disable-transpile src/seed/attach-opponent-logos.ts",
+    "seed:opponents": "payload run --disable-transpile src/seed/seed-opponents.ts",
     "import:hero-videos": "payload run --disable-transpile src/seed/import-hero-videos.ts",
     "optimize:logos": "payload run --disable-transpile src/seed/optimize-small-logos.ts",
     "seed:navigation": "payload run --disable-transpile src/seed/seed-navigation.ts"
