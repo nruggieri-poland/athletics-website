@@ -1,15 +1,25 @@
 // One-off (but safely re-runnable) script — the ONLY time this needs to run
 // is once, to bootstrap the Opponents collection from the legacy
-// scripts/opponent-logos/opponents.json lookup table and its ~460 PNGs.
+// scripts/opponent-logos/opponents.json lookup table. Run with:
+// npm run seed:opponents --workspace=apps/cms
+//
+// IMPORTANT — the actual logo images are NOT read from disk. They're too
+// large to keep in git (scripts/opponent-logos/*.png is gitignored), so
+// they must already be bulk-uploaded into Payload's Media library through
+// the admin UI (drag-and-drop, filenames unchanged) BEFORE this runs. This
+// script only creates the Opponent records and links each one to the
+// already-uploaded Media doc that matches its logo filename — any opponent
+// whose file hasn't been uploaded yet is created without a logo and can be
+// linked later, either by re-running this script or by picking the file
+// manually in that Opponent's admin record.
+//
 // After this runs once, every future opponent is added entirely through
 // Payload admin (create an Opponent, upload its logo, list any aliases) —
 // Games.ts's beforeChange hook (see hooks/matchOpponent.ts) attaches the
-// right logo automatically from then on. Run with:
-// npm run seed:opponents --workspace=apps/cms
+// right logo automatically from then on.
 //
 // Idempotent: matches existing Opponents by name and updates them (merging
-// in any new aliases) rather than creating duplicates, and reuses an
-// already-uploaded logo file rather than re-uploading it.
+// in any new aliases) rather than creating duplicates.
 
 import fs from 'node:fs'
 import path from 'node:path'
@@ -18,8 +28,7 @@ import { getPayload } from 'payload'
 import config from '../payload.config.ts'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const LOGOS_DIR = path.resolve(__dirname, '../../../../scripts/opponent-logos')
-const OPPONENTS_JSON_PATH = path.join(LOGOS_DIR, 'opponents.json')
+const OPPONENTS_JSON_PATH = path.resolve(__dirname, '../../../../scripts/opponent-logos/opponents.json')
 
 interface OpponentEntry {
   name: string
@@ -50,32 +59,21 @@ async function main() {
 
   let created = 0
   let updated = 0
-  let noLogoFile = 0
+  let noMediaYet = 0
 
   for (const { name, mascot, logo, aliases } of aliasesByOpponent.values()) {
     const filename = `${logo}.png`
-    const filePath = path.join(LOGOS_DIR, filename)
 
-    let mediaId: number | undefined
-    if (fs.existsSync(filePath)) {
-      const existingMedia = await payload.find({
-        collection: 'media',
-        where: { filename: { equals: filename } },
-        limit: 1,
-        depth: 0,
-      })
-      mediaId = existingMedia.docs[0]?.id
-      if (!mediaId) {
-        const uploaded = await payload.create({
-          collection: 'media',
-          data: { alt: `${name} ${mascot} logo` },
-          filePath,
-        })
-        mediaId = uploaded.id
-      }
-    } else {
-      noLogoFile++
-      console.warn(`  [warn] "${filename}" not found on disk — creating "${name}" without a logo`)
+    const existingMedia = await payload.find({
+      collection: 'media',
+      where: { filename: { equals: filename } },
+      limit: 1,
+      depth: 0,
+    })
+    const mediaId = existingMedia.docs[0]?.id
+    if (!mediaId) {
+      noMediaYet++
+      console.warn(`  [warn] "${filename}" not uploaded to Media yet — creating "${name}" without a logo`)
     }
 
     // aliases includes the school's own name as one of its JSON keys in most
@@ -119,10 +117,13 @@ async function main() {
     }
   }
 
-  console.log(
-    `\nDone. ${created} opponent(s) created, ${updated} updated, ${noLogoFile} had no matching logo file on disk.`,
-  )
-  console.log('Each Opponent\'s afterChange hook has now backfilled opponentLogo onto every matching existing game.')
+  console.log(`\nDone. ${created} opponent(s) created, ${updated} updated, ${noMediaYet} had no matching upload yet.`)
+  if (noMediaYet > 0) {
+    console.log(
+      `Upload the missing files into Media (same filenames) and re-run this script to link them — it only ever creates/updates, never duplicates.`,
+    )
+  }
+  console.log("Each Opponent's afterChange hook has now backfilled opponentLogo onto every matching existing game.")
   process.exit(0)
 }
 

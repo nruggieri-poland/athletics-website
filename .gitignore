@@ -23,7 +23,9 @@ apps/cms/.next/
 # upload through the CMS admin, not just the items below).
 apps/cms/media/
 
-# Raw opponent logo source files, staged locally for future bulk-import into
-# Payload's Media library. Large (hundreds of files), not meant to be
-# tracked — keep them on disk only until a real import script wires them up.
-scripts/opponent-logos/
+# Raw opponent logo source images — large (hundreds of files), not meant to
+# be tracked in git. These get bulk-uploaded directly into Payload's Media
+# library through the admin UI, not deployed via git pull. opponents.json
+# (the small name/mascot/alias mapping seed-opponents.ts reads) is NOT
+# covered by this pattern and stays tracked.
+scripts/opponent-logos/*.png
