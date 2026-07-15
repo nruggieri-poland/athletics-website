@@ -53,6 +53,10 @@ CI (`.github/workflows/ci.yml`) runs lint + a full build of both apps
 
 ## Deploying
 
-See [`docs/DEPLOY.md`](docs/DEPLOY.md) — covers server setup, environment
-variables, the zero-downtime deploy mechanism, Cloudflare/security
-configuration, and the auto-deploy-on-push GitHub Actions workflow.
+The server pulls for itself — nothing on GitHub's side ever pushes to or
+runs commands on the server. A cron job on the server runs
+[`scripts/deploy.sh`](scripts/deploy.sh) every 5 minutes, which no-ops if
+there's nothing new, and otherwise pulls, installs/migrates/rebuilds only
+what actually changed, and restarts the CMS via PM2. Content edits made in
+the CMS admin deploy themselves separately and immediately, via the
+rebuild-on-publish hook in `apps/cms/src/hooks/rebuildWeb.ts`.
