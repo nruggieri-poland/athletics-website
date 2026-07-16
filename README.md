@@ -12,8 +12,7 @@ apps/web/    Astro frontend — statically built from apps/cms's REST API at
              build time, rebuilt automatically whenever content is published.
 packages/    Shared generated types (apps/cms's `generate:types` output).
 scripts/     EventLink schedule sync, opponent-logo import, and production
-             deploy/db-sync tooling — see comments in each script.
-docs/        Deployment runbook, nginx configs — see docs/DEPLOY.md.
+             deploy tooling — see comments in each script.
 ```
 
 ## Local development
@@ -33,12 +32,6 @@ In another terminal:
 cd apps/web && cp .env.example .env    # PAYLOAD_URL=http://localhost:3000
 npm run dev                            # starts the site at localhost:4321
 ```
-
-If you have access to the production database, `apps/cms`'s `npm run dev`
-automatically pulls a fresh read-only snapshot down first (see
-`scripts/sync-prod-db.sh` and `docs/DEPLOY.md`'s "Local database sync"
-section) — local development then has realistic data without ever writing
-to the live database.
 
 ## Quality checks
 
