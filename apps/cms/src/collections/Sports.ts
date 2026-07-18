@@ -1,12 +1,6 @@
 import type { CollectionConfig } from 'payload'
 import { afterChangeTriggerRebuild, afterDeleteTriggerRebuild } from '../hooks/scheduleRebuildHooks.ts'
-
-const slugify = (value: string): string =>
-  value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
+import { slugify } from '../lib/slugify.ts'
 
 export const Sports: CollectionConfig = {
   slug: 'sports',

@@ -1,12 +1,6 @@
 import type { CollectionConfig } from 'payload'
 import { afterChangeTriggerRebuild, afterDeleteTriggerRebuild } from '../hooks/scheduleRebuildHooks.ts'
-
-const slugify = (value: string): string =>
-  value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
+import { slugify } from '../lib/slugify.ts'
 
 // Shared taxonomy for two unrelated needs: "audience" tags control which
 // Resources page (Parents, Coaches, and any future audience) a Document

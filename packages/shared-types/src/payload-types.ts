@@ -77,6 +77,8 @@ export interface Config {
     articles: Article;
     documents: Document;
     tags: Tag;
+    links: Link;
+    galleries: Gallery;
     'payload-kv': PayloadKv;
     'payload-folders': FolderInterface;
     'payload-locked-documents': PayloadLockedDocument;
@@ -99,6 +101,8 @@ export interface Config {
     articles: ArticlesSelect<false> | ArticlesSelect<true>;
     documents: DocumentsSelect<false> | DocumentsSelect<true>;
     tags: TagsSelect<false> | TagsSelect<true>;
+    links: LinksSelect<false> | LinksSelect<true>;
+    galleries: GalleriesSelect<false> | GalleriesSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-folders': PayloadFoldersSelect<false> | PayloadFoldersSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -179,6 +183,14 @@ export interface Media {
   id: number;
   alt: string;
   caption?: string | null;
+  tags?: (number | Tag)[] | null;
+  /**
+   * Display title in Resources listings — distinct from Alt Text above, which is for screen readers.
+   */
+  title?: string | null;
+  description?: string | null;
+  sortOrder?: number | null;
+  isPublic?: boolean | null;
   folder?: (number | null) | FolderInterface;
   updatedAt: string;
   createdAt: string;
@@ -217,6 +229,18 @@ export interface Media {
       filename?: string | null;
     };
   };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tags".
+ */
+export interface Tag {
+  id: number;
+  name: string;
+  slug: string;
+  type: 'audience' | 'topic';
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -275,18 +299,6 @@ export interface Document {
    */
   sortOrder?: number | null;
   folder?: (number | null) | FolderInterface;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "tags".
- */
-export interface Tag {
-  id: number;
-  name: string;
-  slug: string;
-  type: 'audience' | 'topic';
   updatedAt: string;
   createdAt: string;
 }
@@ -474,6 +486,72 @@ export interface Article {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "links".
+ */
+export interface Link {
+  id: number;
+  title: string;
+  linkType: 'external' | 'video';
+  /**
+   * Full URL, e.g. https://docs.google.com/...
+   */
+  url?: string | null;
+  /**
+   * YouTube video ID (the part after "v=") — same convention as Sports.heroVideoId.
+   */
+  videoId?: string | null;
+  tags?: (number | Tag)[] | null;
+  description?: string | null;
+  isPublic?: boolean | null;
+  sortOrder?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "galleries".
+ */
+export interface Gallery {
+  id: number;
+  title: string;
+  /**
+   * Looked up by a developer-wired page to render this gallery.
+   */
+  slug: string;
+  description?: string | null;
+  isPublic?: boolean | null;
+  /**
+   * Optional groupings, e.g. "Fall Sports". Leave heading blank for one unlabeled group.
+   */
+  sections?:
+    | {
+        heading?: string | null;
+        items?:
+          | {
+              /**
+               * An uploaded photo/PDF (Media) or a video/external link (Links).
+               */
+              item:
+                | {
+                    relationTo: 'media';
+                    value: number | Media;
+                  }
+                | {
+                    relationTo: 'links';
+                    value: number | Link;
+                  };
+              caption?: string | null;
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -535,6 +613,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'tags';
         value: number | Tag;
+      } | null)
+    | ({
+        relationTo: 'links';
+        value: number | Link;
+      } | null)
+    | ({
+        relationTo: 'galleries';
+        value: number | Gallery;
       } | null)
     | ({
         relationTo: 'payload-folders';
@@ -612,6 +698,11 @@ export interface UsersSelect<T extends boolean = true> {
 export interface MediaSelect<T extends boolean = true> {
   alt?: T;
   caption?: T;
+  tags?: T;
+  title?: T;
+  description?: T;
+  sortOrder?: T;
+  isPublic?: T;
   folder?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -793,6 +884,47 @@ export interface TagsSelect<T extends boolean = true> {
   name?: T;
   slug?: T;
   type?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "links_select".
+ */
+export interface LinksSelect<T extends boolean = true> {
+  title?: T;
+  linkType?: T;
+  url?: T;
+  videoId?: T;
+  tags?: T;
+  description?: T;
+  isPublic?: T;
+  sortOrder?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "galleries_select".
+ */
+export interface GalleriesSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  description?: T;
+  isPublic?: T;
+  sections?:
+    | T
+    | {
+        heading?: T;
+        items?:
+          | T
+          | {
+              item?: T;
+              caption?: T;
+              id?: T;
+            };
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }

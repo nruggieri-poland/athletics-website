@@ -1,0 +1,57 @@
+---
+import type { GallerySectionItem } from "../../lib/payload";
+import { galleryItemHref, galleryItemThumbnail, galleryItemTitle, isExternalGalleryItem } from "../../lib/payload";
+
+interface Props {
+  item: GallerySectionItem;
+}
+
+const { item } = Astro.props;
+const { item: ref, caption } = item;
+
+const href = galleryItemHref(ref);
+const thumbnail = galleryItemThumbnail(ref);
+const title = galleryItemTitle(ref);
+const external = isExternalGalleryItem(ref);
+
+const badgeLabel =
+  ref.relationTo === "media"
+    ? ref.value.mimeType === "application/pdf"
+      ? "PDF"
+      : null
+    : ref.value.linkType === "video"
+      ? "Video"
+      : "Link";
+---
+
+<a
+  href={href}
+  target="_blank"
+  rel="noopener noreferrer"
+  class="group block"
+>
+  <div class="relative aspect-[4/3] overflow-hidden rounded-lg bg-ink-100">
+    {thumbnail ? (
+      <img
+        src={thumbnail}
+        alt=""
+        class="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+        loading="lazy"
+      />
+    ) : (
+      <div class="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#3a3c48] to-[#101114]">
+        <span class="text-xs font-semibold uppercase tracking-wide text-white/70">{title}</span>
+      </div>
+    )}
+    {badgeLabel && (
+      <span class="absolute right-2 top-2 rounded-full bg-black/70 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-white backdrop-blur">
+        {badgeLabel}
+      </span>
+    )}
+  </div>
+  <h3 class="mt-2 text-sm font-semibold text-ink-900 group-hover:text-primary-600">
+    {title}
+    {external && <span class="sr-only"> (opens in a new tab)</span>}
+  </h3>
+  {caption && <p class="mt-0.5 text-xs text-ink-500 line-clamp-2">{caption}</p>}
+</a>
