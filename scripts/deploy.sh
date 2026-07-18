@@ -138,20 +138,6 @@ WEB_CHANGED=false
 echo "$CHANGED" | grep -q '^apps/web/' && WEB_CHANGED=true
 
 if [ "$CMS_CHANGED" = true ]; then
-  # `next build` can be killed by the OOM killer on a memory-constrained
-  # box, especially while the live CMS process is still running alongside
-  # it — not hypothetical, it's what happened the first time this exact
-  # migration was rehearsed. Guaranteeing swap exists removes that failure
-  # mode outright.
-  if [ "$(swapon --show=SIZE --noheadings 2>/dev/null | wc -l)" -eq 0 ]; then
-    echo "[deploy] No swap detected — provisioning a 2G swapfile..."
-    fallocate -l 2G /swapfile
-    chmod 600 /swapfile
-    mkswap /swapfile
-    swapon /swapfile
-    grep -q '^/swapfile ' /etc/fstab 2>/dev/null || echo '/swapfile none swap sw 0 0' >> /etc/fstab
-  fi
-
   # Preserve whatever's currently running as a rollback target before
   # overwriting it — a rename, not a copy, so this is cheap even though
   # .next can be large. Only ever updated here, right before a build that
