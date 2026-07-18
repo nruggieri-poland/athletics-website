@@ -76,6 +76,7 @@ export interface Config {
     opponents: Opponent;
     articles: Article;
     documents: Document;
+    tags: Tag;
     'payload-kv': PayloadKv;
     'payload-folders': FolderInterface;
     'payload-locked-documents': PayloadLockedDocument;
@@ -97,6 +98,7 @@ export interface Config {
     opponents: OpponentsSelect<false> | OpponentsSelect<true>;
     articles: ArticlesSelect<false> | ArticlesSelect<true>;
     documents: DocumentsSelect<false> | DocumentsSelect<true>;
+    tags: TagsSelect<false> | TagsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-folders': PayloadFoldersSelect<false> | PayloadFoldersSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -242,7 +244,6 @@ export interface FolderInterface {
     hasNextPage?: boolean;
     totalDocs?: number;
   };
-  folderType?: ('media' | 'documents')[] | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -253,6 +254,10 @@ export interface FolderInterface {
 export interface Document {
   id: number;
   title: string;
+  /**
+   * Controls which Resources page(s) this shows on. Replaces the old Audience field below — leave Audience alone, it will be removed in a later cleanup pass.
+   */
+  tags?: (number | Tag)[] | null;
   audience: 'coaches' | 'parents' | 'both';
   /**
    * Unchecked documents are saved here but never appear on the public site.
@@ -270,6 +275,18 @@ export interface Document {
    */
   sortOrder?: number | null;
   folder?: (number | null) | FolderInterface;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tags".
+ */
+export interface Tag {
+  id: number;
+  name: string;
+  slug: string;
+  type: 'audience' | 'topic';
   updatedAt: string;
   createdAt: string;
 }
@@ -446,6 +463,10 @@ export interface Article {
   heroImage: number | Media;
   relatedTeams?: (number | Team)[] | null;
   relatedSports?: (number | Sport)[] | null;
+  /**
+   * For content that doesn't fit team/sport scoping, e.g. "Booster Club", "Fundraiser".
+   */
+  topicTags?: (number | Tag)[] | null;
   publishedDate: string;
   updatedAt: string;
   createdAt: string;
@@ -510,6 +531,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'documents';
         value: number | Document;
+      } | null)
+    | ({
+        relationTo: 'tags';
+        value: number | Tag;
       } | null)
     | ({
         relationTo: 'payload-folders';
@@ -736,6 +761,7 @@ export interface ArticlesSelect<T extends boolean = true> {
   heroImage?: T;
   relatedTeams?: T;
   relatedSports?: T;
+  topicTags?: T;
   publishedDate?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -747,6 +773,7 @@ export interface ArticlesSelect<T extends boolean = true> {
  */
 export interface DocumentsSelect<T extends boolean = true> {
   title?: T;
+  tags?: T;
   audience?: T;
   isPublic?: T;
   fileType?: T;
@@ -755,6 +782,17 @@ export interface DocumentsSelect<T extends boolean = true> {
   description?: T;
   sortOrder?: T;
   folder?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tags_select".
+ */
+export interface TagsSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  type?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -774,7 +812,6 @@ export interface PayloadFoldersSelect<T extends boolean = true> {
   name?: T;
   folder?: T;
   documentsAndFolders?: T;
-  folderType?: T;
   updatedAt?: T;
   createdAt?: T;
 }
