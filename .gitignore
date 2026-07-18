@@ -29,3 +29,18 @@ apps/cms/media/
 # (the small name/mascot/alias mapping seed-opponents.ts reads) is NOT
 # covered by this pattern and stays tracked.
 scripts/opponent-logos/*.png
+
+# deploy.sh's own record of the last commit it successfully finished
+# deploying, and its consecutive-failure counter for the current commit —
+# server-local state, never meant to be shared or committed. Committing
+# either would recreate the exact "local file drift blocks git pull"
+# problem deploy.sh works around for package-lock.json and next-env.d.ts:
+# every server would fight over whose deploy state is real.
+.deploy-state
+.deploy-failstate
+
+# deploy.sh's rollback copy of the last known-good CMS build — renamed
+# here right before a risky build, restored if the new one fails its
+# health check. Same reason as apps/cms/.next/ above: build output, not
+# source.
+apps/cms/.next.last-good/
