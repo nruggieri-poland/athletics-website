@@ -13,7 +13,13 @@ export interface Media {
   alt: string;
   caption?: string;
   url: string;
+  mimeType?: string;
   sizes?: Record<string, { url: string; width: number; height: number } | undefined>;
+  title?: string;
+  description?: string;
+  sortOrder?: number;
+  tags?: Tag[];
+  isPublic?: boolean;
 }
 
 export interface Sport {
@@ -165,6 +171,75 @@ export function documentHref(doc: DocumentAsset): string {
   if (doc.fileType === "link" && doc.externalUrl) return sanitizeUrl(doc.externalUrl);
   if (doc.file) return mediaUrl(doc.file);
   return "#";
+}
+
+export type LinkType = "external" | "video";
+
+export interface Link {
+  id: string;
+  title: string;
+  linkType: LinkType;
+  url?: string; // present when linkType === "external"
+  videoId?: string; // present when linkType === "video"
+  description?: string;
+  isPublic: boolean;
+  sortOrder: number;
+  tags?: Tag[];
+}
+
+// Payload's stored shape for a polymorphic relationship value is a
+// discriminated union, not a bare populated doc — confirmed both from
+// generated types and a live API response: { relationTo: '<slug>', value }.
+export type GalleryItemRef =
+  | { relationTo: "media"; value: Media }
+  | { relationTo: "links"; value: Link };
+
+export interface GallerySectionItem {
+  item: GalleryItemRef;
+  caption?: string;
+}
+
+export interface GallerySection {
+  heading?: string;
+  items: GallerySectionItem[];
+}
+
+export interface Gallery {
+  id: string;
+  title: string;
+  slug: string;
+  description?: string;
+  isPublic: boolean;
+  sections: GallerySection[];
+}
+
+// Analogous to documentHref/articleHref, but branches on the polymorphic
+// relationTo discriminator instead of a single collection's own type field.
+export function galleryItemHref(ref: GalleryItemRef): string {
+  if (ref.relationTo === "media") return mediaUrl(ref.value);
+  const link = ref.value;
+  if (link.linkType === "video" && link.videoId) {
+    return `https://www.youtube.com/watch?v=${encodeURIComponent(link.videoId)}`;
+  }
+  if (link.linkType === "external" && link.url) return sanitizeUrl(link.url);
+  return "#";
+}
+
+export function galleryItemThumbnail(ref: GalleryItemRef, size = "card"): string {
+  if (ref.relationTo === "media") return mediaUrl(ref.value, size);
+  const link = ref.value;
+  if (link.linkType === "video" && link.videoId) {
+    return `https://img.youtube.com/vi/${encodeURIComponent(link.videoId)}/hqdefault.jpg`;
+  }
+  return "";
+}
+
+export function galleryItemTitle(ref: GalleryItemRef): string {
+  return ref.relationTo === "media" ? ref.value.title || ref.value.alt : ref.value.title;
+}
+
+export function isExternalGalleryItem(ref: GalleryItemRef): boolean {
+  return ref.relationTo === "links";
 }
 
 export interface SiteSettings {
@@ -408,6 +483,22 @@ export async function getPublicDocumentsByAudience(
 ): Promise<DocumentAsset[]> {
   const documents = await getAllPublicDocuments();
   return documents.filter((doc) => doc.tags?.some((tag) => tag.slug === audience));
+}
+
+// Looked up by slug from a developer-wired page (e.g. Resources → Parents)
+// to render one hand-curated gallery. depth=2 populates each section
+// item's polymorphic `value` as a full Media/Link doc, one hop past
+// Payload's default depth=1.
+export async function getGalleryBySlug(slug: string): Promise<Gallery | null> {
+  const data = await payloadFetch<PaginatedDocs<Gallery>>(
+    `/api/galleries${toQuery({
+      "where[slug][equals]": slug,
+      "where[isPublic][equals]": true,
+      limit: 1,
+      depth: 2,
+    })}`,
+  );
+  return data.docs[0] ?? null;
 }
 
 // The Fans page's "next home game" spotlight — earliest upcoming Home game

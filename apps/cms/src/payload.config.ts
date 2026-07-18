@@ -15,6 +15,8 @@ import { Opponents } from './collections/Opponents.ts'
 import { Articles } from './collections/Articles.ts'
 import { Documents } from './collections/Documents.ts'
 import { Tags } from './collections/Tags.ts'
+import { Links } from './collections/Links.ts'
+import { Galleries } from './collections/Galleries.ts'
 import { SiteSettings } from './globals/SiteSettings.ts'
 import { Navigation } from './globals/Navigation.ts'
 import { importFeedHandler } from './endpoints/importFeed.ts'
@@ -44,7 +46,7 @@ export default buildConfig({
     },
   },
   editor: lexicalEditor(),
-  collections: [Users, Media, Sports, Seasons, Teams, Games, Opponents, Articles, Documents, Tags],
+  collections: [Users, Media, Sports, Seasons, Teams, Games, Opponents, Articles, Documents, Tags, Links, Galleries],
   globals: [SiteSettings, Navigation],
   // Public read access on the auto-generated payload-folders collection —
   // without this, folder names never populate on public REST reads (the
@@ -57,7 +59,9 @@ export default buildConfig({
   // created from (a `folderType` field), so a folder made while browsing
   // Documents never shows Media files and vice versa. Turning this off
   // removes that scoping entirely, so one shared folder tree can hold both
-  // — no migration needed, this is a pure admin-behavior config flag.
+  // — a config flag, not a schema change (though adopting it did need one
+  // small follow-up migration to drop the now-unused folderType column;
+  // see 20260718_021527_drop_unused_folder_type_scoping).
   folders: {
     collectionSpecific: false,
     collectionOverrides: [

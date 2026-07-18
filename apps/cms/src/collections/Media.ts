@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import { afterChangeTriggerRebuild, afterDeleteTriggerRebuild } from '../hooks/scheduleRebuildHooks.ts'
 
 export const Media: CollectionConfig = {
   slug: 'media',
@@ -14,6 +15,14 @@ export const Media: CollectionConfig = {
   // into folders ("Opponent Logos", "Hero Photos", "Article Images") from
   // the media library UI instead of one flat list of everything.
   folders: true,
+  // Media items can now be directly, publicly listed (tagged as a public
+  // resource, referenced from a Gallery), not just referenced from an
+  // already-hooked collection like Articles — so a Media-only edit (e.g.
+  // toggling isPublic) needs to trigger a rebuild on its own too.
+  hooks: {
+    afterChange: [afterChangeTriggerRebuild],
+    afterDelete: [afterDeleteTriggerRebuild],
+  },
   upload: {
     imageSizes: [
       {
@@ -57,6 +66,52 @@ export const Media: CollectionConfig = {
     {
       name: 'caption',
       type: 'text',
+    },
+    {
+      type: 'collapsible',
+      label: 'Public Resource Details',
+      admin: {
+        initCollapsed: true,
+        description:
+          'Fill in only if this file should also appear as a downloadable/public resource (e.g. Parents/Coaches pages) — leave collapsed for ordinary hero photos, logos, and article images.',
+      },
+      // A collapsible has no `name` and isn't a data field itself, so
+      // these still serialize as flat top-level keys on the API response
+      // (media.title, media.tags, ...) — same shape as every other
+      // collection in this codebase, not nested under media.resource.*.
+      fields: [
+        {
+          name: 'tags',
+          type: 'relationship',
+          relationTo: 'tags',
+          hasMany: true,
+          filterOptions: {
+            type: { equals: 'audience' },
+          },
+        },
+        {
+          name: 'title',
+          type: 'text',
+          admin: {
+            description: 'Display title in Resources listings — distinct from Alt Text above, which is for screen readers.',
+          },
+        },
+        {
+          name: 'description',
+          type: 'textarea',
+        },
+        {
+          name: 'sortOrder',
+          type: 'number',
+          defaultValue: 0,
+        },
+        {
+          name: 'isPublic',
+          type: 'checkbox',
+          defaultValue: false,
+          label: 'Visible in Resources listings',
+        },
+      ],
     },
   ],
 }
