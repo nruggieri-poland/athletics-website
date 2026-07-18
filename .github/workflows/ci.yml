@@ -41,7 +41,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           # Read from .nvmrc rather than hardcoding a version here — a
           # hardcoded '22.12.0' is what caused this workflow to fail in the
