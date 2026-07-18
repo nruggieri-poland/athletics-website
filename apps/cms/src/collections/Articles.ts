@@ -117,6 +117,18 @@ export const Articles: CollectionConfig = {
       hasMany: true,
     },
     {
+      name: 'topicTags',
+      type: 'relationship',
+      relationTo: 'tags',
+      hasMany: true,
+      filterOptions: {
+        type: { equals: 'topic' },
+      },
+      admin: {
+        description: 'For content that doesn\'t fit team/sport scoping, e.g. "Booster Club", "Fundraiser".',
+      },
+    },
+    {
       name: 'publishedDate',
       type: 'date',
       required: true,

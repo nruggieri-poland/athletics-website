@@ -138,10 +138,20 @@ export function isExternalArticleLink(article: Article): boolean {
 export type DocumentAudience = "coaches" | "parents" | "both";
 export type DocumentFileType = "upload" | "link";
 
+export interface Tag {
+  id: string;
+  name: string;
+  slug: string;
+  type: "audience" | "topic";
+}
+
 export interface DocumentAsset {
   id: string;
   title: string;
+  // Deprecated — superseded by `tags`. Still present on the type since the
+  // underlying column hasn't been dropped yet (see Documents.ts).
   audience: DocumentAudience;
+  tags?: Tag[];
   isPublic: boolean;
   fileType: DocumentFileType;
   file?: Media;
@@ -351,10 +361,14 @@ export async function getArticleBySlug(slug: string): Promise<Article | null> {
   return data.docs[0] ?? null;
 }
 
+// An article with no relatedSports selected is treated as broadly relevant
+// and shows on every sport's page — only an article that explicitly picks
+// OTHER sports (and not this one) is excluded.
 export async function getArticlesForSport(sportId: string, limit = 5): Promise<Article[]> {
   const data = await payloadFetch<PaginatedDocs<Article>>(
     `/api/articles${toQuery({
-      "where[relatedSports][in]": sportId,
+      "where[or][0][relatedSports][exists]": false,
+      "where[or][1][relatedSports][in]": sportId,
       sort: "-publishedDate",
       limit,
     })}`,
@@ -385,14 +399,15 @@ export async function getNavigation(): Promise<Navigation> {
   return payloadFetch<Navigation>("/api/globals/navigation");
 }
 
-// Parents/Coaches resource pages each want only the documents meant for
-// them — "both" documents show on both pages, so this filters the same
-// public set rather than adding a second API shape to keep in sync.
+// Parents/Coaches resource pages each want only the documents tagged for
+// them — filters the same public set rather than adding a second API shape
+// to keep in sync. Matches on tag.slug (not name) so renaming a tag's label
+// later doesn't break this. An untagged document shows on neither page.
 export async function getPublicDocumentsByAudience(
   audience: "coaches" | "parents",
 ): Promise<DocumentAsset[]> {
   const documents = await getAllPublicDocuments();
-  return documents.filter((doc) => doc.audience === audience || doc.audience === "both");
+  return documents.filter((doc) => doc.tags?.some((tag) => tag.slug === audience));
 }
 
 // The Fans page's "next home game" spotlight — earliest upcoming Home game

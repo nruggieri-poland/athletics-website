@@ -14,6 +14,7 @@ import { Games } from './collections/Games.ts'
 import { Opponents } from './collections/Opponents.ts'
 import { Articles } from './collections/Articles.ts'
 import { Documents } from './collections/Documents.ts'
+import { Tags } from './collections/Tags.ts'
 import { SiteSettings } from './globals/SiteSettings.ts'
 import { Navigation } from './globals/Navigation.ts'
 import { importFeedHandler } from './endpoints/importFeed.ts'
@@ -43,14 +44,22 @@ export default buildConfig({
     },
   },
   editor: lexicalEditor(),
-  collections: [Users, Media, Sports, Seasons, Teams, Games, Opponents, Articles, Documents],
+  collections: [Users, Media, Sports, Seasons, Teams, Games, Opponents, Articles, Documents, Tags],
   globals: [SiteSettings, Navigation],
   // Public read access on the auto-generated payload-folders collection —
   // without this, folder names never populate on public REST reads (the
   // Documents collection's `folder` relation comes back as a bare numeric
   // ID instead of `{ id, name }`), which silently breaks folder display on
   // the /documents pages (everything falls back to "General").
+  //
+  // collectionSpecific: false — Documents and Media both have folders:
+  // true, but by default each folder is scoped to the collection it was
+  // created from (a `folderType` field), so a folder made while browsing
+  // Documents never shows Media files and vice versa. Turning this off
+  // removes that scoping entirely, so one shared folder tree can hold both
+  // — no migration needed, this is a pure admin-behavior config flag.
   folders: {
+    collectionSpecific: false,
     collectionOverrides: [
       ({ collection }) => ({
         ...collection,

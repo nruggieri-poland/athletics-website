@@ -16,7 +16,7 @@ export const Documents: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'title',
-    defaultColumns: ['title', 'audience', 'isPublic'],
+    defaultColumns: ['title', 'tags', 'isPublic'],
   },
   // Native Payload folders — lets an admin drag documents into nested
   // folders (e.g. "Parents > Physicals", "Coaches > Handbooks") without us
@@ -32,6 +32,21 @@ export const Documents: CollectionConfig = {
       type: 'text',
       required: true,
     },
+    {
+      name: 'tags',
+      type: 'relationship',
+      relationTo: 'tags',
+      hasMany: true,
+      filterOptions: {
+        type: { equals: 'audience' },
+      },
+      admin: {
+        description:
+          'Controls which Resources page(s) this shows on. Replaces the old Audience field below — leave Audience alone, it will be removed in a later cleanup pass.',
+      },
+    },
+    // Deprecated — superseded by `tags` above. Left in place until existing
+    // documents are re-tagged and a follow-up migration drops this column.
     {
       name: 'audience',
       type: 'select',
