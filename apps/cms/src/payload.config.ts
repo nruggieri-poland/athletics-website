@@ -20,6 +20,7 @@ import { Galleries } from './collections/Galleries.ts'
 import { SiteSettings } from './globals/SiteSettings.ts'
 import { Navigation } from './globals/Navigation.ts'
 import { importFeedHandler } from './endpoints/importFeed.ts'
+import { healthCheckCanaryHandler } from './endpoints/healthCheckCanary.ts'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -79,6 +80,11 @@ export default buildConfig({
       path: '/import-feed',
       method: 'post',
       handler: importFeedHandler,
+    },
+    {
+      path: '/health-check-canary',
+      method: 'get',
+      handler: healthCheckCanaryHandler,
     },
   ],
   db: postgresAdapter({
