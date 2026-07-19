@@ -1,6 +1,14 @@
 import type { MigrateUpArgs, MigrateDownArgs } from '@payloadcms/db-postgres'
 import { sql } from '@payloadcms/db-postgres'
 
+// payload-deploy:allow-destructive — deliberately reviewed. up() drops only
+// the payload_folders_folder_type table and its enum: obsolete per-collection
+// folder-scoping metadata that the app stopped reading when payload.config.ts
+// set folders.collectionSpecific: false. Zero content data lives there. This
+// marker tells scripts/deploy.sh's destructive-migration guard to let this
+// specific file through; any migration WITHOUT this marker that contains a
+// DROP in its up() is still refused and requires human review.
+
 export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   await db.execute(sql`
    DROP TABLE "payload_folders_folder_type" CASCADE;
