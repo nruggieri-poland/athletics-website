@@ -209,6 +209,54 @@ if echo "$CHANGED" | grep -q '^apps/cms/src/migrations/'; then
     record_failure_and_exit
   fi
 
+  # --- Payload dev-mode ledger repair ---------------------------------
+  # Payload's migration ledger can carry a "dev mode" marker (a row with
+  # batch = -1), left behind whenever `next dev` runs against this
+  # database (e.g. during initial server setup). While that marker
+  # exists, `payload migrate` stops at an interactive confirmation no
+  # cron run can ever answer — the root cause of every database deploy
+  # on this server silently failing or hanging, before any other logic
+  # gets a chance to run. Confirmed from the installed source
+  # (@payloadcms/drizzle/dist/migrate.js): accepting the prompt does NOT
+  # wipe anything — it only ignores the marker in memory and runs
+  # migrations not yet recorded by name — and it never deletes the
+  # marker, so it would re-prompt forever. The durable fix is repairing
+  # the ledger: remove the marker, and backfill rows for the early
+  # migrations whose schema is provably already present (each INSERT is
+  # gated on its migration's own sentinel table existing via
+  # to_regclass, and on the row not already existing — safe to run any
+  # number of times, a no-op on a healthy ledger).
+  DB_URI="$(grep -m1 '^DATABASE_URI=' apps/cms/.env 2>/dev/null | cut -d= -f2- | sed -e "s/^[\"']//" -e "s/[\"']\$//" || true)"
+  if [ -n "$DB_URI" ] && command -v psql >/dev/null 2>&1; then
+    DEV_ROWS="$(psql "$DB_URI" -tA -c "SELECT count(*) FROM payload_migrations WHERE batch = -1;" 2>/dev/null || echo "")"
+    if [ -n "$DEV_ROWS" ] && [ "$DEV_ROWS" != "0" ]; then
+      log "[deploy] Migration ledger carries a dev-mode marker — repairing so migrate can run non-interactively."
+      log "[deploy] Ledger before repair:"
+      psql "$DB_URI" -tA -c "SELECT name || ' (batch ' || batch || ')' FROM payload_migrations ORDER BY id;" 2>&1 | tee -a "$RUN_LOG" || true
+      psql "$DB_URI" -v ON_ERROR_STOP=1 2>&1 <<'SQL' | tee -a "$RUN_LOG" || true
+BEGIN;
+DELETE FROM payload_migrations WHERE batch = -1;
+INSERT INTO payload_migrations (name, batch)
+SELECT '20260710_154727_initial_schema', 1
+WHERE to_regclass('public.users') IS NOT NULL
+  AND NOT EXISTS (SELECT 1 FROM payload_migrations WHERE name = '20260710_154727_initial_schema');
+INSERT INTO payload_migrations (name, batch)
+SELECT '20260714_040659_add_media_folders', 1
+WHERE to_regclass('public.payload_folders') IS NOT NULL
+  AND NOT EXISTS (SELECT 1 FROM payload_migrations WHERE name = '20260714_040659_add_media_folders');
+INSERT INTO payload_migrations (name, batch)
+SELECT '20260715_163354_add_opponents', 1
+WHERE to_regclass('public.opponents') IS NOT NULL
+  AND NOT EXISTS (SELECT 1 FROM payload_migrations WHERE name = '20260715_163354_add_opponents');
+COMMIT;
+SQL
+      log "[deploy] Ledger after repair:"
+      psql "$DB_URI" -tA -c "SELECT name || ' (batch ' || batch || ')' FROM payload_migrations ORDER BY id;" 2>&1 | tee -a "$RUN_LOG" || true
+    fi
+  else
+    log "[deploy] (psql or DATABASE_URI unavailable — skipping ledger inspection)"
+  fi
+
   log "[deploy] New migration(s) detected — applying..."
   if ! run_with_timeout 600 npm run migrate --workspace=apps/cms 2>&1 | tee -a "$RUN_LOG"; then
     log "[deploy] Migration failed — the running CMS was never touched and keeps serving. Payload's migration ledger means a partial batch is not re-applied twice."
