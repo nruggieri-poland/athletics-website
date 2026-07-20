@@ -15,6 +15,7 @@ export const Opponents: CollectionConfig = {
   admin: {
     useAsTitle: 'name',
     defaultColumns: ['name', 'mascot', 'logo'],
+    group: 'Athletics',
   },
   hooks: {
     // Re-propagates to every already-matched game whenever a logo is

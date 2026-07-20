@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import { afterChangeTriggerRebuild, afterDeleteTriggerRebuild } from '../hooks/scheduleRebuildHooks.ts'
+import { tagsField } from '../lib/fields/tagsField.ts'
 
 export const Articles: CollectionConfig = {
   slug: 'articles',
@@ -12,6 +13,7 @@ export const Articles: CollectionConfig = {
   admin: {
     useAsTitle: 'title',
     defaultColumns: ['title', 'publishedDate', '_status'],
+    group: 'Content',
   },
   versions: {
     drafts: true,
@@ -116,18 +118,7 @@ export const Articles: CollectionConfig = {
       relationTo: 'sports',
       hasMany: true,
     },
-    {
-      name: 'topicTags',
-      type: 'relationship',
-      relationTo: 'tags',
-      hasMany: true,
-      filterOptions: {
-        type: { equals: 'topic' },
-      },
-      admin: {
-        description: 'For content that doesn\'t fit team/sport scoping, e.g. "Booster Club", "Fundraiser".',
-      },
-    },
+    tagsField('For content that doesn\'t fit team/sport scoping, e.g. "Booster Club", "Fundraiser" — or any other tag.'),
     {
       name: 'publishedDate',
       type: 'date',

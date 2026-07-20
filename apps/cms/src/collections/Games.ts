@@ -14,6 +14,7 @@ export const Games: CollectionConfig = {
   admin: {
     useAsTitle: 'opponentName',
     defaultColumns: ['team', 'date', 'opponentName', 'homeOrAway', 'result', 'status'],
+    group: 'Athletics',
   },
   hooks: {
     beforeChange: [matchOpponentLogoOnGame],

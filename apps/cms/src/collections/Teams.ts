@@ -1,5 +1,6 @@
 import type { CollectionConfig } from 'payload'
 import { afterChangeTriggerRebuild, afterDeleteTriggerRebuild } from '../hooks/scheduleRebuildHooks.ts'
+import { slugify } from '../lib/slugify.ts'
 
 export const Teams: CollectionConfig = {
   slug: 'teams',
@@ -10,6 +11,7 @@ export const Teams: CollectionConfig = {
   admin: {
     useAsTitle: 'displayName',
     defaultColumns: ['displayName', 'sport', 'level', 'gender', 'schoolLevel', 'isActive'],
+    group: 'Athletics',
   },
   hooks: {
     afterChange: [afterChangeTriggerRebuild],
@@ -64,6 +66,17 @@ export const Teams: CollectionConfig = {
       required: true,
       unique: true,
       index: true,
+      // Same auto-fill-from-title pattern as Sports/Tags/Galleries — Teams
+      // was the one collection that made you type this by hand.
+      hooks: {
+        beforeValidate: [
+          ({ value, data }) => {
+            if (value) return value
+            if (data?.displayName) return slugify(data.displayName)
+            return value
+          },
+        ],
+      },
     },
     {
       name: 'displayName',

@@ -123,6 +123,7 @@ export interface Article {
   heroImage: Media;
   relatedTeams?: Team[];
   relatedSports?: Sport[];
+  tags?: Tag[];
   publishedDate: string;
 }
 
@@ -141,36 +142,12 @@ export function isExternalArticleLink(article: Article): boolean {
   return article.linkType === "external" || article.linkType === "pdf";
 }
 
-export type DocumentAudience = "coaches" | "parents" | "both";
-export type DocumentFileType = "upload" | "link";
-
+// A single, open taxonomy shared across the whole site — Media, Links,
+// Galleries, and Articles all carry the same `tags` field.
 export interface Tag {
   id: string;
   name: string;
   slug: string;
-  type: "audience" | "topic";
-}
-
-export interface DocumentAsset {
-  id: string;
-  title: string;
-  // Deprecated — superseded by `tags`. Still present on the type since the
-  // underlying column hasn't been dropped yet (see Documents.ts).
-  audience: DocumentAudience;
-  tags?: Tag[];
-  isPublic: boolean;
-  fileType: DocumentFileType;
-  file?: Media;
-  externalUrl?: string;
-  description?: string;
-  sortOrder: number;
-  folder?: { id: string; name: string } | null;
-}
-
-export function documentHref(doc: DocumentAsset): string {
-  if (doc.fileType === "link" && doc.externalUrl) return sanitizeUrl(doc.externalUrl);
-  if (doc.file) return mediaUrl(doc.file);
-  return "#";
 }
 
 export type LinkType = "external" | "video";
@@ -213,8 +190,8 @@ export interface Gallery {
   sections: GallerySection[];
 }
 
-// Analogous to documentHref/articleHref, but branches on the polymorphic
-// relationTo discriminator instead of a single collection's own type field.
+// Analogous to articleHref, but branches on the polymorphic relationTo
+// discriminator instead of a single collection's own type field.
 export function galleryItemHref(ref: GalleryItemRef): string {
   if (ref.relationTo === "media") return mediaUrl(ref.value);
   const link = ref.value;
@@ -455,34 +432,8 @@ export async function getSiteSettings(): Promise<SiteSettings> {
   return payloadFetch<SiteSettings>("/api/globals/site-settings");
 }
 
-// Every public document, folder populated — the Resources page groups these
-// by folder.name itself rather than querying per-folder, so a folder with
-// nothing in it just never appears (no empty-state cards to hide).
-export async function getAllPublicDocuments(): Promise<DocumentAsset[]> {
-  const data = await payloadFetch<PaginatedDocs<DocumentAsset>>(
-    `/api/documents${toQuery({
-      "where[isPublic][equals]": true,
-      sort: "sortOrder",
-      limit: 300,
-      depth: 2,
-    })}`,
-  );
-  return data.docs;
-}
-
 export async function getNavigation(): Promise<Navigation> {
   return payloadFetch<Navigation>("/api/globals/navigation");
-}
-
-// Parents/Coaches resource pages each want only the documents tagged for
-// them — filters the same public set rather than adding a second API shape
-// to keep in sync. Matches on tag.slug (not name) so renaming a tag's label
-// later doesn't break this. An untagged document shows on neither page.
-export async function getPublicDocumentsByAudience(
-  audience: "coaches" | "parents",
-): Promise<DocumentAsset[]> {
-  const documents = await getAllPublicDocuments();
-  return documents.filter((doc) => doc.tags?.some((tag) => tag.slug === audience));
 }
 
 // Looked up by slug from a developer-wired page (e.g. Resources → Parents)

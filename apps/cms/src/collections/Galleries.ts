@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload'
 import { afterChangeTriggerRebuild, afterDeleteTriggerRebuild } from '../hooks/scheduleRebuildHooks.ts'
 import { slugify } from '../lib/slugify.ts'
+import { tagsField } from '../lib/fields/tagsField.ts'
 
 // A hand-curated, ordered collection of Media/Links items, grouped into
 // optional named sections — e.g. "2024 Homecoming Photos", "Parent Forms".
@@ -15,6 +16,7 @@ export const Galleries: CollectionConfig = {
   admin: {
     useAsTitle: 'title',
     defaultColumns: ['title', 'slug', 'isPublic'],
+    group: 'Resources',
   },
   hooks: {
     afterChange: [afterChangeTriggerRebuild],
@@ -55,6 +57,7 @@ export const Galleries: CollectionConfig = {
       defaultValue: false,
       label: 'Visible on the live site',
     },
+    tagsField('Tag the gallery itself for your own organization — separate from tagging individual items inside it.'),
     {
       name: 'sections',
       type: 'array',

@@ -13,7 +13,6 @@ import { Teams } from './collections/Teams.ts'
 import { Games } from './collections/Games.ts'
 import { Opponents } from './collections/Opponents.ts'
 import { Articles } from './collections/Articles.ts'
-import { Documents } from './collections/Documents.ts'
 import { Tags } from './collections/Tags.ts'
 import { Links } from './collections/Links.ts'
 import { Galleries } from './collections/Galleries.ts'
@@ -47,22 +46,20 @@ export default buildConfig({
     },
   },
   editor: lexicalEditor(),
-  collections: [Users, Media, Sports, Seasons, Teams, Games, Opponents, Articles, Documents, Tags, Links, Galleries],
+  collections: [Users, Media, Sports, Seasons, Teams, Games, Opponents, Articles, Tags, Links, Galleries],
   globals: [SiteSettings, Navigation],
   // Public read access on the auto-generated payload-folders collection —
-  // without this, folder names never populate on public REST reads (the
-  // Documents collection's `folder` relation comes back as a bare numeric
-  // ID instead of `{ id, name }`), which silently breaks folder display on
-  // the /documents pages (everything falls back to "General").
+  // without this, folder names never populate on public REST reads (a
+  // Media item's `folder` relation would come back as a bare numeric ID
+  // instead of `{ id, name }`).
   //
-  // collectionSpecific: false — Documents and Media both have folders:
-  // true, but by default each folder is scoped to the collection it was
-  // created from (a `folderType` field), so a folder made while browsing
-  // Documents never shows Media files and vice versa. Turning this off
-  // removes that scoping entirely, so one shared folder tree can hold both
-  // — a config flag, not a schema change (though adopting it did need one
-  // small follow-up migration to drop the now-unused folderType column;
-  // see 20260718_021527_drop_unused_folder_type_scoping).
+  // collectionSpecific: false — its original purpose (sharing one folder
+  // tree between Documents and Media) is gone now that Documents is gone
+  // too, but this must stay `false` regardless: the default (`true`) adds
+  // back a `folderType` field/enum on the folders collection, which is
+  // exactly what an earlier migration deliberately dropped as unused
+  // (20260718_021527_drop_unused_folder_type_scoping) — reverting to the
+  // default would resurrect it for no benefit with only one collection.
   folders: {
     collectionSpecific: false,
     collectionOverrides: [
