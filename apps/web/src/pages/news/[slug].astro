@@ -1,7 +1,8 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import { getArticles, mediaUrl } from "../../lib/payload";
-import { lexicalToHtml } from "../../lib/lexical";
+import { getArticles, getGamesForTeam, getTeams, mediaUrl } from "../../lib/payload";
+import { lexicalToHtml, extractScheduleSnippetTeamIds } from "../../lib/lexical";
+import type { ScheduleSnippetData } from "../../lib/lexical";
 
 export async function getStaticPaths() {
   const { docs: articles } = await getArticles(500, 1);
@@ -17,7 +18,26 @@ export async function getStaticPaths() {
 }
 
 const { article } = Astro.props;
-const bodyHtml = lexicalToHtml(article.body);
+
+// Schedule Snippet blocks render live schedule data — fetched here (not
+// inside lexicalToHtml, which stays a pure sync function) so each
+// referenced team's real games/team record are ready before rendering.
+const snippetTeamIds = extractScheduleSnippetTeamIds(article.body);
+const scheduleData = new Map<string, ScheduleSnippetData>();
+if (snippetTeamIds.length > 0) {
+  const allTeams = await getTeams();
+  // Team.id is typed as string but is a raw Postgres integer at runtime —
+  // normalize to string on both sides of this lookup (extractScheduleSnippetTeamIds
+  // already returns string IDs) so the Map.get() below actually matches.
+  const teamsById = new Map(allTeams.map((team) => [String(team.id), team]));
+  for (const teamId of snippetTeamIds) {
+    const team = teamsById.get(teamId);
+    if (!team) continue;
+    scheduleData.set(teamId, { team, games: await getGamesForTeam(teamId) });
+  }
+}
+
+const bodyHtml = lexicalToHtml(article.body, { scheduleData });
 const formattedDate = new Date(article.publishedDate).toLocaleDateString("en-US", {
   month: "long",
   day: "numeric",

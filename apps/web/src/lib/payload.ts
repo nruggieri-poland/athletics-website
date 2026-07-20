@@ -213,15 +213,6 @@ export function galleryItemHref(ref: GalleryItemRef): string {
   return "#";
 }
 
-export function galleryItemThumbnail(ref: GalleryItemRef, size = "card"): string {
-  if (ref.relationTo === "media") return mediaUrl(ref.value, size);
-  const link = ref.value;
-  if (link.linkType === "video" && link.videoId) {
-    return `https://img.youtube.com/vi/${encodeURIComponent(link.videoId)}/hqdefault.jpg`;
-  }
-  return "";
-}
-
 export function galleryItemTitle(ref: GalleryItemRef): string {
   return ref.relationTo === "media" ? ref.value.title || ref.value.alt : ref.value.title;
 }
@@ -477,6 +468,20 @@ export async function getArticlesForSport(sportId: string, limit = 5): Promise<A
     `/api/articles${toQuery({
       "where[or][0][relatedSports][exists]": false,
       "where[or][1][relatedSports][in]": sportId,
+      sort: "-publishedDate",
+      limit,
+    })}`,
+  );
+  return data.docs;
+}
+
+// Unlike getArticlesForSport, this is strictly opt-in — an article shows
+// here only if it's explicitly tagged, since "Fans" isn't a broad default
+// the way an untagged article defaults to "relevant to every sport."
+export async function getArticlesForTag(tagSlug: string, limit = 12): Promise<Article[]> {
+  const data = await payloadFetch<PaginatedDocs<Article>>(
+    `/api/articles${toQuery({
+      "where[tags.slug][equals]": tagSlug,
       sort: "-publishedDate",
       limit,
     })}`,

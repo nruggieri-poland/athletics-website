@@ -62,17 +62,29 @@ for (const game of seasonGames) {
       <div class="mx-auto max-w-content px-6 py-14">
         {activeTeams.length > 1 ? (
           <>
-            <div role="group" aria-label="Team level" class="mb-6 flex w-fit flex-wrap rounded-md border border-ink-200 bg-surface p-0.5">
-              {activeTeams.map((team, i) => (
-                <button
-                  type="button"
-                  data-level-tab={team.id}
-                  aria-pressed={i === 0 ? "true" : "false"}
-                  class="rounded px-3 py-1.5 text-sm font-medium text-ink-600 aria-pressed:bg-primary-600 aria-pressed:text-white"
-                >
-                  {team.level}
-                </button>
-              ))}
+            <div class="mb-6">
+              <label for="level-select" class="sr-only">Team level</label>
+              <select
+                id="level-select"
+                data-level-select
+                class="block w-full max-w-xs rounded-md border border-ink-200 bg-surface px-3 py-2 text-sm font-medium text-ink-900 sm:hidden"
+              >
+                {activeTeams.map((team, i) => (
+                  <option value={team.id} selected={i === 0}>{team.level}</option>
+                ))}
+              </select>
+              <div role="group" aria-label="Team level" class="hidden w-fit rounded-md border border-ink-200 bg-surface p-0.5 sm:flex">
+                {activeTeams.map((team, i) => (
+                  <button
+                    type="button"
+                    data-level-tab={team.id}
+                    aria-pressed={i === 0 ? "true" : "false"}
+                    class="rounded px-3 py-1.5 text-sm font-medium text-ink-600 aria-pressed:bg-primary-600 aria-pressed:text-white"
+                  >
+                    {team.level}
+                  </button>
+                ))}
+              </div>
             </div>
             <div data-level-panels>
               {activeTeams.map((team, i) => (
@@ -113,23 +125,35 @@ for (const game of seasonGames) {
 </BaseLayout>
 
 <script>
-  // Level tabs — same show/hide-by-data-attribute pattern used elsewhere on
-  // the site (the mega menu's High School/Junior High toggle, the calendar
-  // page's view switch): one click swaps which level's full ScheduleList is
-  // visible, no page navigation or re-fetch needed since every level's
-  // schedule is already server-rendered on this page, just hidden.
-  document.querySelectorAll<HTMLElement>("[data-level-tab]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const group = btn.closest('[role="group"]');
-      const panelsRoot = group?.parentElement?.querySelector("[data-level-panels]");
-      if (!group || !panelsRoot) return;
-      const target = btn.dataset.levelTab;
-      group.querySelectorAll<HTMLElement>("[data-level-tab]").forEach((b) => {
-        b.setAttribute("aria-pressed", String(b.dataset.levelTab === target));
-      });
-      panelsRoot.querySelectorAll<HTMLElement>("[data-level-panel]").forEach((panel) => {
-        panel.classList.toggle("hidden", panel.dataset.levelPanel !== target);
-      });
+  // Level switcher — same show/hide-by-data-attribute pattern used elsewhere
+  // on the site (the mega menu's High School/Junior High toggle, the
+  // calendar page's view switch): picking a level swaps which level's full
+  // ScheduleList is visible, no page navigation or re-fetch needed since
+  // every level's schedule is already server-rendered on this page, just
+  // hidden. Two pickers share one target level: a pill/tab button group
+  // (sm: and up) and a native <select> below that, since a sport with
+  // several levels (Football: Varsity/JV/Freshman/8th/7th) wraps onto
+  // multiple messy rows as buttons on a narrow phone.
+  function switchLevel(trigger: Element, target: string | undefined) {
+    if (!target) return;
+    const group = trigger.closest(".mb-6");
+    const panelsRoot = group?.parentElement?.querySelector("[data-level-panels]");
+    if (!group || !panelsRoot) return;
+    group.querySelectorAll<HTMLElement>("[data-level-tab]").forEach((b) => {
+      b.setAttribute("aria-pressed", String(b.dataset.levelTab === target));
     });
+    const select = group.querySelector<HTMLSelectElement>("[data-level-select]");
+    if (select && select.value !== target) select.value = target;
+    panelsRoot.querySelectorAll<HTMLElement>("[data-level-panel]").forEach((panel) => {
+      panel.classList.toggle("hidden", panel.dataset.levelPanel !== target);
+    });
+  }
+
+  document.querySelectorAll<HTMLElement>("[data-level-tab]").forEach((btn) => {
+    btn.addEventListener("click", () => switchLevel(btn, btn.dataset.levelTab));
+  });
+
+  document.querySelectorAll<HTMLSelectElement>("[data-level-select]").forEach((select) => {
+    select.addEventListener("change", () => switchLevel(select, select.value));
   });
 </script>

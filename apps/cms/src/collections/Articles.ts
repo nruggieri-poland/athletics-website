@@ -1,7 +1,16 @@
 import type { CollectionConfig } from 'payload'
-import { lexicalEditor } from '@payloadcms/richtext-lexical'
+import { BlocksFeature, FixedToolbarFeature, lexicalEditor } from '@payloadcms/richtext-lexical'
 import { afterChangeTriggerRebuild, afterDeleteTriggerRebuild } from '../hooks/scheduleRebuildHooks.ts'
 import { tagsField } from '../lib/fields/tagsField.ts'
+import { EmbedBlock } from '../lib/blocks/embedBlock.ts'
+import { PricingTableBlock } from '../lib/blocks/pricingTableBlock.ts'
+import { InfoTilesBlock } from '../lib/blocks/infoTilesBlock.ts'
+import { CalloutBannerBlock } from '../lib/blocks/calloutBannerBlock.ts'
+import { CtaBandBlock } from '../lib/blocks/ctaBandBlock.ts'
+import { PhotoGridBlock } from '../lib/blocks/photoGridBlock.ts'
+import { ScheduleSnippetBlock } from '../lib/blocks/scheduleSnippetBlock.ts'
+import { PullQuoteBlock } from '../lib/blocks/pullQuoteBlock.ts'
+import { SponsorShoutoutBlock } from '../lib/blocks/sponsorShoutoutBlock.ts'
 
 export const Articles: CollectionConfig = {
   slug: 'articles',
@@ -57,7 +66,31 @@ export const Articles: CollectionConfig = {
     {
       name: 'body',
       type: 'richText',
-      editor: lexicalEditor(),
+      // Defaults already cover bold/italic/lists/headings/links/quotes and
+      // inline photo/PDF embeds (UploadFeature, targeting Media — see
+      // Media.ts's allowed mimeTypes). Added on top: a persistent toolbar
+      // (discoverability for the block-insert command below) and a curated
+      // video-embed block — see embedBlock.ts for why this isn't a raw
+      // iframe/HTML field.
+      editor: lexicalEditor({
+        features: ({ defaultFeatures }) => [
+          ...defaultFeatures,
+          FixedToolbarFeature(),
+          BlocksFeature({
+            blocks: [
+              EmbedBlock,
+              PricingTableBlock,
+              InfoTilesBlock,
+              CalloutBannerBlock,
+              CtaBandBlock,
+              PhotoGridBlock,
+              ScheduleSnippetBlock,
+              PullQuoteBlock,
+              SponsorShoutoutBlock,
+            ],
+          }),
+        ],
+      }),
       admin: {
         condition: (_, siblingData) => siblingData.linkType !== 'external' && siblingData.linkType !== 'pdf',
         description: 'Only used for standard Articles.',

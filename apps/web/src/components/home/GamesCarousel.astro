@@ -1,65 +1,17 @@
 ---
 import type { Game } from "../../lib/payload";
 import GameTile from "./GameTile.astro";
+import Carousel from "../shared/Carousel.astro";
 
 interface Props {
   games: Game[];
 }
 
 const { games } = Astro.props;
-const uid = Math.random().toString(36).slice(2, 8);
 ---
 
 {games.length > 0 && (
-  <div class="relative" data-carousel={uid}>
-    <div
-      class="carousel-track flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-2"
-      data-track={uid}
-    >
-      {games.map((game) => <GameTile game={game} />)}
-    </div>
-
-    <button
-      type="button"
-      aria-label="Scroll left"
-      data-dir="-1"
-      data-target={uid}
-      class="carousel-btn absolute left-0 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-ink-100 bg-surface p-3.5 shadow-md hover:bg-ink-50 md:flex"
-    >
-      <svg class="h-4 w-4" viewBox="0 0 12 12" fill="none">
-        <path d="M8 2L4 6l4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-      </svg>
-    </button>
-    <button
-      type="button"
-      aria-label="Scroll right"
-      data-dir="1"
-      data-target={uid}
-      class="carousel-btn absolute right-0 top-1/2 hidden -translate-y-1/2 translate-x-1/2 items-center justify-center rounded-full border border-ink-100 bg-surface p-3.5 shadow-md hover:bg-ink-50 md:flex"
-    >
-      <svg class="h-4 w-4" viewBox="0 0 12 12" fill="none">
-        <path d="M4 2l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-      </svg>
-    </button>
-  </div>
+  <Carousel>
+    {games.map((game) => <GameTile game={game} />)}
+  </Carousel>
 )}
-
-<style>
-  .carousel-track {
-    scrollbar-width: none;
-  }
-  .carousel-track::-webkit-scrollbar {
-    display: none;
-  }
-</style>
-
-<script>
-  document.querySelectorAll<HTMLButtonElement>(".carousel-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const targetId = btn.dataset.target;
-      const track = document.querySelector<HTMLElement>(`[data-track="${targetId}"]`);
-      const dir = Number(btn.dataset.dir ?? "1");
-      track?.scrollBy({ left: dir * 280, behavior: "smooth" });
-    });
-  });
-</script>
