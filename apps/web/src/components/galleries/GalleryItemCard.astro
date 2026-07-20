@@ -1,6 +1,6 @@
 ---
 import type { GallerySectionItem } from "../../lib/payload";
-import { galleryItemHref, galleryItemThumbnail, galleryItemTitle, isExternalGalleryItem } from "../../lib/payload";
+import { galleryItemHref, galleryItemTitle, isExternalGalleryItem } from "../../lib/payload";
 
 interface Props {
   item: GallerySectionItem;
@@ -10,48 +10,49 @@ const { item } = Astro.props;
 const { item: ref, caption } = item;
 
 const href = galleryItemHref(ref);
-const thumbnail = galleryItemThumbnail(ref);
 const title = galleryItemTitle(ref);
 const external = isExternalGalleryItem(ref);
 
-const badgeLabel =
-  ref.relationTo === "media"
-    ? ref.value.mimeType === "application/pdf"
-      ? "PDF"
-      : null
-    : ref.value.linkType === "video"
-      ? "Video"
-      : "Link";
+// Type badge/icon derived purely from the item's own fields — never a
+// thumbnail image. A gallery is a list of resources (documents, links,
+// photos, whatever), not a photo grid, so it never depends on Payload's
+// image-resizing pipeline just to render.
+const isPdf = ref.relationTo === "media" && ref.value.mimeType === "application/pdf";
+const isImage = ref.relationTo === "media" && ref.value.mimeType?.startsWith("image/");
+const isVideo = ref.relationTo === "links" && ref.value.linkType === "video";
+const typeLabel = isPdf ? "PDF" : isImage ? "Photo" : isVideo ? "Video" : ref.relationTo === "links" ? "Link" : "File";
+
+const FILE_ICON = "M6 2.5h5l3.5 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 4.5 15V4A1.5 1.5 0 0 1 6 2.5Z";
+const IMAGE_ICON = "M4 5.5A1.5 1.5 0 0 1 5.5 4h9A1.5 1.5 0 0 1 16 5.5v9a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 4 14.5v-9Zm1.5 8L8 10l2 2 2.5-3 2 3";
+const LINK_ICON = "M8 12l4-4m-3-2h4a2 2 0 0 1 2 2v0a2 2 0 0 1-2 2h-1m-4 0H7a2 2 0 0 1-2-2v0a2 2 0 0 1 2-2h1";
+const VIDEO_ICON = "M4 5.5A1.5 1.5 0 0 1 5.5 4h6A1.5 1.5 0 0 1 13 5.5v9a1.5 1.5 0 0 1-1.5 1.5h-6A1.5 1.5 0 0 1 4 14.5v-9Zm9 3 3-2v7l-3-2";
+const iconPath = isPdf ? FILE_ICON : isImage ? IMAGE_ICON : isVideo ? VIDEO_ICON : ref.relationTo === "links" ? LINK_ICON : FILE_ICON;
 ---
 
 <a
   href={href}
   target="_blank"
   rel="noopener noreferrer"
-  class="group block"
+  class="flex items-center gap-3 px-4 py-3.5 hover:bg-ink-50"
 >
-  <div class="relative aspect-[4/3] overflow-hidden rounded-lg bg-ink-100">
-    {thumbnail ? (
-      <img
-        src={thumbnail}
-        alt=""
-        class="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-        loading="lazy"
-      />
-    ) : (
-      <div class="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#3a3c48] to-[#101114]">
-        <span class="text-xs font-semibold uppercase tracking-wide text-white/70">{title}</span>
-      </div>
-    )}
-    {badgeLabel && (
-      <span class="absolute right-2 top-2 rounded-full bg-black/70 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-white backdrop-blur">
-        {badgeLabel}
-      </span>
-    )}
-  </div>
-  <h3 class="mt-2 text-sm font-semibold text-ink-900 group-hover:text-primary-600">
-    {title}
-    {external && <span class="sr-only"> (opens in a new tab)</span>}
-  </h3>
-  {caption && <p class="mt-0.5 text-xs text-ink-500 line-clamp-2">{caption}</p>}
+  <span
+    class:list={[
+      "grid h-9 w-9 shrink-0 place-items-center rounded-lg",
+      ref.relationTo === "links" ? "bg-ink-100 text-ink-600" : "bg-primary-50 text-primary-700",
+    ]}
+  >
+    <svg class="h-[18px] w-[18px]" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+      <path d={iconPath} stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+  </span>
+  <span class="min-w-0 flex-1">
+    <span class="block text-sm font-semibold text-ink-900">
+      {title}
+      {external && <span class="sr-only"> (opens in a new tab)</span>}
+    </span>
+    {caption && <span class="block text-xs text-ink-500">{caption}</span>}
+  </span>
+  <span class="shrink-0 rounded-full bg-ink-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-ink-500">
+    {typeLabel}
+  </span>
 </a>

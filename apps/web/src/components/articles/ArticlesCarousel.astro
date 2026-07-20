@@ -1,0 +1,21 @@
+---
+import type { Article } from "../../lib/payload";
+import ArticleCard from "./ArticleCard.astro";
+import Carousel from "../shared/Carousel.astro";
+
+interface Props {
+  articles: Article[];
+}
+
+const { articles } = Astro.props;
+---
+
+{articles.length > 0 && (
+  <Carousel>
+    {articles.map((article) => (
+      <div class="w-64 shrink-0 snap-start">
+        <ArticleCard article={article} />
+      </div>
+    ))}
+  </Carousel>
+)}

@@ -409,14 +409,26 @@ function levelLabel(level: TeamLevel): string {
   // portrait is ~768-834px, at or past the md: breakpoint), tapping
   // "Sports" or "Resources" just followed the link immediately — there's
   // no hover state for a finger to trigger, so the menu never got a
-  // chance to appear. `(hover: hover)` is the standard test for "this
-  // input can actually hover"; when it's false, the trigger's first tap
-  // opens the panel instead of navigating, and a second tap on the same
-  // trigger (or any link inside the now-open panel) goes through
-  // normally — same "reveal, then commit" pattern as a real touchscreen
-  // menu, instead of relying on browsers' inconsistent legacy behavior of
-  // simulating a hover on the first tap of a link.
-  if (!window.matchMedia("(hover: hover)").matches) {
+  // chance to appear. The first tap should open the panel instead of
+  // navigating, and a second tap on the same trigger (or any link inside
+  // the now-open panel) should go through normally.
+  //
+  // `(hover: hover)` alone is NOT a reliable test for this: iPadOS has
+  // reported `hover: hover` as true since trackpad/cursor support landed
+  // in iPadOS 13.4, regardless of whether a trackpad is actually
+  // connected — so on a real iPad, `!matchMedia("(hover: hover)").matches`
+  // is false and this whole block used to never run. Sports still "felt"
+  // fine there because tapping it landed on /teams, itself a real useful
+  // page — but tapping Resources dumped you on the redundant /resources
+  // fallback page instead of opening the dropdown, which read as broken.
+  // Checking touch capability directly catches both true touch-only
+  // devices and iPad's hover-but-still-primarily-touch case. A genuine
+  // hybrid device (touchscreen laptop with a mouse) is unaffected: a real
+  // mouse hover opens the panel before any click lands, so the click
+  // handler's `!group.classList.contains("menu-open")` guard is already
+  // false by the time a click fires and this never intercepts it.
+  const isTouchCapable = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+  if (isTouchCapable) {
     menuGroups.forEach((group) => {
       const trigger = group.querySelector<HTMLAnchorElement>("[data-menu-trigger]");
       trigger?.addEventListener("click", (e) => {
