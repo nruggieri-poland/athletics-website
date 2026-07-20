@@ -1,12 +1,13 @@
 import type { CollectionConfig } from 'payload'
-import { propagateOpponentLogoToGames } from '../hooks/matchOpponent.ts'
 
 // The source of truth for opponent logos. An admin creates one record per
 // school here (name, mascot, logo upload, and any alternate spellings the
-// EventLink feed might send it under), and Games.ts's beforeChange hook
-// auto-attaches the right logo to every game by matching against this list
-// — no script, no server access, no manual per-game logo picking required
-// once a school's record exists here.
+// EventLink feed might send it under). The frontend matches each game's
+// opponentName against this list live at build time (see
+// apps/web/src/lib/payload.ts) — no write-time hook copies a logo onto the
+// Game itself, so there's nothing here that can go stale: editing a logo
+// or adding an alias is correct on every game the next time the site
+// rebuilds, with no per-game backfill step.
 export const Opponents: CollectionConfig = {
   slug: 'opponents',
   access: {
@@ -16,14 +17,6 @@ export const Opponents: CollectionConfig = {
     useAsTitle: 'name',
     defaultColumns: ['name', 'mascot', 'logo'],
     group: 'Athletics',
-  },
-  hooks: {
-    // Re-propagates to every already-matched game whenever a logo is
-    // added/replaced here — so fixing a wrong logo in one place updates it
-    // everywhere it's used, rather than only affecting games created after
-    // the fix. See matchOpponent.ts for why this can't just be a
-    // relationship the other direction.
-    afterChange: [propagateOpponentLogoToGames],
   },
   fields: [
     {

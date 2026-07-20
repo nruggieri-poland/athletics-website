@@ -346,7 +346,6 @@ export interface Game {
   homeOrAway?: ('Home' | 'Away' | 'Neutral') | null;
   opponentName?: string | null;
   opponentMascot?: string | null;
-  opponentLogo?: (number | null) | Media;
   location?: string | null;
   isConferenceGame?: boolean | null;
   isCancelled?: boolean | null;
@@ -775,7 +774,6 @@ export interface GamesSelect<T extends boolean = true> {
   homeOrAway?: T;
   opponentName?: T;
   opponentMascot?: T;
-  opponentLogo?: T;
   location?: T;
   isConferenceGame?: T;
   isCancelled?: T;

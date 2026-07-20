@@ -80,6 +80,14 @@ export interface Team {
   isActive: boolean;
 }
 
+export interface Opponent {
+  id: string;
+  name: string;
+  mascot?: string;
+  aliases?: { alias: string }[];
+  logo?: Media;
+}
+
 export type EventType = "Game" | "Practice" | "Scrimmage" | "Other";
 export type HomeOrAway = "Home" | "Away" | "Neutral";
 export type GameResult = "W" | "L" | "T" | "";
@@ -97,6 +105,9 @@ export interface Game {
   homeOrAway: HomeOrAway;
   opponentName?: string;
   opponentMascot?: string;
+  // Not part of the API response — attached by attachOpponentLogos() below,
+  // resolved live against the Opponents collection at build time. See its
+  // comment for why this isn't a field Payload returns directly.
   opponentLogo?: Media;
   location?: string;
   isConferenceGame: boolean;
@@ -310,6 +321,51 @@ function getCurrentSchoolYear(referenceDate = new Date()): { start: string; end:
   return { start: `${startYear}-07-01`, end: `${startYear + 1}-06-30` };
 }
 
+function normalizeOpponentKey(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+// Astro's build (`astro build`) runs every Game-returning function below in
+// the same process, once per site rebuild — this cache means Opponents is
+// only fetched once per build, not once per page, while still resolving
+// fresh from the CMS on every rebuild (no write-time copy on Game itself
+// that could go stale between edits in the Opponents admin and the games
+// that reference it).
+let opponentLogoIndexPromise: Promise<Map<string, Media>> | null = null;
+
+async function getOpponentLogoIndex(): Promise<Map<string, Media>> {
+  if (!opponentLogoIndexPromise) {
+    opponentLogoIndexPromise = (async () => {
+      const data = await payloadFetch<PaginatedDocs<Opponent>>(
+        `/api/opponents${toQuery({ limit: 1000 })}`,
+      );
+      const index = new Map<string, Media>();
+      for (const opponent of data.docs) {
+        if (!opponent.logo) continue;
+        const names = [opponent.name, ...(opponent.aliases ?? []).map((entry) => entry.alias)];
+        for (const name of names) {
+          if (name) index.set(normalizeOpponentKey(name), opponent.logo);
+        }
+      }
+      return index;
+    })();
+  }
+  return opponentLogoIndexPromise;
+}
+
+// Matches each game's opponentName against the Opponents collection (by
+// name or alias, case-insensitive) and attaches the logo directly onto the
+// Game object — every Game-returning function below calls this before
+// returning, so components keep reading game.opponentLogo exactly as
+// before.
+async function attachOpponentLogos<T extends Game | null>(games: T[]): Promise<T[]> {
+  const index = await getOpponentLogoIndex();
+  for (const game of games) {
+    if (game?.opponentName) game.opponentLogo = index.get(normalizeOpponentKey(game.opponentName));
+  }
+  return games;
+}
+
 export async function getGamesForTeam(teamId: string): Promise<Game[]> {
   const { start, end } = getCurrentSchoolYear();
   const data = await payloadFetch<PaginatedDocs<Game>>(
@@ -327,7 +383,7 @@ export async function getGamesForTeam(teamId: string): Promise<Game[]> {
       limit: 200,
     })}`,
   );
-  return data.docs;
+  return attachOpponentLogos(data.docs);
 }
 
 // Every team's full season under one sport (Varsity through 7th Grade) —
@@ -347,7 +403,7 @@ export async function getSchoolYearGamesForSport(sportId: string): Promise<Game[
       limit: 500,
     })}`,
   );
-  return data.docs;
+  return attachOpponentLogos(data.docs);
 }
 
 // All games (every team) within the current school year — the data source
@@ -365,7 +421,7 @@ export async function getSchoolYearGames(): Promise<Game[]> {
       limit: 2000,
     })}`,
   );
-  return data.docs;
+  return attachOpponentLogos(data.docs);
 }
 
 export async function getUpcomingGames(limit = 8): Promise<Game[]> {
@@ -379,7 +435,7 @@ export async function getUpcomingGames(limit = 8): Promise<Game[]> {
       limit,
     })}`,
   );
-  return data.docs;
+  return attachOpponentLogos(data.docs);
 }
 
 // Upcoming games across every level of one sport (Varsity through 7th
@@ -397,7 +453,7 @@ export async function getUpcomingGamesForSport(sportId: string, limit = 10): Pro
       limit,
     })}`,
   );
-  return data.docs;
+  return attachOpponentLogos(data.docs);
 }
 
 export async function getArticles(limit = 20, page = 1): Promise<PaginatedDocs<Article>> {
@@ -467,7 +523,8 @@ export async function getNextHomeGame(): Promise<Game | null> {
       limit: 1,
     })}`,
   );
-  return data.docs[0] ?? null;
+  const [game] = await attachOpponentLogos([data.docs[0] ?? null]);
+  return game;
 }
 
 export function mediaUrl(media?: Media, size?: string): string {

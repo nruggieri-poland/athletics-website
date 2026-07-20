@@ -6,8 +6,8 @@
 // serving far more bytes than a 10-24px calendar icon needs. This
 // re-encodes each one as WebP at its native resolution — same pixels, a
 // fraction of the bytes — by replacing the Media doc's underlying file via
-// Payload's Local API (all existing Game.opponentLogo references keep
-// pointing at the same doc id, so nothing else needs to change).
+// Payload's Local API (Opponents.logo keeps pointing at the same doc id,
+// so nothing else needs to change).
 // Run with: npm run optimize:logos
 
 import fs from 'node:fs'
