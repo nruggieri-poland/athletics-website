@@ -1,11 +1,10 @@
 ---
 import BaseLayout from "../../../layouts/BaseLayout.astro";
 import PageHero from "../../../components/resources/PageHero.astro";
-import DocumentGroups from "../../../components/resources/DocumentGroups.astro";
-import ContactGrid from "../../../components/resources/ContactGrid.astro";
-import { getPublicDocumentsByAudience } from "../../../lib/payload";
+import GalleryView from "../../../components/galleries/GalleryView.astro";
+import { getGalleryBySlug } from "../../../lib/payload";
 
-const documents = await getPublicDocumentsByAudience("coaches");
+const gallery = await getGalleryBySlug("coaches");
 
 ---
 
@@ -19,8 +18,12 @@ const documents = await getPublicDocumentsByAudience("coaches");
 
     <div class="grid gap-10 py-14 md:grid-cols-[1fr_280px]">
       <section>
-        <h2 class="mb-5 text-h3 font-bold text-ink-900">Documents</h2>
-        <DocumentGroups documents={documents} emptyLabel="No documents published yet — check back soon." />
+        <h2 class="mb-5 text-h3 font-bold text-ink-900">Resources</h2>
+        {gallery ? (
+          <GalleryView gallery={gallery} emptyLabel="No resources published yet — check back soon." />
+        ) : (
+          <p class="text-ink-400">No resources published yet — check back soon.</p>
+        )}
       </section>
     </div>
   </div>

@@ -1,5 +1,6 @@
 import type { CollectionConfig } from 'payload'
 import { afterChangeTriggerRebuild, afterDeleteTriggerRebuild } from '../hooks/scheduleRebuildHooks.ts'
+import { tagsField } from '../lib/fields/tagsField.ts'
 
 export const Media: CollectionConfig = {
   slug: 'media',
@@ -10,6 +11,7 @@ export const Media: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'alt',
+    group: 'Resources',
   },
   // Native Payload folders, same as Documents — lets an admin drag uploads
   // into folders ("Opponent Logos", "Hero Photos", "Article Images") from
@@ -80,15 +82,7 @@ export const Media: CollectionConfig = {
       // (media.title, media.tags, ...) — same shape as every other
       // collection in this codebase, not nested under media.resource.*.
       fields: [
-        {
-          name: 'tags',
-          type: 'relationship',
-          relationTo: 'tags',
-          hasMany: true,
-          filterOptions: {
-            type: { equals: 'audience' },
-          },
-        },
+        tagsField('Controls which Resources page(s) this shows on — tags are open, use whichever apply.'),
         {
           name: 'title',
           type: 'text',

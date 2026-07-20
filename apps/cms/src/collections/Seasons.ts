@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import { afterChangeTriggerRebuild, afterDeleteTriggerRebuild } from '../hooks/scheduleRebuildHooks.ts'
 
 export const Seasons: CollectionConfig = {
   slug: 'seasons',
@@ -9,6 +10,11 @@ export const Seasons: CollectionConfig = {
   admin: {
     useAsTitle: 'year',
     defaultColumns: ['year', 'seasonType', 'isCurrent'],
+    group: 'Athletics',
+  },
+  hooks: {
+    afterChange: [afterChangeTriggerRebuild],
+    afterDelete: [afterDeleteTriggerRebuild],
   },
   fields: [
     {

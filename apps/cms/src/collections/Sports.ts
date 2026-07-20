@@ -11,6 +11,7 @@ export const Sports: CollectionConfig = {
   admin: {
     useAsTitle: 'name',
     defaultColumns: ['name', 'seasonType', 'sortOrder'],
+    group: 'Athletics',
   },
   hooks: {
     afterChange: [afterChangeTriggerRebuild],

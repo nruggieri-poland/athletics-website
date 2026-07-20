@@ -75,7 +75,6 @@ export interface Config {
     games: Game;
     opponents: Opponent;
     articles: Article;
-    documents: Document;
     tags: Tag;
     links: Link;
     galleries: Gallery;
@@ -87,7 +86,7 @@ export interface Config {
   };
   collectionsJoins: {
     'payload-folders': {
-      documentsAndFolders: 'payload-folders' | 'media' | 'documents';
+      documentsAndFolders: 'payload-folders' | 'media';
     };
   };
   collectionsSelect: {
@@ -99,7 +98,6 @@ export interface Config {
     games: GamesSelect<false> | GamesSelect<true>;
     opponents: OpponentsSelect<false> | OpponentsSelect<true>;
     articles: ArticlesSelect<false> | ArticlesSelect<true>;
-    documents: DocumentsSelect<false> | DocumentsSelect<true>;
     tags: TagsSelect<false> | TagsSelect<true>;
     links: LinksSelect<false> | LinksSelect<true>;
     galleries: GalleriesSelect<false> | GalleriesSelect<true>;
@@ -183,6 +181,9 @@ export interface Media {
   id: number;
   alt: string;
   caption?: string | null;
+  /**
+   * Controls which Resources page(s) this shows on — tags are open, use whichever apply.
+   */
   tags?: (number | Tag)[] | null;
   /**
    * Display title in Resources listings — distinct from Alt Text above, which is for screen readers.
@@ -238,7 +239,6 @@ export interface Tag {
   id: number;
   name: string;
   slug: string;
-  type: 'audience' | 'topic';
   updatedAt: string;
   createdAt: string;
 }
@@ -260,45 +260,10 @@ export interface FolderInterface {
           relationTo?: 'media';
           value: number | Media;
         }
-      | {
-          relationTo?: 'documents';
-          value: number | Document;
-        }
     )[];
     hasNextPage?: boolean;
     totalDocs?: number;
   };
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "documents".
- */
-export interface Document {
-  id: number;
-  title: string;
-  /**
-   * Controls which Resources page(s) this shows on. Replaces the old Audience field below — leave Audience alone, it will be removed in a later cleanup pass.
-   */
-  tags?: (number | Tag)[] | null;
-  audience: 'coaches' | 'parents' | 'both';
-  /**
-   * Unchecked documents are saved here but never appear on the public site.
-   */
-  isPublic?: boolean | null;
-  fileType: 'upload' | 'link';
-  file?: (number | null) | Media;
-  /**
-   * Full URL, e.g. https://docs.google.com/...
-   */
-  externalUrl?: string | null;
-  description?: string | null;
-  /**
-   * Lower numbers appear first within a folder.
-   */
-  sortOrder?: number | null;
-  folder?: (number | null) | FolderInterface;
   updatedAt: string;
   createdAt: string;
 }
@@ -476,9 +441,9 @@ export interface Article {
   relatedTeams?: (number | Team)[] | null;
   relatedSports?: (number | Sport)[] | null;
   /**
-   * For content that doesn't fit team/sport scoping, e.g. "Booster Club", "Fundraiser".
+   * For content that doesn't fit team/sport scoping, e.g. "Booster Club", "Fundraiser" — or any other tag.
    */
-  topicTags?: (number | Tag)[] | null;
+  tags?: (number | Tag)[] | null;
   publishedDate: string;
   updatedAt: string;
   createdAt: string;
@@ -500,6 +465,9 @@ export interface Link {
    * YouTube video ID (the part after "v=") — same convention as Sports.heroVideoId.
    */
   videoId?: string | null;
+  /**
+   * Tags for filtering and organization — used across the whole site, not just this collection.
+   */
   tags?: (number | Tag)[] | null;
   description?: string | null;
   isPublic?: boolean | null;
@@ -520,6 +488,10 @@ export interface Gallery {
   slug: string;
   description?: string | null;
   isPublic?: boolean | null;
+  /**
+   * Tag the gallery itself for your own organization — separate from tagging individual items inside it.
+   */
+  tags?: (number | Tag)[] | null;
   /**
    * Optional groupings, e.g. "Fall Sports". Leave heading blank for one unlabeled group.
    */
@@ -605,10 +577,6 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'articles';
         value: number | Article;
-      } | null)
-    | ({
-        relationTo: 'documents';
-        value: number | Document;
       } | null)
     | ({
         relationTo: 'tags';
@@ -852,29 +820,11 @@ export interface ArticlesSelect<T extends boolean = true> {
   heroImage?: T;
   relatedTeams?: T;
   relatedSports?: T;
-  topicTags?: T;
+  tags?: T;
   publishedDate?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "documents_select".
- */
-export interface DocumentsSelect<T extends boolean = true> {
-  title?: T;
-  tags?: T;
-  audience?: T;
-  isPublic?: T;
-  fileType?: T;
-  file?: T;
-  externalUrl?: T;
-  description?: T;
-  sortOrder?: T;
-  folder?: T;
-  updatedAt?: T;
-  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -883,7 +833,6 @@ export interface DocumentsSelect<T extends boolean = true> {
 export interface TagsSelect<T extends boolean = true> {
   name?: T;
   slug?: T;
-  type?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -912,6 +861,7 @@ export interface GalleriesSelect<T extends boolean = true> {
   slug?: T;
   description?: T;
   isPublic?: T;
+  tags?: T;
   sections?:
     | T
     | {

@@ -1,10 +1,11 @@
 import type { CollectionConfig } from 'payload'
 import { afterChangeTriggerRebuild, afterDeleteTriggerRebuild } from '../hooks/scheduleRebuildHooks.ts'
+import { tagsField } from '../lib/fields/tagsField.ts'
 
 // URL/video-only resources — the case Media can't hold, since Payload's
-// upload-enabled collections require a real file per record. Same tagging
-// (Tags, type=audience) as Documents/Media, so a Gallery item or a future
-// Resources listing can mix uploaded files and links under one audience.
+// upload-enabled collections require a real file per record. Same shared
+// `tags` field as Media/Galleries/Articles, so a Gallery item or a
+// Resources listing can mix uploaded files and links under one tag.
 export const Links: CollectionConfig = {
   slug: 'links',
   access: {
@@ -13,6 +14,7 @@ export const Links: CollectionConfig = {
   admin: {
     useAsTitle: 'title',
     defaultColumns: ['title', 'linkType', 'isPublic'],
+    group: 'Resources',
   },
   hooks: {
     afterChange: [afterChangeTriggerRebuild],
@@ -60,15 +62,7 @@ export const Links: CollectionConfig = {
         return true
       },
     },
-    {
-      name: 'tags',
-      type: 'relationship',
-      relationTo: 'tags',
-      hasMany: true,
-      filterOptions: {
-        type: { equals: 'audience' },
-      },
-    },
+    tagsField(),
     {
       name: 'description',
       type: 'textarea',

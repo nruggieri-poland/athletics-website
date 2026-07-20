@@ -4,6 +4,8 @@ import * as migration_20260715_163354_add_opponents from './20260715_163354_add_
 import * as migration_20260718_015256_add_tags_and_document_topic_tags from './20260718_015256_add_tags_and_document_topic_tags';
 import * as migration_20260718_021527_drop_unused_folder_type_scoping from './20260718_021527_drop_unused_folder_type_scoping';
 import * as migration_20260718_161832_add_media_resource_fields_links_and_galleries from './20260718_161832_add_media_resource_fields_links_and_galleries';
+import * as migration_20260720_115540_rework_tags_omnipresent_additive from './20260720_115540_rework_tags_omnipresent_additive';
+import * as migration_20260720_115937_rework_drop_documents_and_tags_type from './20260720_115937_rework_drop_documents_and_tags_type';
 
 export const migrations = [
   {
@@ -34,6 +36,16 @@ export const migrations = [
   {
     up: migration_20260718_161832_add_media_resource_fields_links_and_galleries.up,
     down: migration_20260718_161832_add_media_resource_fields_links_and_galleries.down,
-    name: '20260718_161832_add_media_resource_fields_links_and_galleries'
+    name: '20260718_161832_add_media_resource_fields_links_and_galleries',
+  },
+  {
+    up: migration_20260720_115540_rework_tags_omnipresent_additive.up,
+    down: migration_20260720_115540_rework_tags_omnipresent_additive.down,
+    name: '20260720_115540_rework_tags_omnipresent_additive',
+  },
+  {
+    up: migration_20260720_115937_rework_drop_documents_and_tags_type.up,
+    down: migration_20260720_115937_rework_drop_documents_and_tags_type.down,
+    name: '20260720_115937_rework_drop_documents_and_tags_type'
   },
 ];
