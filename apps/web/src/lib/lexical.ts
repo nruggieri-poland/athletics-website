@@ -67,8 +67,9 @@ function renderChildren(node: LexicalNode, ctx: RenderContext): string {
 function extractYouTubeId(url: string): string | null {
   try {
     const parsed = new URL(url);
-    if (parsed.hostname === "youtu.be") return parsed.pathname.slice(1) || null;
-    if (parsed.hostname.endsWith("youtube.com")) {
+    const hostname = parsed.hostname.toLowerCase();
+    if (hostname === "youtu.be") return parsed.pathname.slice(1) || null;
+    if (hostname === "youtube.com" || hostname.endsWith(".youtube.com")) {
       if (parsed.pathname === "/watch") return parsed.searchParams.get("v");
       if (parsed.pathname.startsWith("/embed/")) return parsed.pathname.slice("/embed/".length);
       if (parsed.pathname.startsWith("/shorts/")) return parsed.pathname.slice("/shorts/".length);
