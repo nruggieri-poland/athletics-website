@@ -63,7 +63,7 @@ async function upsertSport(
   name: string,
   seasonType: SeasonType,
   sortOrder: number,
-) {
+): Promise<{ id: number }> {
   const slug = slugify(name)
   const existing = await payload.find({
     collection: 'sports',
@@ -71,16 +71,18 @@ async function upsertSport(
     limit: 1,
   })
   if (existing.docs.length > 0) {
-    return payload.update({
+    const updated = await payload.update({
       collection: 'sports',
       id: existing.docs[0].id,
       data: { name, seasonType, sortOrder },
     })
+    return { id: Number(updated.id) }
   }
-  return payload.create({
+  const created = await payload.create({
     collection: 'sports',
     data: { name, slug, seasonType, sortOrder },
   })
+  return { id: Number(created.id) }
 }
 
 async function upsertTeam(

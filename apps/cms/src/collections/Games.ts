@@ -1,10 +1,15 @@
 import type { CollectionConfig } from 'payload'
 import { afterChangeTriggerRebuild, afterDeleteTriggerRebuild } from '../hooks/scheduleRebuildHooks.ts'
-import { matchOpponentLogoOnGame } from '../hooks/matchOpponent.ts'
 
 // Modeled directly on the legacy WordPress `wp_pshs_events` table so that an
 // external data-sync process can upsert rows into this collection (keyed on
 // `externalEventId`) without a field-mapping layer in between.
+//
+// No opponentLogo field here — the frontend resolves each game's logo live,
+// by matching opponentName against the Opponents collection at build time
+// (see apps/web/src/lib/payload.ts). That way a logo added/edited on an
+// Opponent record is correct everywhere immediately, with no per-game copy
+// that can go stale.
 export const Games: CollectionConfig = {
   slug: 'games',
   // Public read access — consumed directly by the Astro frontend via REST.
@@ -17,7 +22,6 @@ export const Games: CollectionConfig = {
     group: 'Athletics',
   },
   hooks: {
-    beforeChange: [matchOpponentLogoOnGame],
     afterChange: [afterChangeTriggerRebuild],
     afterDelete: [afterDeleteTriggerRebuild],
   },
@@ -95,11 +99,6 @@ export const Games: CollectionConfig = {
     {
       name: 'opponentMascot',
       type: 'text',
-    },
-    {
-      name: 'opponentLogo',
-      type: 'upload',
-      relationTo: 'media',
     },
     {
       name: 'location',

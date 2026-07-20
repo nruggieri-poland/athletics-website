@@ -6,6 +6,7 @@ import * as migration_20260718_021527_drop_unused_folder_type_scoping from './20
 import * as migration_20260718_161832_add_media_resource_fields_links_and_galleries from './20260718_161832_add_media_resource_fields_links_and_galleries';
 import * as migration_20260720_115540_rework_tags_omnipresent_additive from './20260720_115540_rework_tags_omnipresent_additive';
 import * as migration_20260720_115937_rework_drop_documents_and_tags_type from './20260720_115937_rework_drop_documents_and_tags_type';
+import * as migration_20260720_140323_drop_games_opponent_logo from './20260720_140323_drop_games_opponent_logo';
 
 export const migrations = [
   {
@@ -46,6 +47,11 @@ export const migrations = [
   {
     up: migration_20260720_115937_rework_drop_documents_and_tags_type.up,
     down: migration_20260720_115937_rework_drop_documents_and_tags_type.down,
-    name: '20260720_115937_rework_drop_documents_and_tags_type'
+    name: '20260720_115937_rework_drop_documents_and_tags_type',
+  },
+  {
+    up: migration_20260720_140323_drop_games_opponent_logo.up,
+    down: migration_20260720_140323_drop_games_opponent_logo.down,
+    name: '20260720_140323_drop_games_opponent_logo'
   },
 ];
