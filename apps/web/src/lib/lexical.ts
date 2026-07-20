@@ -82,7 +82,8 @@ function extractYouTubeId(url: string): string | null {
 function extractVimeoId(url: string): string | null {
   try {
     const parsed = new URL(url);
-    if (parsed.hostname.endsWith("vimeo.com")) {
+    const hostname = parsed.hostname.toLowerCase();
+    if (hostname === "vimeo.com" || hostname.endsWith(".vimeo.com")) {
       const match = parsed.pathname.match(/^\/(\d+)/);
       return match?.[1] ?? null;
     }
