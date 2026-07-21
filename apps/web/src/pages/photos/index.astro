@@ -1,7 +1,7 @@
 ---
-import BaseLayout from "../../../layouts/BaseLayout.astro";
-import CtaBand from "../../../components/shared/CtaBand.astro";
-import { getLinksByPlacement } from "../../../lib/payload";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import CtaBand from "../../components/shared/CtaBand.astro";
+import { getLinksByPlacement, type Link } from "../../lib/payload";
 
 const links = await getLinksByPlacement("photos");
 ---
@@ -15,7 +15,7 @@ const links = await getLinksByPlacement("photos");
 
     <div class="py-14">
       {links.length > 0 ? (
-        links.map((link) => (
+        links.map((link: Link) => (
           <CtaBand
             title={link.title}
             body={link.description}
