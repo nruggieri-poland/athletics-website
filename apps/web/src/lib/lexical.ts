@@ -379,7 +379,7 @@ function renderSponsorShoutout(fields: LexicalNode["fields"]): string {
   const { name, logo, message, url } = (fields ?? {}) as SponsorShoutoutFields;
   if (!name) return "";
   const logoHtml = logo?.url
-    ? `<img src="${escapeHtml(sanitizeUrl(mediaUrl(logo, "thumbnail")))}" alt="" class="h-12 w-12 shrink-0 rounded-lg object-contain" loading="lazy" />`
+    ? `<img src="${escapeHtml(sanitizeUrl(mediaUrl(logo)))}" alt="" class="h-12 w-12 shrink-0 rounded-lg object-contain" loading="lazy" />`
     : "";
   const nameHtml = escapeHtml(name);
   const safeUrl = url ? sanitizeUrl(url) : "";

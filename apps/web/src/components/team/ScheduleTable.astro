@@ -44,7 +44,7 @@ function formatDate(dateStr: string): string {
         <div class="min-w-0 flex-1">
           <div class="flex items-center gap-1.5">
             {game.opponentLogo && (
-              <img src={mediaUrl(game.opponentLogo, "thumbnail")} alt="" class="h-4 w-4 shrink-0 object-contain" loading="lazy" />
+              <img src={mediaUrl(game.opponentLogo)} alt="" class="h-4 w-4 shrink-0 object-contain" loading="lazy" />
             )}
             <span class="truncate text-sm font-semibold text-ink-900">{game.opponentName}</span>
             {game.isConferenceGame && (
@@ -131,7 +131,7 @@ function formatDate(dateStr: string): string {
               <div class="flex items-center gap-2">
                 {game.opponentLogo && (
                   <img
-                    src={mediaUrl(game.opponentLogo, "thumbnail")}
+                    src={mediaUrl(game.opponentLogo)}
                     alt=""
                     class="h-5 w-5 shrink-0 object-contain"
                     loading="lazy"

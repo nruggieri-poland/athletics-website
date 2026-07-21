@@ -26,7 +26,7 @@ const timeLabel = game.isTimeTBD || !game.time ? "TBD" : game.time;
     <div class="mt-1 flex items-center gap-2">
       {game.opponentLogo && (
         <img
-          src={mediaUrl(game.opponentLogo, "thumbnail")}
+          src={mediaUrl(game.opponentLogo)}
           alt=""
           class="h-7 w-7 shrink-0 object-contain"
           loading="lazy"

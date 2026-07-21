@@ -35,7 +35,7 @@ const events = games.map((game) => ({
   homeOrAway: game.homeOrAway,
   opponentName: game.opponentName ?? "",
   opponentMascot: game.opponentMascot ?? null,
-  opponentLogoUrl: game.opponentLogo ? mediaUrl(game.opponentLogo, "thumbnail") : null,
+  opponentLogoUrl: game.opponentLogo ? mediaUrl(game.opponentLogo) : null,
   location: game.location ?? null,
   isConferenceGame: game.isConferenceGame,
   isCancelled: game.isCancelled,
