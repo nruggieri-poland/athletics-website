@@ -1,15 +1,16 @@
 ---
-import type { Sport, Team, Navigation, NavLink, TeamLevel } from "../../lib/payload";
-import { sortTeamsByLevel, levelSlug } from "../../lib/payload";
+import type { Sport, Team, Navigation, NavLink, TeamLevel, Media } from "../../lib/payload";
+import { sortTeamsByLevel, levelSlug, mediaUrl } from "../../lib/payload";
 
 interface Props {
   siteName: string;
+  logo?: Media;
   sports: Sport[];
   teams: Team[];
   navigation: Navigation | null;
 }
 
-const { siteName, sports, teams, navigation } = Astro.props;
+const { siteName, logo, sports, teams, navigation } = Astro.props;
 
 const seasonOrder = ["Fall", "Winter", "Spring"] as const;
 
@@ -49,7 +50,8 @@ const DEFAULT_LINKS: NavLink[] = [
   { label: "News", url: "/news", showInHeader: true, showInFooter: true },
 ];
 const navLinks = navigation?.links?.length ? navigation.links : DEFAULT_LINKS;
-const headerLinks = navLinks.filter((link) => link.showInHeader !== false);
+const headerLinks = navLinks.filter((link) => link.showInHeader !== false && link.group !== "more");
+const moreLinks = navLinks.filter((link) => link.showInHeader !== false && link.group === "more");
 
 // Shorthand label so "Junior Varsity" doesn't force-wrap inside the menu.
 function levelLabel(level: TeamLevel): string {
@@ -59,7 +61,8 @@ function levelLabel(level: TeamLevel): string {
 
 <header class="sticky top-0 z-50 border-b border-ink-100 bg-surface/90 backdrop-blur">
   <div class="mx-auto flex max-w-content items-center justify-between px-6 py-4">
-    <a href="/" class="text-lg font-semibold tracking-tight text-ink-900">
+    <a href="/" class="flex items-center gap-2.5 text-lg font-semibold tracking-tight text-ink-900">
+      {logo?.url && <img src={mediaUrl(logo)} alt="" class="h-9 w-9 shrink-0 object-contain" />}
       {siteName}
     </a>
 
@@ -202,6 +205,26 @@ function levelLabel(level: TeamLevel): string {
           {link.label}
         </a>
       ))}
+
+      {moreLinks.length > 0 && (
+        <div class="group relative -my-4 flex items-center self-stretch py-4" data-menu-group>
+          <button type="button" aria-haspopup="true" aria-expanded="false" data-menu-trigger class="flex items-center gap-1 text-sm font-medium text-ink-500 hover:text-primary-600">
+            More
+            <svg class="h-3 w-3" viewBox="0 0 12 12" fill="none">
+              <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+            </svg>
+          </button>
+          <div class="invisible absolute right-0 top-full w-56 rounded-xl border border-ink-100 bg-surface opacity-0 shadow-lg transition group-focus-within:visible group-focus-within:opacity-100" data-menu-panel>
+            <div class="flex flex-col gap-0.5 p-2">
+              {moreLinks.map((link) => (
+                <a href={link.url} class="rounded-lg px-3 py-2.5 text-sm font-medium text-ink-700 hover:bg-ink-50">
+                  {link.label}
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </nav>
 
     <button
@@ -308,6 +331,22 @@ function levelLabel(level: TeamLevel): string {
         <a href="/resources/fans" class="block text-sm font-medium text-ink-700">Fans &amp; Community</a>
       </div>
     </details>
+
+    {moreLinks.length > 0 && (
+      <details class="group border-b border-ink-100 px-6">
+        <summary class="mobile-menu-summary flex cursor-pointer items-center justify-between py-4 text-sm font-semibold text-ink-500">
+          More
+          <svg class="h-3 w-3 shrink-0 text-ink-400 transition-transform group-open:rotate-180" viewBox="0 0 12 12" fill="none">
+            <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+          </svg>
+        </summary>
+        <div class="space-y-3 pb-5">
+          {moreLinks.map((link) => (
+            <a href={link.url} class="block text-sm font-medium text-ink-700">{link.label}</a>
+          ))}
+        </div>
+      </details>
+    )}
 
     <div class="space-y-3 px-6 py-4">
       {headerLinks.map((link) => (

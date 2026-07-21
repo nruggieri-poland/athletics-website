@@ -469,6 +469,18 @@ export interface Link {
    */
   tags?: (number | Tag)[] | null;
   description?: string | null;
+  /**
+   * Optional — shown next to the title when this link renders as a CTA card (e.g. a sponsor/partner logo).
+   */
+  logo?: (number | null) | Media;
+  /**
+   * Button text when rendered as a CTA card. Defaults to "Visit" if left blank.
+   */
+  ctaLabel?: string | null;
+  /**
+   * Assigns this link to render as a CTA card on a specific hardcoded page. Leave "None" if this link is only used inside a Gallery.
+   */
+  placement?: ('none' | 'photos' | 'watchLive') | null;
   isPublic?: boolean | null;
   sortOrder?: number | null;
   updatedAt: string;
@@ -845,6 +857,9 @@ export interface LinksSelect<T extends boolean = true> {
   videoId?: T;
   tags?: T;
   description?: T;
+  logo?: T;
+  ctaLabel?: T;
+  placement?: T;
   isPublic?: T;
   sortOrder?: T;
   updatedAt?: T;
@@ -990,6 +1005,10 @@ export interface Navigation {
         url: string;
         showInHeader?: boolean | null;
         showInFooter?: boolean | null;
+        /**
+         * Primary links sit directly in the header. "More" links are tucked into a low-visibility "More" dropdown instead — use this for secondary pages that need to be reachable but not front-and-center.
+         */
+        group?: ('primary' | 'more') | null;
         id?: string | null;
       }[]
     | null;
@@ -1033,6 +1052,7 @@ export interface NavigationSelect<T extends boolean = true> {
         url?: T;
         showInHeader?: T;
         showInFooter?: T;
+        group?: T;
         id?: T;
       };
   updatedAt?: T;

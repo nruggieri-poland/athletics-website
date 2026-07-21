@@ -170,6 +170,9 @@ export interface Link {
   url?: string; // present when linkType === "external"
   videoId?: string; // present when linkType === "video"
   description?: string;
+  logo?: Media;
+  ctaLabel?: string;
+  placement?: "none" | "photos" | "watchLive";
   isPublic: boolean;
   sortOrder: number;
   tags?: Tag[];
@@ -239,6 +242,7 @@ export interface NavLink {
   url: string;
   showInHeader?: boolean;
   showInFooter?: boolean;
+  group?: "primary" | "more";
 }
 
 export interface Navigation {
@@ -511,6 +515,23 @@ export async function getGalleryBySlug(slug: string): Promise<Gallery | null> {
     })}`,
   );
   return data.docs[0] ?? null;
+}
+
+// Looked up by a Link's own `placement` field (e.g. "photos", "watchLive")
+// from a developer-wired page that renders each matching Link as a CTA
+// card — the Magic Moments / Poland Local Schools Photos / YSN / Hudl
+// cards, none of which fit the Gallery model since they're single
+// standalone CTAs, not a curated collection of items.
+export async function getLinksByPlacement(placement: "photos" | "watchLive"): Promise<Link[]> {
+  const data = await payloadFetch<PaginatedDocs<Link>>(
+    `/api/links${toQuery({
+      "where[placement][equals]": placement,
+      "where[isPublic][equals]": true,
+      sort: "sortOrder",
+      limit: 10,
+    })}`,
+  );
+  return data.docs;
 }
 
 // The Fans page's "next home game" spotlight — earliest upcoming Home game

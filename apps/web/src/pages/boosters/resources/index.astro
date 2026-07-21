@@ -1,0 +1,37 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import GalleryView from "../../../components/galleries/GalleryView.astro";
+import CtaBand from "../../../components/shared/CtaBand.astro";
+import { getGalleryBySlug } from "../../../lib/payload";
+
+const gallery = await getGalleryBySlug("all-sports-boosters");
+---
+
+<BaseLayout title="Boosters Resources" description="Forms, agreements, and documents for the Poland All-Sports Booster Club.">
+  <div class="mx-auto max-w-content px-6">
+    <div class="border-b border-ink-100 py-12">
+      <p class="mb-3 text-xs font-semibold uppercase tracking-wide text-primary-600">
+        <a href="/boosters" class="hover:text-primary-700">All-Sports Boosters</a> / Resources
+      </p>
+      <h1 class="max-w-[20ch] text-h1 font-bold text-ink-900">Boosters Resources</h1>
+      <p class="mt-3 max-w-[62ch] text-lg text-ink-600">Forms, agreements, and documents for the All-Sports Booster Club.</p>
+    </div>
+
+    <div class="space-y-14 py-14">
+      <section>
+        {gallery ? (
+          <GalleryView gallery={gallery} emptyLabel="No resources published yet — check back soon." />
+        ) : (
+          <p class="text-ink-400">No resources published yet — check back soon.</p>
+        )}
+      </section>
+
+      <CtaBand
+        title="Interested in signing up?"
+        body="Join the All-Sports Booster Club or become a sponsor — every contribution goes directly to Poland Seminary athletics."
+        ctaLabel="Get in touch"
+        ctaUrl="mailto:boosters@polandbulldogs.com"
+      />
+    </div>
+  </div>
+</BaseLayout>

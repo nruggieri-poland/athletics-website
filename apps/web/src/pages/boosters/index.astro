@@ -1,0 +1,29 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import CtaBand from "../../components/shared/CtaBand.astro";
+---
+
+<BaseLayout title="All-Sports Boosters" description="The Poland All-Sports Booster Club supports every Bulldogs team.">
+  <div class="mx-auto max-w-content px-6">
+    <div class="border-b border-ink-100 py-12">
+      <h1 class="max-w-[20ch] text-h1 font-bold text-ink-900">All-Sports Boosters</h1>
+      <p class="mt-3 max-w-[62ch] text-lg text-ink-600">
+        The Poland All-Sports Booster Club supports every Bulldogs team through fundraising, sponsorships, and volunteer effort year-round.
+      </p>
+    </div>
+
+    <div class="py-14">
+      <CtaBand
+        title="Interested in signing up?"
+        body="Join the All-Sports Booster Club or become a sponsor — every contribution goes directly to Poland Seminary athletics."
+        ctaLabel="Get in touch"
+        ctaUrl="mailto:boosters@polandbulldogs.com"
+      />
+
+      <p class="mt-8 text-sm text-ink-500">
+        Looking for meeting dates, sponsorship forms, or membership paperwork? Visit the{" "}
+        <a href="/boosters/resources" class="font-semibold text-primary-600 hover:text-primary-700">Boosters resources page</a>.
+      </p>
+    </div>
+  </div>
+</BaseLayout>

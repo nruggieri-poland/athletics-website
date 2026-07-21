@@ -1,0 +1,40 @@
+---
+// Same visual as Articles' ctaBand richText block (see
+// apps/web/src/lib/lexical.ts renderCtaBand) so CTAs look identical
+// whether they came from an article body or a hardcoded page like this.
+import { mediaUrl, type Media } from "../../lib/payload";
+import { sanitizeUrl } from "../../lib/sanitize-url";
+
+interface Props {
+  title: string;
+  body?: string;
+  ctaLabel: string;
+  ctaUrl: string;
+  logo?: Media;
+}
+
+const { title, body, ctaLabel, ctaUrl, logo } = Astro.props;
+const safeUrl = sanitizeUrl(ctaUrl);
+---
+
+{safeUrl !== "#" && (
+  <div class="my-6 flex flex-wrap items-center justify-between gap-6 rounded-2xl bg-primary-600 px-9 py-8 text-white">
+    <div class="flex items-center gap-5">
+      {logo?.url && (
+        <img
+          src={mediaUrl(logo)}
+          alt=""
+          class="h-14 w-14 shrink-0 rounded-lg bg-white object-contain p-1.5"
+          loading="lazy"
+        />
+      )}
+      <div>
+        <h3 class="text-xl font-extrabold">{title}</h3>
+        {body && <p class="mt-1 max-w-[46ch] text-sm text-white/85">{body}</p>}
+      </div>
+    </div>
+    <a href={safeUrl} class="shrink-0 rounded-lg bg-white px-5 py-2.5 text-sm font-bold text-primary-700 hover:bg-primary-50">
+      {ctaLabel}
+    </a>
+  </div>
+)}

@@ -3,7 +3,7 @@ import "../styles/global.css";
 import TopBanner from "../components/nav/TopBanner.astro";
 import Header from "../components/nav/Header.astro";
 import Footer from "../components/nav/Footer.astro";
-import { getSports, getTeams, getSiteSettings, getNavigation } from "../lib/payload";
+import { getSports, getTeams, getSiteSettings, getNavigation, mediaUrl } from "../lib/payload";
 
 interface Props {
   title: string;
@@ -30,6 +30,9 @@ try {
 }
 
 const siteName = siteSettings?.siteName || "Poland Seminary Bulldogs";
+const logo = siteSettings?.logo;
+const faviconHref = logo?.url ? mediaUrl(logo) : "/favicon.svg";
+const faviconType = logo?.mimeType || "image/svg+xml";
 ---
 
 <!doctype html>
@@ -39,7 +42,7 @@ const siteName = siteSettings?.siteName || "Poland Seminary Bulldogs";
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{title} | {siteName}</title>
     <meta name="description" content={description} />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type={faviconType} href={faviconHref} />
     <script is:inline>
       // Runs before first paint so a returning visitor's saved theme choice
       // applies immediately — no flash of the wrong theme. A fresh visitor
@@ -66,10 +69,10 @@ const siteName = siteSettings?.siteName || "Poland Seminary Bulldogs";
       Skip to content
     </a>
     <TopBanner address={siteSettings?.address} socialLinks={siteSettings?.socialLinks} />
-    <Header siteName={siteName} sports={sports} teams={teams} navigation={navigation} />
+    <Header siteName={siteName} logo={logo} sports={sports} teams={teams} navigation={navigation} />
     <main id="main-content" class="flex-1">
       <slot />
     </main>
-    <Footer siteName={siteName} navigation={navigation} />
+    <Footer siteName={siteName} logo={logo} navigation={navigation} />
   </body>
 </html>

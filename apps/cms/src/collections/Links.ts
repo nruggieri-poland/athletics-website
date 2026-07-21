@@ -68,6 +68,34 @@ export const Links: CollectionConfig = {
       type: 'textarea',
     },
     {
+      name: 'logo',
+      type: 'upload',
+      relationTo: 'media',
+      admin: {
+        description: 'Optional — shown next to the title when this link renders as a CTA card (e.g. a sponsor/partner logo).',
+      },
+    },
+    {
+      name: 'ctaLabel',
+      type: 'text',
+      admin: {
+        description: 'Button text when rendered as a CTA card. Defaults to "Visit" if left blank.',
+      },
+    },
+    {
+      name: 'placement',
+      type: 'select',
+      defaultValue: 'none',
+      admin: {
+        description: 'Assigns this link to render as a CTA card on a specific hardcoded page. Leave "None" if this link is only used inside a Gallery.',
+      },
+      options: [
+        { label: 'None (gallery item only)', value: 'none' },
+        { label: 'Photos page', value: 'photos' },
+        { label: 'Watch Live page', value: 'watchLive' },
+      ],
+    },
+    {
       name: 'isPublic',
       type: 'checkbox',
       defaultValue: false,

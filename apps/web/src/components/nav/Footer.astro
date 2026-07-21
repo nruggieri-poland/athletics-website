@@ -1,13 +1,15 @@
 ---
-import type { Navigation, NavLink } from "../../lib/payload";
+import type { Navigation, NavLink, Media } from "../../lib/payload";
+import { mediaUrl } from "../../lib/payload";
 import ThemeToggle from "./ThemeToggle.astro";
 
 interface Props {
   siteName: string;
+  logo?: Media;
   navigation: Navigation | null;
 }
 
-const { siteName, navigation } = Astro.props;
+const { siteName, logo, navigation } = Astro.props;
 const year = new Date().getFullYear();
 
 // Independent from the header's link set — an admin can show a link in one,
@@ -24,7 +26,10 @@ const links = navLinks.filter((link) => link.showInFooter !== false);
 <footer class="border-t border-ink-100 bg-ink-50">
   <div class="mx-auto max-w-content px-6 py-12">
     <div class="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-      <p class="text-sm font-semibold text-ink-900">{siteName}</p>
+      <p class="flex items-center gap-2.5 text-sm font-semibold text-ink-900">
+        {logo?.url && <img src={mediaUrl(logo)} alt="" class="h-8 w-8 shrink-0 object-contain" />}
+        {siteName}
+      </p>
       <div class="flex flex-wrap items-center gap-6">
         <ul class="flex flex-wrap gap-6">
           {links.map((link) => (

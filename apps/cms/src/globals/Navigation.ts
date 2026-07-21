@@ -45,6 +45,18 @@ export const Navigation: GlobalConfig = {
           type: 'checkbox',
           defaultValue: true,
         },
+        {
+          name: 'group',
+          type: 'select',
+          defaultValue: 'primary',
+          admin: {
+            description: 'Primary links sit directly in the header. "More" links are tucked into a low-visibility "More" dropdown instead — use this for secondary pages that need to be reachable but not front-and-center.',
+          },
+          options: [
+            { label: 'Primary', value: 'primary' },
+            { label: 'More (tucked into a dropdown)', value: 'more' },
+          ],
+        },
       ],
     },
   ],

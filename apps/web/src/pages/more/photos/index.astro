@@ -1,0 +1,32 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import CtaBand from "../../../components/shared/CtaBand.astro";
+import { getLinksByPlacement } from "../../../lib/payload";
+
+const links = await getLinksByPlacement("photos");
+---
+
+<BaseLayout title="Photos" description="Where to find photos from Poland Seminary Bulldogs games and events.">
+  <div class="mx-auto max-w-content px-6">
+    <div class="border-b border-ink-100 py-12">
+      <h1 class="max-w-[20ch] text-h1 font-bold text-ink-900">Photos</h1>
+      <p class="mt-3 max-w-[62ch] text-lg text-ink-600">Where to find photos from Bulldogs games and events.</p>
+    </div>
+
+    <div class="py-14">
+      {links.length > 0 ? (
+        links.map((link) => (
+          <CtaBand
+            title={link.title}
+            body={link.description}
+            ctaLabel={link.ctaLabel || "View photos"}
+            ctaUrl={link.url || "#"}
+            logo={link.logo}
+          />
+        ))
+      ) : (
+        <p class="text-ink-400">Nothing published here yet — check back soon.</p>
+      )}
+    </div>
+  </div>
+</BaseLayout>
