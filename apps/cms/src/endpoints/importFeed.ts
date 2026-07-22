@@ -206,5 +206,21 @@ export const importFeedHandler: PayloadHandler = async (req) => {
     }
   }
 
+  // Recorded regardless of whether anything actually changed this run — an
+  // all-zero, no-warnings result is still proof the sync executed, which is
+  // the whole point (see SyncStatus.ts): answering "did it run, and when"
+  // without reverse-engineering it from Games' updatedAt timestamps.
+  await payload.updateGlobal({
+    slug: 'sync-status',
+    data: {
+      lastSyncAt: new Date().toISOString(),
+      created,
+      updated,
+      retired,
+      skipped,
+      warnings: warnings.join('\n'),
+    },
+  })
+
   return Response.json({ created, updated, retired, skipped, warnings })
 }

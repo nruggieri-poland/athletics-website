@@ -114,10 +114,12 @@ export interface Config {
   globals: {
     'site-settings': SiteSetting;
     navigation: Navigation;
+    'sync-status': SyncStatus;
   };
   globalsSelect: {
     'site-settings': SiteSettingsSelect<false> | SiteSettingsSelect<true>;
     navigation: NavigationSelect<false> | NavigationSelect<true>;
+    'sync-status': SyncStatusSelect<false> | SyncStatusSelect<true>;
   };
   locale: null;
   widgets: {
@@ -1016,6 +1018,29 @@ export interface Navigation {
   createdAt?: string | null;
 }
 /**
+ * Read-only — updated automatically by the schedule sync. Nothing here is hand-edited.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "sync-status".
+ */
+export interface SyncStatus {
+  id: number;
+  /**
+   * When the schedule sync last ran, successfully or not.
+   */
+  lastSyncAt?: string | null;
+  created?: number | null;
+  updated?: number | null;
+  retired?: number | null;
+  skipped?: number | null;
+  /**
+   * One per line, from the sync's last run — e.g. teams with no matching slug.
+   */
+  warnings?: string | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "site-settings_select".
  */
@@ -1055,6 +1080,21 @@ export interface NavigationSelect<T extends boolean = true> {
         group?: T;
         id?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "sync-status_select".
+ */
+export interface SyncStatusSelect<T extends boolean = true> {
+  lastSyncAt?: T;
+  created?: T;
+  updated?: T;
+  retired?: T;
+  skipped?: T;
+  warnings?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

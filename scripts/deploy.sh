@@ -4,9 +4,13 @@
 # Payload migrations, and rebuilds+restarts only the piece(s) that actually
 # changed (apps/cms and/or apps/web).
 #
-# This is for CODE changes only — content edits made through the CMS admin
-# never need this, they deploy themselves automatically via the
-# rebuild-on-publish hook (apps/cms/src/hooks/rebuildWeb.ts).
+# The code-deploy part above is for CODE changes only — content edits made
+# through the CMS admin never need it, they deploy themselves automatically
+# via the rebuild-on-publish hook (apps/cms/src/hooks/rebuildWeb.ts). This
+# script also runs the schedule data sync (scripts/schedule-sync) on every
+# tick, unconditionally — see the "Schedule data sync" step below — since
+# that's a separate, code-independent concern that needs its own regular
+# cadence and this cron is the one reliable heartbeat already running here.
 #
 # Designed to run unattended from cron with no SSH access for debugging:
 # every run publishes its own status to the live static site at
@@ -95,6 +99,35 @@ run_with_timeout() {
     "$@"
   fi
 }
+
+# --- Schedule data sync -------------------------------------------------
+# Independent of whether any CODE changed this tick — the upstream
+# schedules feed (nruggieri-poland/schedules) can publish new games,
+# cancellations, or event-type corrections (e.g. Scrimmage) at any time,
+# entirely decoupled from when this repo's own code last changed. Runs on
+# every cron tick, before the code-deploy logic below, against the CMS
+# already running on this box — reusing PAYLOAD_SYNC_API_KEY straight out
+# of apps/cms/.env (the same value the CMS itself checks incoming syncs
+# against) so there's no separate secret file to keep in sync on this
+# server. A failure here is never a deploy failure — it just means this
+# tick's data refresh didn't happen; it retries again in 5 minutes.
+if [ -f scripts/schedule-sync/pull-and-sync.js ]; then
+  CMS_UP="$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3000/api/sports 2>/dev/null || true)"
+  if [ "$CMS_UP" = "200" ]; then
+    SYNC_KEY="$(grep -m1 '^PAYLOAD_SYNC_API_KEY=' apps/cms/.env 2>/dev/null | cut -d= -f2- | sed -e "s/^[\"']//" -e "s/[\"']\$//" || true)"
+    if [ -n "$SYNC_KEY" ]; then
+      log "[deploy] Running schedule sync..."
+      if ! PAYLOAD_URL="http://127.0.0.1:3000" PAYLOAD_SYNC_API_KEY="$SYNC_KEY" \
+        run_with_timeout 120 node scripts/schedule-sync/pull-and-sync.js 2>&1 | tee -a "$RUN_LOG"; then
+        log "[deploy] Schedule sync failed this tick — not a deploy failure, will retry next tick."
+      fi
+    else
+      log "[deploy] (PAYLOAD_SYNC_API_KEY not found in apps/cms/.env — skipping schedule sync)"
+    fi
+  else
+    log "[deploy] (CMS not responding on 127.0.0.1:3000 — skipping schedule sync this tick)"
+  fi
+fi
 
 log "[deploy] Fetching latest..."
 run_with_timeout 120 git fetch origin main 2>&1 | tee -a "$RUN_LOG"

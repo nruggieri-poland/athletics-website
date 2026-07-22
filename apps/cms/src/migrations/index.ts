@@ -8,6 +8,7 @@ import * as migration_20260720_115540_rework_tags_omnipresent_additive from './2
 import * as migration_20260720_115937_rework_drop_documents_and_tags_type from './20260720_115937_rework_drop_documents_and_tags_type';
 import * as migration_20260720_140323_drop_games_opponent_logo from './20260720_140323_drop_games_opponent_logo';
 import * as migration_20260721_155325_add_links_cta_and_nav_group from './20260721_155325_add_links_cta_and_nav_group';
+import * as migration_20260722_180833_add_sync_status from './20260722_180833_add_sync_status';
 
 export const migrations = [
   {
@@ -58,6 +59,11 @@ export const migrations = [
   {
     up: migration_20260721_155325_add_links_cta_and_nav_group.up,
     down: migration_20260721_155325_add_links_cta_and_nav_group.down,
-    name: '20260721_155325_add_links_cta_and_nav_group'
+    name: '20260721_155325_add_links_cta_and_nav_group',
+  },
+  {
+    up: migration_20260722_180833_add_sync_status.up,
+    down: migration_20260722_180833_add_sync_status.down,
+    name: '20260722_180833_add_sync_status'
   },
 ];

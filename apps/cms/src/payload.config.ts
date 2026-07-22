@@ -18,6 +18,7 @@ import { Links } from './collections/Links.ts'
 import { Galleries } from './collections/Galleries.ts'
 import { SiteSettings } from './globals/SiteSettings.ts'
 import { Navigation } from './globals/Navigation.ts'
+import { SyncStatus } from './globals/SyncStatus.ts'
 import { importFeedHandler } from './endpoints/importFeed.ts'
 import { healthCheckCanaryHandler } from './endpoints/healthCheckCanary.ts'
 
@@ -47,7 +48,7 @@ export default buildConfig({
   },
   editor: lexicalEditor(),
   collections: [Users, Media, Sports, Seasons, Teams, Games, Opponents, Articles, Tags, Links, Galleries],
-  globals: [SiteSettings, Navigation],
+  globals: [SiteSettings, Navigation, SyncStatus],
   // Public read access on the auto-generated payload-folders collection —
   // without this, folder names never populate on public REST reads (a
   // Media item's `folder` relation would come back as a bare numeric ID
