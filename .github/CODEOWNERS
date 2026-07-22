@@ -1,0 +1,5 @@
+# Only takes effect once branch protection on `main` requires "Review from
+# Code Owners" — inert on its own. Scoped narrowly to deploy.sh, the script
+# that runs unattended from cron on the production server with no SSH
+# access to intervene if something goes wrong there.
+scripts/deploy.sh @nruggieri-poland

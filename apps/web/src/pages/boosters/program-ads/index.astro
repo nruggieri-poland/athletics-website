@@ -1,0 +1,44 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import PdfPreview from "../../../components/shared/PdfPreview.astro";
+import BoosterSidebar from "../../../components/boosters/BoosterSidebar.astro";
+import { getMediaForTag } from "../../../lib/payload";
+
+const pdf = await getMediaForTag("booster-program-ads");
+---
+
+<BaseLayout title="Program Ads" description="Purchase ad space in the Poland All-Sports Boosters' Fall Athletic Program.">
+  <div class="mx-auto max-w-content px-6">
+    <div class="border-b border-ink-100 py-12">
+      <p class="mb-3 text-xs font-semibold uppercase tracking-wide text-primary-600">
+        <a href="/boosters" class="hover:text-primary-700">All-Sports Boosters</a> / Program Ads
+      </p>
+      <h1 class="max-w-[20ch] text-h1 font-bold text-ink-900">Program Ads</h1>
+    </div>
+
+    <div class="grid gap-10 py-14 md:grid-cols-[1fr_280px]">
+      <div class="min-w-0">
+        <div class="max-w-[70ch] space-y-5 text-base leading-relaxed text-ink-700">
+          <p>
+            The Poland All Sports Booster Club is excited to launch our Annual Fall Sports Program Ad Campaign for the upcoming athletic season.
+          </p>
+          <p>
+            We invite you to be part of the excitement by purchasing ad space in our official Fall Athletic Program. The program will be distributed at all home varsity football games and other fall events. This is a great opportunity to showcase your business, send a shoutout to your favorite athlete, or simply show your Bulldog pride!
+          </p>
+          <p>
+            Your support plays a vital role in the continued success of Poland Athletics, and we are truly grateful to have you as part of our Bulldog community.
+          </p>
+          <p class="text-lg font-bold text-ink-900">GO DOGS!</p>
+        </div>
+
+        {pdf ? (
+          <PdfPreview media={pdf} />
+        ) : (
+          <p class="mt-8 text-ink-400">Program ad details coming soon — check back shortly.</p>
+        )}
+      </div>
+
+      <BoosterSidebar current="/boosters/program-ads" />
+    </div>
+  </div>
+</BaseLayout>
