@@ -22,20 +22,20 @@
     "seed:navigation": "payload run --disable-transpile src/seed/seed-navigation.ts"
   },
   "dependencies": {
-    "next": "^16.2.10",
-    "react": "^19",
-    "react-dom": "^19",
-    "payload": "3.85.2",
-    "@payloadcms/next": "3.85.2",
-    "@payloadcms/db-postgres": "3.85.2",
-    "@payloadcms/richtext-lexical": "3.85.2",
+    "@payloadcms/db-postgres": "3.86.0",
+    "@payloadcms/next": "3.86.0",
+    "@payloadcms/richtext-lexical": "3.86.0",
     "graphql": "^16.8.1",
-    "sharp": "latest"
+    "next": "^16.2.11",
+    "payload": "3.86.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "sharp": "*"
   },
   "devDependencies": {
-    "typescript": "^5.7.3",
     "@types/node": "^22.10.5",
     "@types/react": "^19.0.7",
-    "@types/react-dom": "^19.0.3"
+    "@types/react-dom": "^19.0.3",
+    "typescript": "^5.7.3"
   }
 }
