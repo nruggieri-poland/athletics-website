@@ -1,0 +1,30 @@
+---
+const links = [
+  { href: "/boosters", label: "About the Boosters", description: "History, mission & impact" },
+  { href: "/boosters/resources", label: "Resources", description: "Forms, agreements & documents" },
+  { href: "/boosters/program-ads", label: "Program Ads", description: "Fall Athletic Program ad space" },
+  { href: "/boosters/sponsorships", label: "Sponsorships", description: "Become a Bulldog Athletics sponsor" },
+];
+
+interface Props {
+  current: string;
+}
+
+const { current } = Astro.props;
+---
+
+<aside class="md:pt-1">
+  <p class="mb-3 text-xs font-semibold uppercase tracking-wide text-ink-400">All-Sports Boosters</p>
+  <nav class="flex flex-col gap-1 rounded-lg border border-ink-100 p-2">
+    {links.map((link) => (
+      <a
+        href={link.href}
+        aria-current={link.href === current ? "page" : undefined}
+        class:list={["rounded-md px-3 py-2.5 hover:bg-ink-50", link.href === current && "bg-primary-50"]}
+      >
+        <span class:list={["block text-sm font-semibold", link.href === current ? "text-primary-700" : "text-ink-900"]}>{link.label}</span>
+        <span class="block text-xs text-ink-500">{link.description}</span>
+      </a>
+    ))}
+  </nav>
+</aside>

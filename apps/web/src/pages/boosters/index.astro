@@ -1,6 +1,22 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import CtaBand from "../../components/shared/CtaBand.astro";
+import BoosterSidebar from "../../components/boosters/BoosterSidebar.astro";
+
+const donations = [
+  { program: "Cheerleading", detail: "Replaced two bulldog mascots and every three years, purchases new uniforms for the JV and Varsity Cheerleaders." },
+  { program: "Football", detail: "Purchased six new headsets for high school coaches and helped pay for the weight room equipment." },
+  { program: "Softball", detail: "Donated money towards the new softball field press box and purchased new uniform pants in 2018." },
+  { program: "Baseball", detail: "Purchased new hats for the teams every year and also helped purchase new dugouts." },
+  { program: "Basketball", detail: "Purchased a shooting gun in 2017 used by both boys and girls teams." },
+  { program: "Soccer", detail: "Purchased a set of goals for the program." },
+  { program: "Golf", detail: "Provide money for equipment such as bags, umbrellas and polos." },
+  { program: "Tennis", detail: "Purchased two nets and equipment for the courts." },
+  { program: "Volleyball and Wrestling", detail: "Donated money for the purchase of general equipment and training aids." },
+  { program: "Swimming", detail: "Made a donation to help defray the cost of the pool rental fees." },
+  { program: "Cross Country", detail: "Purchased new uniforms." },
+  { program: "High School Campus", detail: "Donated money towards the construction of the electronic sign board on Dobbins Road at State Route 170." },
+];
 ---
 
 <BaseLayout title="All-Sports Boosters" description="The Poland All-Sports Booster Club supports every Bulldogs team.">
@@ -12,18 +28,39 @@ import CtaBand from "../../components/shared/CtaBand.astro";
       </p>
     </div>
 
-    <div class="py-14">
-      <CtaBand
-        title="Interested in signing up?"
-        body="Join the All-Sports Booster Club or become a sponsor — every contribution goes directly to Poland Seminary athletics."
-        ctaLabel="Get in touch"
-        ctaUrl="mailto:boosters@polandbulldogs.com"
-      />
+    <div class="grid gap-10 py-14 md:grid-cols-[1fr_280px]">
+      <div class="min-w-0">
+        <div class="max-w-[70ch] space-y-5 text-base leading-relaxed text-ink-700">
+          <p>
+            Tradition is a word synonymous with the Poland Schools as well as with Poland Athletics. The Poland All-Sports Boosters is an organization that began in the mid 1970's and is still a successful, philanthropic organization today. The goal of the organization is to support more than 800 high school and middle school student-athletes involved in any 7&ndash;12th grade sport.
+          </p>
+          <p>
+            Through donations and fundraisers, the All-Sports Booster Club offers every Poland athletic program extra money to help fund special request of each sport, purchase gear for our athletes and supplies for the school athletic trainer. It also helps to defray costs the athletic department may encounter such as purchasing student athletic awards in grades 7&ndash;12. The following is a list of some of the donations the club has made throughout the years.
+          </p>
 
-      <p class="mt-8 text-sm text-ink-500">
-        Looking for meeting dates, sponsorship forms, or membership paperwork? Visit the{" "}
-        <a href="/boosters/resources" class="font-semibold text-primary-600 hover:text-primary-700">Boosters resources page</a>.
-      </p>
+          <ul class="list-disc space-y-2 pl-5 marker:text-primary-600">
+            {donations.map((d) => (
+              <li><span class="font-semibold text-ink-900">{d.program}</span> &mdash; {d.detail}</li>
+            ))}
+          </ul>
+
+          <p>
+            In the last year, the All-Sports Boosters have donated well over $40,000 in additional funds to help student-athletes in grades 7-12 in all sports. The All-Sports Booster Club has several major fundraisers in order to make these generous donations possible. The Bulldog 100 is back this Fall Season! It is a raffle in which one-hundred $100 tickets are sold for a chance to win $5,000 in prize money. The club also hosts an annual fourth, fifth, and sixth grade, boy and girls youth basketball tournament in the winter. In the spring, the Booster Club hosts a golf outing.
+          </p>
+          <p>
+            Fundraising is an essential part in raising money for Poland students; however, most importantly and appreciated are donations from community members. If you wish to make a donation to the Poland All-Sports Boosters and want to help maintain the excellence of Poland Athletics you can visit the <a href="https://www.facebook.com/PolandAllSportsBoosters" target="_blank" rel="noopener noreferrer" class="font-semibold text-primary-600 hover:text-primary-700">Boosters Facebook Page</a> or you can contact us at <a href="mailto:cbrant19@gmail.com" class="font-semibold text-primary-600 hover:text-primary-700">cbrant19@gmail.com</a>. Help to keep the tradition of excellence in Poland and make a donation to the All-Sports Boosters.
+          </p>
+        </div>
+
+        <CtaBand
+          title="Interested in signing up?"
+          body="Join the All-Sports Booster Club or become a sponsor — every contribution goes directly to Poland Seminary athletics."
+          ctaLabel="Get in touch"
+          ctaUrl="mailto:boosters@polandbulldogs.com"
+        />
+      </div>
+
+      <BoosterSidebar current="/boosters" />
     </div>
   </div>
 </BaseLayout>

@@ -1,0 +1,44 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import PdfPreview from "../../../components/shared/PdfPreview.astro";
+import BoosterSidebar from "../../../components/boosters/BoosterSidebar.astro";
+import { getMediaForTag } from "../../../lib/payload";
+
+const pdf = await getMediaForTag("booster-sponsorships");
+---
+
+<BaseLayout title="Sponsorships" description="Become a sponsor of Poland All-Sports Boosters and support Bulldog Athletics year-round.">
+  <div class="mx-auto max-w-content px-6">
+    <div class="border-b border-ink-100 py-12">
+      <p class="mb-3 text-xs font-semibold uppercase tracking-wide text-primary-600">
+        <a href="/boosters" class="hover:text-primary-700">All-Sports Boosters</a> / Sponsorships
+      </p>
+      <h1 class="max-w-[20ch] text-h1 font-bold text-ink-900">Sponsorships</h1>
+    </div>
+
+    <div class="grid gap-10 py-14 md:grid-cols-[1fr_280px]">
+      <div class="min-w-0">
+        <div class="max-w-[70ch] space-y-5 text-base leading-relaxed text-ink-700">
+          <p>
+            The Poland All Sports Booster Club is excited to offer local businesses and community members the chance to become an official sponsor of Bulldog Athletics for the upcoming season.
+          </p>
+          <p>
+            Sponsorship goes beyond a single game or event — it's a season-long partnership that puts your name and support in front of the Poland community all year, while directly funding the equipment, gear, and opportunities that make Poland Athletics great for more than 800 student-athletes.
+          </p>
+          <p>
+            Whatever level of sponsorship fits your business, every contribution keeps the tradition of excellence in Poland Athletics going strong.
+          </p>
+          <p class="text-lg font-bold text-ink-900">GO DOGS!</p>
+        </div>
+
+        {pdf ? (
+          <PdfPreview media={pdf} />
+        ) : (
+          <p class="mt-8 text-ink-400">Sponsorship details coming soon — check back shortly.</p>
+        )}
+      </div>
+
+      <BoosterSidebar current="/boosters/sponsorships" />
+    </div>
+  </div>
+</BaseLayout>

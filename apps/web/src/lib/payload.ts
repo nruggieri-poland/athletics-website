@@ -494,6 +494,23 @@ export async function getArticlesForTag(tagSlug: string, limit = 12): Promise<Ar
   return data.docs;
 }
 
+// Looked up by tag from a developer-wired page that needs exactly one
+// specific uploaded file — e.g. this year's Program Ads or Sponsorships
+// PDF — rather than a curated Gallery of several items. Most-recently
+// uploaded wins, so re-uploading next year's version (same tag) replaces
+// last year's automatically with no code change.
+export async function getMediaForTag(tagSlug: string): Promise<Media | null> {
+  const data = await payloadFetch<PaginatedDocs<Media>>(
+    `/api/media${toQuery({
+      "where[tags.slug][equals]": tagSlug,
+      "where[isPublic][equals]": true,
+      sort: "-createdAt",
+      limit: 1,
+    })}`,
+  );
+  return data.docs[0] ?? null;
+}
+
 export async function getSiteSettings(): Promise<SiteSettings> {
   return payloadFetch<SiteSettings>("/api/globals/site-settings");
 }

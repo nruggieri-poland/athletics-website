@@ -1,0 +1,36 @@
+---
+// An embedded <iframe> PDF preview is unreliable on mobile (iOS Safari and
+// most Android browsers don't render PDFs inline in an iframe at all — the
+// pane just shows blank or a download prompt) — so the direct "Open/
+// Download PDF" link above the preview is the real, always-working action,
+// not just a fallback for the rare case the iframe fails.
+import { mediaUrl, type Media } from "../../lib/payload";
+
+interface Props {
+  media: Media;
+}
+
+const { media } = Astro.props;
+const src = mediaUrl(media);
+const label = media.title || media.alt || "PDF document";
+---
+
+<div class="my-8">
+  <div class="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-ink-100 bg-ink-50 px-4 py-3">
+    <p class="text-sm font-semibold text-ink-900">{label}</p>
+    <a
+      href={src}
+      target="_blank"
+      rel="noopener noreferrer"
+      class="shrink-0 rounded-md bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700"
+    >
+      Open / Download PDF
+    </a>
+  </div>
+  <iframe
+    src={src}
+    title={label}
+    class="h-[80vh] w-full rounded-lg border border-ink-100"
+    loading="lazy"
+  />
+</div>
