@@ -85,6 +85,9 @@ function formatDate(dateStr: string): string {
           ) : (
             <span class="text-xs text-ink-300">Upcoming</span>
           )}
+          {game.eventType === "Scrimmage" && (
+            <span class="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700">Scrimmage</span>
+          )}
           {game.isConferenceGame && (
             <span class="rounded-full bg-primary-50 px-2 py-0.5 text-[11px] font-medium text-primary-700">Conf</span>
           )}

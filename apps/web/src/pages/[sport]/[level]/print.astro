@@ -37,6 +37,7 @@ const rows = games.map((game) => {
     opponent: `${game.homeOrAway === "Home" ? "vs" : game.homeOrAway === "Away" ? "@" : ""} ${game.opponentName ?? ""}`.trim(),
     location: game.location ?? "",
     result,
+    isScrimmage: game.eventType === "Scrimmage",
   };
 });
 
@@ -90,7 +91,10 @@ const generatedOn = new Date().toLocaleDateString("en-US", { month: "long", day:
               <td class="whitespace-nowrap py-1 pr-3">{formatDate(row.date)}</td>
               <td class="whitespace-nowrap py-1 pr-3">{row.time}</td>
               <td class="whitespace-nowrap py-1 pr-3">{row.homeOrAway}</td>
-              <td class="py-1 pr-3">{row.opponent}</td>
+              <td class="py-1 pr-3">
+                {row.opponent}
+                {row.isScrimmage && <span class="ml-1 text-xs font-semibold uppercase text-amber-700">(Scrimmage)</span>}
+              </td>
               <td class="py-1 pr-3">{row.location}</td>
               <td class="whitespace-nowrap py-1">{row.result}</td>
             </tr>

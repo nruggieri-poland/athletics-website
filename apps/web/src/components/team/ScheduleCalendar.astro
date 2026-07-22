@@ -68,14 +68,16 @@ function resultLabel(game: Game): string | null {
 function pillSecondLine(game: Game): string {
   if (game.isCancelled) return "Cancelled";
   if (game.isPostponed) return "Postponed";
-  return resultLabel(game) ?? (game.isTimeTBD || !game.time ? "TBD" : game.time ?? "");
+  const base = resultLabel(game) ?? (game.isTimeTBD || !game.time ? "TBD" : game.time ?? "");
+  return game.eventType === "Scrimmage" ? `Scrimmage · ${base}` : base;
 }
 
 function pillTitle(game: Game): string {
   const timeLabel = game.isTimeTBD || !game.time ? "Time TBD" : game.time;
   const result = resultLabel(game);
   const status = game.isCancelled ? " (Cancelled)" : game.isPostponed ? " (Postponed)" : "";
-  return `${pillLabel(game)}, ${game.homeOrAway}, ${timeLabel}${result ? ` — ${result}` : ""}${status}${
+  const scrimmage = game.eventType === "Scrimmage" ? " (Scrimmage)" : "";
+  return `${pillLabel(game)}, ${game.homeOrAway}, ${timeLabel}${result ? ` — ${result}` : ""}${status}${scrimmage}${
     game.location ? `, ${game.location}` : ""
   }`;
 }
@@ -120,9 +122,11 @@ function pillTitle(game: Game): string {
                               "rounded px-1 py-0.5 text-[10px] font-medium leading-tight",
                               game.isCancelled || game.isPostponed
                                 ? "bg-ink-100 text-ink-600 line-through"
-                                : game.homeOrAway === "Home"
-                                  ? "bg-primary-50 text-primary-700"
-                                  : "bg-ink-100 text-ink-600",
+                                : game.eventType === "Scrimmage"
+                                  ? "bg-amber-50 text-amber-700"
+                                  : game.homeOrAway === "Home"
+                                    ? "bg-primary-50 text-primary-700"
+                                    : "bg-ink-100 text-ink-600",
                             ]}
                           >
                             <div class="flex items-center gap-1">

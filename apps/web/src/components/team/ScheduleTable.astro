@@ -47,6 +47,9 @@ function formatDate(dateStr: string): string {
               <img src={mediaUrl(game.opponentLogo)} alt="" class="h-4 w-4 shrink-0 object-contain" loading="lazy" />
             )}
             <span class="truncate text-sm font-semibold text-ink-900">{game.opponentName}</span>
+            {game.eventType === "Scrimmage" && (
+              <span class="shrink-0 rounded-full bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-700">Scrimmage</span>
+            )}
             {game.isConferenceGame && (
               <span class="shrink-0 rounded-full bg-primary-50 px-1.5 py-0.5 text-[10px] font-medium text-primary-700">Conf</span>
             )}
@@ -139,6 +142,11 @@ function formatDate(dateStr: string): string {
                 )}
                 <span class="font-medium text-ink-900">{game.opponentName}</span>
                 {game.opponentMascot && <span class="text-ink-500">{game.opponentMascot}</span>}
+                {game.eventType === "Scrimmage" && (
+                  <span class="rounded-full bg-amber-50 px-1.5 py-0.5 text-[11px] font-medium text-amber-700">
+                    Scrimmage
+                  </span>
+                )}
                 {game.isConferenceGame && (
                   <span class="rounded-full bg-primary-50 px-1.5 py-0.5 text-[11px] font-medium text-primary-700">
                     Conf

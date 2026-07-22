@@ -367,9 +367,10 @@ export async function getGamesForTeam(teamId: string): Promise<Game[]> {
     `/api/games${toQuery({
       "where[team][equals]": teamId,
       "where[status][equals]": "active",
-      // Public schedule shows games only — internal Practices/Scrimmages
-      // (about 13% of synced events) are sync-tracked but not fan-facing.
-      "where[eventType][equals]": "Game",
+      // Public schedule shows Games and Scrimmages (tagged as such in the
+      // UI) — internal Practices/Other events are sync-tracked but not
+      // fan-facing.
+      "where[eventType][in]": "Game,Scrimmage",
       // The full current school-year season always shows, regardless of
       // today's date — a Fall sport shouldn't look "done" once winter hits.
       "where[date][greater_than_equal]": start,
@@ -391,7 +392,7 @@ export async function getSchoolYearGamesForSport(sportId: string): Promise<Game[
     `/api/games${toQuery({
       "where[team.sport][equals]": sportId,
       "where[status][equals]": "active",
-      "where[eventType][equals]": "Game",
+      "where[eventType][in]": "Game,Scrimmage",
       "where[date][greater_than_equal]": start,
       "where[date][less_than_equal]": end,
       sort: "date",
@@ -409,7 +410,7 @@ export async function getSchoolYearGames(): Promise<Game[]> {
   const data = await payloadFetch<PaginatedDocs<Game>>(
     `/api/games${toQuery({
       "where[status][equals]": "active",
-      "where[eventType][equals]": "Game",
+      "where[eventType][in]": "Game,Scrimmage",
       "where[date][greater_than_equal]": start,
       "where[date][less_than_equal]": end,
       sort: "date",
@@ -425,7 +426,7 @@ export async function getUpcomingGames(limit = 8): Promise<Game[]> {
     `/api/games${toQuery({
       "where[status][equals]": "active",
       "where[date][greater_than_equal]": today,
-      "where[eventType][equals]": "Game",
+      "where[eventType][in]": "Game,Scrimmage",
       sort: "date",
       limit,
     })}`,
@@ -443,7 +444,7 @@ export async function getUpcomingGamesForSport(sportId: string, limit = 10): Pro
       "where[team.sport][equals]": sportId,
       "where[status][equals]": "active",
       "where[date][greater_than_equal]": today,
-      "where[eventType][equals]": "Game",
+      "where[eventType][in]": "Game,Scrimmage",
       sort: "date",
       limit,
     })}`,
@@ -542,7 +543,7 @@ export async function getNextHomeGame(): Promise<Game | null> {
   const data = await payloadFetch<PaginatedDocs<Game>>(
     `/api/games${toQuery({
       "where[status][equals]": "active",
-      "where[eventType][equals]": "Game",
+      "where[eventType][in]": "Game,Scrimmage",
       "where[homeOrAway][equals]": "Home",
       "where[date][greater_than_equal]": today,
       sort: "date",

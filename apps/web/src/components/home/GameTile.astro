@@ -54,6 +54,9 @@ const timeLabel = game.isTimeTBD || !game.time ? "TBD" : game.time;
           {game.homeOrAway}
         </span>
       )}
+      {game.eventType === "Scrimmage" && (
+        <span class="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">Scrimmage</span>
+      )}
       {game.isConferenceGame && (
         <span class="rounded-full bg-primary-50 px-2 py-0.5 text-xs font-medium text-primary-700">Conf</span>
       )}
