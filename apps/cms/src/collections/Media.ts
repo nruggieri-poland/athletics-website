@@ -105,6 +105,19 @@ export const Media: CollectionConfig = {
           defaultValue: false,
           label: 'Visible in Resources listings',
         },
+        {
+          name: 'placement',
+          type: 'select',
+          defaultValue: 'none',
+          admin: {
+            description: 'Assigns this file to render on a specific hardcoded page (e.g. the Boosters Program Ads/Sponsorships PDF preview), independent of tags or the Visible checkbox above.',
+          },
+          options: [
+            { label: 'None (tags/galleries only)', value: 'none' },
+            { label: 'Boosters — Program Ads PDF', value: 'boosterProgramAds' },
+            { label: 'Boosters — Sponsorships PDF', value: 'boosterSponsorships' },
+          ],
+        },
       ],
     },
   ],

@@ -2,9 +2,9 @@
 import BaseLayout from "../../../layouts/BaseLayout.astro";
 import PdfPreview from "../../../components/shared/PdfPreview.astro";
 import BoosterSidebar from "../../../components/boosters/BoosterSidebar.astro";
-import { getMediaForTag } from "../../../lib/payload";
+import { getMediaByPlacement } from "../../../lib/payload";
 
-const pdf = await getMediaForTag("booster-program-ads");
+const pdf = await getMediaByPlacement("boosterProgramAds");
 ---
 
 <BaseLayout title="Program Ads" description="Purchase ad space in the Poland All-Sports Boosters' Fall Athletic Program.">

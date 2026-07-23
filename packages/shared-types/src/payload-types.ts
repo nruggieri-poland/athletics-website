@@ -194,6 +194,10 @@ export interface Media {
   description?: string | null;
   sortOrder?: number | null;
   isPublic?: boolean | null;
+  /**
+   * Assigns this file to render on a specific hardcoded page (e.g. the Boosters Program Ads/Sponsorships PDF preview), independent of tags or the Visible checkbox above.
+   */
+  placement?: ('none' | 'boosterProgramAds' | 'boosterSponsorships') | null;
   folder?: (number | null) | FolderInterface;
   updatedAt: string;
   createdAt: string;
@@ -684,6 +688,7 @@ export interface MediaSelect<T extends boolean = true> {
   description?: T;
   sortOrder?: T;
   isPublic?: T;
+  placement?: T;
   folder?: T;
   updatedAt?: T;
   createdAt?: T;
