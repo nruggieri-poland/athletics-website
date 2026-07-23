@@ -20,7 +20,6 @@ import { SiteSettings } from './globals/SiteSettings.ts'
 import { Navigation } from './globals/Navigation.ts'
 import { SyncStatus } from './globals/SyncStatus.ts'
 import { importFeedHandler } from './endpoints/importFeed.ts'
-import { healthCheckCanaryHandler } from './endpoints/healthCheckCanary.ts'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -37,8 +36,15 @@ const csrfOrigins = (process.env.CSRF_ORIGINS || 'http://localhost:3000')
   .map((origin) => origin.trim())
   .filter(Boolean)
 
+// A missing secret must fail loudly at startup, not silently sign every
+// auth cookie/token with an empty (forgeable) string — the `|| ''`
+// fallback this replaced would have done exactly that.
+if (!process.env.PAYLOAD_SECRET) {
+  throw new Error('PAYLOAD_SECRET environment variable is not set.')
+}
+
 export default buildConfig({
-  secret: process.env.PAYLOAD_SECRET || '',
+  secret: process.env.PAYLOAD_SECRET,
   csrf: csrfOrigins,
   admin: {
     user: Users.slug,
@@ -78,11 +84,6 @@ export default buildConfig({
       path: '/import-feed',
       method: 'post',
       handler: importFeedHandler,
-    },
-    {
-      path: '/health-check-canary',
-      method: 'get',
-      handler: healthCheckCanaryHandler,
     },
   ],
   db: postgresAdapter({
