@@ -20,6 +20,7 @@ export interface Media {
   sortOrder?: number;
   tags?: Tag[];
   isPublic?: boolean;
+  placement?: "none" | "boosterProgramAds" | "boosterSponsorships";
 }
 
 export interface Sport {
@@ -494,16 +495,20 @@ export async function getArticlesForTag(tagSlug: string, limit = 12): Promise<Ar
   return data.docs;
 }
 
-// Looked up by tag from a developer-wired page that needs exactly one
+// Looked up by a Media doc's own `placement` field (mirrors
+// getLinksByPlacement) from a developer-wired page that needs exactly one
 // specific uploaded file — e.g. this year's Program Ads or Sponsorships
-// PDF — rather than a curated Gallery of several items. Most-recently
-// uploaded wins, so re-uploading next year's version (same tag) replaces
-// last year's automatically with no code change.
-export async function getMediaForTag(tagSlug: string): Promise<Media | null> {
+// PDF — rather than a curated Gallery of several items. Deliberately
+// independent of `isPublic`/tags: those govern general Resources-listing
+// visibility, a different concern from "does this page show a file at
+// all." Most-recently uploaded wins, so re-uploading next year's version
+// (same placement) replaces last year's automatically with no code change.
+export async function getMediaByPlacement(
+  placement: "boosterProgramAds" | "boosterSponsorships",
+): Promise<Media | null> {
   const data = await payloadFetch<PaginatedDocs<Media>>(
     `/api/media${toQuery({
-      "where[tags.slug][equals]": tagSlug,
-      "where[isPublic][equals]": true,
+      "where[placement][equals]": placement,
       sort: "-createdAt",
       limit: 1,
     })}`,

@@ -2,9 +2,9 @@
 import BaseLayout from "../../../layouts/BaseLayout.astro";
 import PdfPreview from "../../../components/shared/PdfPreview.astro";
 import BoosterSidebar from "../../../components/boosters/BoosterSidebar.astro";
-import { getMediaForTag } from "../../../lib/payload";
+import { getMediaByPlacement } from "../../../lib/payload";
 
-const pdf = await getMediaForTag("booster-sponsorships");
+const pdf = await getMediaByPlacement("boosterSponsorships");
 ---
 
 <BaseLayout title="Sponsorships" description="Become a sponsor of Poland All-Sports Boosters and support Bulldog Athletics year-round.">

@@ -9,6 +9,7 @@ import * as migration_20260720_115937_rework_drop_documents_and_tags_type from '
 import * as migration_20260720_140323_drop_games_opponent_logo from './20260720_140323_drop_games_opponent_logo';
 import * as migration_20260721_155325_add_links_cta_and_nav_group from './20260721_155325_add_links_cta_and_nav_group';
 import * as migration_20260722_180833_add_sync_status from './20260722_180833_add_sync_status';
+import * as migration_20260723_023140_add_media_placement from './20260723_023140_add_media_placement';
 
 export const migrations = [
   {
@@ -64,6 +65,11 @@ export const migrations = [
   {
     up: migration_20260722_180833_add_sync_status.up,
     down: migration_20260722_180833_add_sync_status.down,
-    name: '20260722_180833_add_sync_status'
+    name: '20260722_180833_add_sync_status',
+  },
+  {
+    up: migration_20260723_023140_add_media_placement.up,
+    down: migration_20260723_023140_add_media_placement.down,
+    name: '20260723_023140_add_media_placement'
   },
 ];
