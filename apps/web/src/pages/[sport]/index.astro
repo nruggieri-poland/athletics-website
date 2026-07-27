@@ -70,7 +70,7 @@ for (const game of seasonGames) {
                 class="block w-full max-w-xs rounded-md border border-ink-200 bg-surface px-3 py-2 text-sm font-medium text-ink-900 sm:hidden"
               >
                 {activeTeams.map((team, i) => (
-                  <option value={team.id} selected={i === 0}>{team.level}</option>
+                  <option value={team.id} data-level-slug={levelSlug(team.level)} selected={i === 0}>{team.level}</option>
                 ))}
               </select>
               <div role="group" aria-label="Team level" class="hidden w-fit rounded-md border border-ink-200 bg-surface p-0.5 sm:flex">
@@ -78,6 +78,7 @@ for (const game of seasonGames) {
                   <button
                     type="button"
                     data-level-tab={team.id}
+                    data-level-slug={levelSlug(team.level)}
                     aria-pressed={i === 0 ? "true" : "false"}
                     class="rounded px-3 py-1.5 text-sm font-medium text-ink-600 aria-pressed:bg-primary-600 aria-pressed:text-white"
                   >
@@ -88,7 +89,7 @@ for (const game of seasonGames) {
             </div>
             <div data-level-panels>
               {activeTeams.map((team, i) => (
-                <div data-level-panel={team.id} class:list={[i !== 0 && "hidden"]}>
+                <div data-level-panel={team.id} data-level-slug={levelSlug(team.level)} class:list={[i !== 0 && "hidden"]}>
                   <ScheduleList
                     games={gamesByTeam.get(String(team.id)) ?? []}
                     printHref={`/${sport.slug}/${levelSlug(team.level)}/print`}
@@ -134,7 +135,9 @@ for (const game of seasonGames) {
   // (sm: and up) and a native <select> below that, since a sport with
   // several levels (Football: Varsity/JV/Freshman/8th/7th) wraps onto
   // multiple messy rows as buttons on a narrow phone.
-  function switchLevel(trigger: Element, target: string | undefined) {
+  const LEVEL_PARAM = "level";
+
+  function switchLevel(trigger: Element, target: string | undefined, options: { updateUrl?: boolean } = {}) {
     if (!target) return;
     const group = trigger.closest(".mb-6");
     const panelsRoot = group?.parentElement?.querySelector("[data-level-panels]");
@@ -144,9 +147,23 @@ for (const game of seasonGames) {
     });
     const select = group.querySelector<HTMLSelectElement>("[data-level-select]");
     if (select && select.value !== target) select.value = target;
+    let activeSlug: string | undefined;
     panelsRoot.querySelectorAll<HTMLElement>("[data-level-panel]").forEach((panel) => {
-      panel.classList.toggle("hidden", panel.dataset.levelPanel !== target);
+      const isActive = panel.dataset.levelPanel === target;
+      panel.classList.toggle("hidden", !isActive);
+      if (isActive) activeSlug = panel.dataset.levelSlug;
     });
+
+    // Persisted so a refresh (or a shared/bookmarked link) lands back on the
+    // level someone actually picked, instead of always resetting to
+    // whichever level happens to be first — replaceState, not pushState,
+    // since switching tabs is a view toggle, not a new page to step back
+    // through with the browser's Back button.
+    if (options.updateUrl !== false && activeSlug) {
+      const url = new URL(location.href);
+      url.searchParams.set(LEVEL_PARAM, activeSlug);
+      history.replaceState(history.state, "", url);
+    }
   }
 
   document.querySelectorAll<HTMLElement>("[data-level-tab]").forEach((btn) => {
@@ -156,4 +173,16 @@ for (const game of seasonGames) {
   document.querySelectorAll<HTMLSelectElement>("[data-level-select]").forEach((select) => {
     select.addEventListener("change", () => switchLevel(select, select.value));
   });
+
+  // On load, honor a `?level=` param from a refresh, bookmark, or shared
+  // link — matched against the same slug (e.g. "junior-varsity") already
+  // used in this sport's print-view URLs, not the opaque team id.
+  const requestedSlug = new URLSearchParams(location.search).get(LEVEL_PARAM);
+  if (requestedSlug) {
+    document.querySelectorAll<HTMLElement>("[data-level-tab]").forEach((btn) => {
+      if (btn.dataset.levelSlug === requestedSlug) {
+        switchLevel(btn, btn.dataset.levelTab, { updateUrl: false });
+      }
+    });
+  }
 </script>
