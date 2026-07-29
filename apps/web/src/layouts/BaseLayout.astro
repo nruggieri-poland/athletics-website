@@ -40,9 +40,15 @@ const faviconHref = logo?.url ? mediaUrl(logo) : "/favicon.svg";
 const faviconType = logo?.mimeType || "image/svg+xml";
 
 // A per-page `image` prop (an article's heroImage, a document's own file)
-// wins; otherwise every page still gets a real social-preview image via
-// the site logo rather than no og:image at all.
-const ogImage = image || (logo?.url ? mediaUrl(logo, "card") : undefined);
+// wins; otherwise every page falls back to SiteSettings' dedicated
+// socialImage (a wide landscape photo meant for this), and only as a last
+// resort to the logo — the logo is square-ish, made for the header/
+// favicon, and looks cropped/awkward stretched into a big preview card.
+const socialImage = siteSettings?.socialImage;
+const ogImage =
+  image ||
+  (socialImage?.url ? mediaUrl(socialImage, "card") : undefined) ||
+  (logo?.url ? mediaUrl(logo, "card") : undefined);
 const canonicalUrl = new URL(Astro.url.pathname, Astro.site).href;
 ---
 

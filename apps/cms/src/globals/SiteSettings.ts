@@ -21,6 +21,15 @@ export const SiteSettings: GlobalConfig = {
       relationTo: 'media',
     },
     {
+      name: 'socialImage',
+      type: 'upload',
+      relationTo: 'media',
+      admin: {
+        description:
+          'Default social-share preview image (Facebook/iMessage/etc.) for any page or article that doesn\'t have its own — ideally a wide ~1200x630 landscape photo, not the logo. The logo is square-ish and made for the header/favicon, not a big preview card, so it\'s only used as a last resort if this is left blank.',
+      },
+    },
+    {
       name: 'address',
       type: 'text',
       admin: {
