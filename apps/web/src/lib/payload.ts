@@ -228,6 +228,7 @@ export function isExternalGalleryItem(ref: GalleryItemRef): boolean {
 export interface SiteSettings {
   siteName: string;
   logo?: Media;
+  socialImage?: Media;
   address?: string;
   primaryColor?: string;
   secondaryColor?: string;

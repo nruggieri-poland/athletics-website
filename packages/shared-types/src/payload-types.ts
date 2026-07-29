@@ -958,6 +958,10 @@ export interface SiteSetting {
   siteName?: string | null;
   logo?: (number | null) | Media;
   /**
+   * Default social-share preview image (Facebook/iMessage/etc.) for any page or article that doesn't have its own — ideally a wide ~1200x630 landscape photo, not the logo. The logo is square-ish and made for the header/favicon, not a big preview card, so it's only used as a last resort if this is left blank.
+   */
+  socialImage?: (number | null) | Media;
+  /**
    * School address shown in the top banner, e.g. "100 Bulldog Ln, Poland, OH 44514".
    */
   address?: string | null;
@@ -1052,6 +1056,7 @@ export interface SyncStatus {
 export interface SiteSettingsSelect<T extends boolean = true> {
   siteName?: T;
   logo?: T;
+  socialImage?: T;
   address?: T;
   primaryColor?: T;
   secondaryColor?: T;
