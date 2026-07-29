@@ -45,7 +45,12 @@ const formattedDate = new Date(article.publishedDate).toLocaleDateString("en-US"
 });
 ---
 
-<BaseLayout title={article.title} description={article.excerpt}>
+<BaseLayout
+  title={article.title}
+  description={article.excerpt}
+  image={mediaUrl(article.heroImage, "card")}
+  type="article"
+>
   <article class="mx-auto max-w-content px-6 py-16">
     <div class="mx-auto max-w-2xl">
       <p class="text-sm font-medium uppercase tracking-wide text-primary-600">{formattedDate}</p>
