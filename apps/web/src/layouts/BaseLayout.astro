@@ -8,9 +8,14 @@ import { getSports, getTeams, getSiteSettings, getNavigation, mediaUrl } from ".
 interface Props {
   title: string;
   description?: string;
+  // Absolute URL of a specific image for this page to use as its social
+  // preview (e.g. an article's heroImage) — falls back to the site logo
+  // below when omitted, so every page gets a real og:image either way.
+  image?: string;
+  type?: "website" | "article";
 }
 
-const { title, description = "Poland Seminary Bulldogs Athletics" } = Astro.props;
+const { title, description = "Poland Seminary Bulldogs Athletics", image, type = "website" } = Astro.props;
 
 let sports: Awaited<ReturnType<typeof getSports>> = [];
 let teams: Awaited<ReturnType<typeof getTeams>> = [];
@@ -33,6 +38,12 @@ const siteName = siteSettings?.siteName || "Poland Seminary Bulldogs";
 const logo = siteSettings?.logo;
 const faviconHref = logo?.url ? mediaUrl(logo) : "/favicon.svg";
 const faviconType = logo?.mimeType || "image/svg+xml";
+
+// A per-page `image` prop (an article's heroImage, a document's own file)
+// wins; otherwise every page still gets a real social-preview image via
+// the site logo rather than no og:image at all.
+const ogImage = image || (logo?.url ? mediaUrl(logo, "card") : undefined);
+const canonicalUrl = new URL(Astro.url.pathname, Astro.site).href;
 ---
 
 <!doctype html>
@@ -42,7 +53,20 @@ const faviconType = logo?.mimeType || "image/svg+xml";
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{title} | {siteName}</title>
     <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalUrl} />
     <link rel="icon" type={faviconType} href={faviconHref} />
+
+    <meta property="og:type" content={type} />
+    <meta property="og:site_name" content={siteName} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalUrl} />
+    {ogImage && <meta property="og:image" content={ogImage} />}
+
+    <meta name="twitter:card" content={ogImage ? "summary_large_image" : "summary"} />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    {ogImage && <meta name="twitter:image" content={ogImage} />}
     <script is:inline>
       // Runs before first paint so a returning visitor's saved theme choice
       // applies immediately — no flash of the wrong theme. A fresh visitor

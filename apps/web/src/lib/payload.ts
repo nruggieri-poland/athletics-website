@@ -520,6 +520,21 @@ export async function getSiteSettings(): Promise<SiteSettings> {
   return payloadFetch<SiteSettings>("/api/globals/site-settings");
 }
 
+// Every Media doc an admin has explicitly marked public — the source list
+// for /documents/[filename], which builds one real, shareable HTML landing
+// page per file (title/description/og:image) since a raw uploaded-file URL
+// can never carry that metadata itself (it isn't HTML). filename is the
+// route param since Payload already enforces it as unique.
+export async function getPublicMedia(): Promise<Media[]> {
+  const data = await payloadFetch<PaginatedDocs<Media>>(
+    `/api/media${toQuery({
+      "where[isPublic][equals]": true,
+      limit: 500,
+    })}`,
+  );
+  return data.docs;
+}
+
 export async function getNavigation(): Promise<Navigation> {
   return payloadFetch<Navigation>("/api/globals/navigation");
 }
