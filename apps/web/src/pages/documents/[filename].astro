@@ -29,6 +29,7 @@ const title = media.title || media.alt;
   title={title}
   description={media.description}
   image={isImage ? mediaUrl(media, "card") : undefined}
+  imageAlt={isImage ? media.alt : undefined}
 >
   <div class="mx-auto max-w-content px-6 py-14">
     <p class="mb-3 text-xs font-semibold uppercase tracking-wide text-primary-600">

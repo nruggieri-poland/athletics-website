@@ -377,7 +377,7 @@ export async function getGamesForTeam(teamId: string): Promise<Game[]> {
       // today's date — a Fall sport shouldn't look "done" once winter hits.
       "where[date][greater_than_equal]": start,
       "where[date][less_than_equal]": end,
-      sort: "date",
+      sort: "date,time24",
       limit: 200,
     })}`,
   );
@@ -397,7 +397,7 @@ export async function getSchoolYearGamesForSport(sportId: string): Promise<Game[
       "where[eventType][in]": "Game,Scrimmage",
       "where[date][greater_than_equal]": start,
       "where[date][less_than_equal]": end,
-      sort: "date",
+      sort: "date,time24",
       limit: 500,
     })}`,
   );
@@ -415,7 +415,7 @@ export async function getSchoolYearGames(): Promise<Game[]> {
       "where[eventType][in]": "Game,Scrimmage",
       "where[date][greater_than_equal]": start,
       "where[date][less_than_equal]": end,
-      sort: "date",
+      sort: "date,time24",
       limit: 2000,
     })}`,
   );
@@ -429,7 +429,7 @@ export async function getUpcomingGames(limit = 8): Promise<Game[]> {
       "where[status][equals]": "active",
       "where[date][greater_than_equal]": today,
       "where[eventType][in]": "Game,Scrimmage",
-      sort: "date",
+      sort: "date,time24",
       limit,
     })}`,
   );
@@ -447,7 +447,7 @@ export async function getUpcomingGamesForSport(sportId: string, limit = 10): Pro
       "where[status][equals]": "active",
       "where[date][greater_than_equal]": today,
       "where[eventType][in]": "Game,Scrimmage",
-      sort: "date",
+      sort: "date,time24",
       limit,
     })}`,
   );
@@ -584,7 +584,7 @@ export async function getNextHomeGame(): Promise<Game | null> {
       "where[eventType][in]": "Game,Scrimmage",
       "where[homeOrAway][equals]": "Home",
       "where[date][greater_than_equal]": today,
-      sort: "date",
+      sort: "date,time24",
       limit: 1,
     })}`,
   );

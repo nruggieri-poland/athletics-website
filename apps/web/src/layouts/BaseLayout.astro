@@ -5,17 +5,45 @@ import Header from "../components/nav/Header.astro";
 import Footer from "../components/nav/Footer.astro";
 import { getSports, getTeams, getSiteSettings, getNavigation, mediaUrl } from "../lib/payload";
 
+// ---------------------------------------------------------------------
+// How to change what a page looks like when it's shared (Facebook,
+// iMessage, Slack, etc.) — no Payload needed for any of this:
+//
+// Every page passes these straight to <BaseLayout ...> in its own .astro
+// file's frontmatter (e.g. apps/web/src/pages/boosters/index.astro). Open
+// that file, find the <BaseLayout> tag, and edit the props directly:
+//
+//   title        — the page's title (also the browser tab title)
+//   description  — the preview card's body text
+//   image        — an absolute image URL for this specific page. Omit it
+//                  and the page falls back to SiteSettings' Social Share
+//                  Image, then the site logo — see the ogImage fallback
+//                  chain below. Only set this per-page when you want a
+//                  DIFFERENT image than that sitewide default (e.g. an
+//                  article already does this with its own heroImage).
+//   imageAlt     — alt text describing the image, for screen readers
+//                  reading the shared link's preview card. Only matters
+//                  when `image` is also set.
+//
+// Articles and document pages (news/[slug].astro, documents/[filename].astro)
+// already wire these up from their own CMS-editable fields (title, excerpt,
+// heroImage/alt) — change those in Payload as usual, not here.
+// ---------------------------------------------------------------------
 interface Props {
   title: string;
   description?: string;
-  // Absolute URL of a specific image for this page to use as its social
-  // preview (e.g. an article's heroImage) — falls back to the site logo
-  // below when omitted, so every page gets a real og:image either way.
   image?: string;
+  imageAlt?: string;
   type?: "website" | "article";
 }
 
-const { title, description = "Poland Seminary Bulldogs Athletics", image, type = "website" } = Astro.props;
+const {
+  title,
+  description = "Poland Seminary Bulldogs Athletics",
+  image,
+  imageAlt,
+  type = "website",
+} = Astro.props;
 
 let sports: Awaited<ReturnType<typeof getSports>> = [];
 let teams: Awaited<ReturnType<typeof getTeams>> = [];
@@ -49,6 +77,9 @@ const ogImage =
   image ||
   (socialImage?.url ? mediaUrl(socialImage, "card") : undefined) ||
   (logo?.url ? mediaUrl(logo, "card") : undefined);
+// Only meaningful alongside a per-page `image` — the sitewide fallbacks
+// above (socialImage/logo) don't carry their own alt text to reuse here.
+const ogImageAlt = image ? imageAlt : undefined;
 const canonicalUrl = new URL(Astro.url.pathname, Astro.site).href;
 ---
 
@@ -68,11 +99,13 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site).href;
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonicalUrl} />
     {ogImage && <meta property="og:image" content={ogImage} />}
+    {ogImageAlt && <meta property="og:image:alt" content={ogImageAlt} />}
 
     <meta name="twitter:card" content={ogImage ? "summary_large_image" : "summary"} />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
     {ogImage && <meta name="twitter:image" content={ogImage} />}
+    {ogImageAlt && <meta name="twitter:image:alt" content={ogImageAlt} />}
     <script is:inline>
       // Runs before first paint so a returning visitor's saved theme choice
       // applies immediately — no flash of the wrong theme. A fresh visitor

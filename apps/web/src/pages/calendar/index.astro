@@ -420,8 +420,15 @@ const sportsJson = JSON.stringify(sportsForFilter).replace(/</g, "\\u003c");
   function buildAgendaMonth(monthEvents: CalEvent[]): HTMLElement {
     const byDate = groupByDate(monthEvents);
     const dates = [...byDate.keys()].sort();
+    // Only today's own calendar month hides its already-past days — a month
+    // reached via "Load Earlier" is being viewed *because* it's in the past,
+    // so it still shows in full. Checked by content (this month's dates),
+    // not by window position, so it's correct however the user navigated in.
+    const todayStr = ymd(new Date());
+    const isCurrentMonth = dates.length > 0 && monthKeyOf(dates[0]) === monthKeyOf(todayStr);
     const wrap = el("div", "space-y-6");
     for (const dateStr of dates) {
+      if (isCurrentMonth && dateStr < todayStr) continue;
       const section = el("div");
       const heading = el(
         "h3",
