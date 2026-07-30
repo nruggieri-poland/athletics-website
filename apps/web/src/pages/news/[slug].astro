@@ -49,6 +49,7 @@ const formattedDate = new Date(article.publishedDate).toLocaleDateString("en-US"
   title={article.title}
   description={article.excerpt}
   image={mediaUrl(article.heroImage, "card")}
+  imageAlt={article.heroImage.alt}
   type="article"
 >
   <article class="mx-auto max-w-content px-6 py-16">
