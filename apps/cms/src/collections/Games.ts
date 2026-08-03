@@ -119,17 +119,19 @@ export const Games: CollectionConfig = {
       type: 'checkbox',
       defaultValue: false,
     },
-    // EDITOR-OWNED FIELDS — an external sync process must never write to
-    // homeScore, awayScore, result, or notes. These are populated/edited by
-    // staff in the admin UI only; this mirrors a real invariant from the
-    // WordPress system being replaced (the sync bot only touches schedule
-    // fields, never scores/results/notes).
+    // homeScore/awayScore/result are sync-owned — the EventLink feed (via
+    // scripts/schedule-sync) is the source of truth and overwrites these on
+    // every sync run, same as date/time/cancellations. Edits made here get
+    // overwritten the next time that team's schedule syncs; correct the
+    // source data upstream instead if a result is wrong. `notes` is the one
+    // field left fully editor-owned — there's no upstream equivalent to
+    // sync it from.
     {
       name: 'homeScore',
       type: 'number',
       min: 0,
       admin: {
-        description: 'Editor-owned — the external sync process must never write to this field.',
+        description: 'Sync-owned — set automatically from EventLink. Manual edits are overwritten on the next sync.',
       },
     },
     {
@@ -137,7 +139,7 @@ export const Games: CollectionConfig = {
       type: 'number',
       min: 0,
       admin: {
-        description: 'Editor-owned — the external sync process must never write to this field.',
+        description: 'Sync-owned — set automatically from EventLink. Manual edits are overwritten on the next sync.',
       },
     },
     {
@@ -149,14 +151,14 @@ export const Games: CollectionConfig = {
         { label: 'T', value: 'T' },
       ],
       admin: {
-        description: 'Editor-owned — the external sync process must never write to this field.',
+        description: 'Sync-owned — set automatically from EventLink. Manual edits are overwritten on the next sync. Not yet set for multi-opponent meets (track/swim/golf invitationals, wrestling duals).',
       },
     },
     {
       name: 'notes',
       type: 'textarea',
       admin: {
-        description: 'Editor-owned — the external sync process must never write to this field.',
+        description: 'Editor-owned — the external sync process never writes to this field.',
       },
     },
     {

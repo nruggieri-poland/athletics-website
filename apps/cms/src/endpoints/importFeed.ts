@@ -3,10 +3,24 @@ import { timingSafeEqual } from 'node:crypto'
 
 // Receives pre-parsed schedule events — pulled from nruggieri-poland/schedules'
 // published per-team JSON by scripts/schedule-sync/pull-and-sync.js — and
-// upserts them into the Games collection, keyed on externalEventId. Never
-// writes homeScore, awayScore, result, or notes — those are editor-owned,
-// mirroring the invariant the legacy WordPress plugin enforced in
-// class-pshs-db.php.
+// upserts them into the Games collection, keyed on externalEventId.
+//
+// homeScore/awayScore/result ARE sync-owned, same as every other field here —
+// EventLink (via that feed) is the source of truth for them, same as it is
+// for date/time/cancellations, and a later sync run overwrites whatever's
+// there. `notes` remains the one fully editor-owned field (no upstream
+// equivalent exists to sync it from).
+//
+// The feed's teamScore/opponentScore are always from Poland's own
+// perspective, not "home team's score" — mapScores() below translates that
+// into our homeScore/awayScore based on homeOrAway. Its `result` string
+// ("Win"/"Loss" confirmed so far) already matches our own W/L/T semantics
+// directly, just needs mapping to our select's values — see mapResult().
+//
+// allResults (the multi-opponent breakdown for meets/invitationals) is
+// deliberately not handled yet — Games models one opponent + one score pair
+// per event, with no way to store several results on one record. Those
+// events still sync everything except a result, same as before this change.
 
 interface RawEvent {
   eventId: string
@@ -17,7 +31,7 @@ interface RawEvent {
   eventTime?: string
   _time24?: string | null
   isTimeTBD: boolean
-  homeOrAway: 'Home' | 'Away'
+  homeOrAway: 'Home' | 'Away' | 'Neutral'
   opponent?: string
   opponentMascot?: string | null
   location?: string | null
@@ -25,6 +39,33 @@ interface RawEvent {
   isCancelled: boolean
   isPostponed: boolean
   conferenceGame: boolean
+  teamScore?: number | null
+  opponentScore?: number | null
+  result?: string | null
+}
+
+// "Win"/"Loss" confirmed live; anything else (a future tie/no-decision
+// string, or just null before the game's played) is deliberately left
+// unmapped rather than guessed at — the Games.result field is a strict
+// W/L/T select, so passing an unrecognized string through would fail
+// validation and abort that game's whole upsert.
+function mapResult(raw: string | null | undefined): 'W' | 'L' | 'T' | undefined {
+  if (raw === 'Win') return 'W'
+  if (raw === 'Loss') return 'L'
+  return undefined
+}
+
+// The feed's teamScore/opponentScore are always "Poland's score" /
+// "the opponent's score", regardless of home/away — Games.homeScore/
+// awayScore are the home team's/away team's score instead, so which one is
+// "ours" flips with homeOrAway. Neutral-site games have no real "home"
+// team; ours is arbitrarily written to the homeScore column so the numbers
+// still show somewhere rather than being dropped.
+function mapScores(e: RawEvent): { homeScore?: number; awayScore?: number } {
+  if (e.teamScore == null || e.opponentScore == null) return {}
+  return e.homeOrAway === 'Away'
+    ? { homeScore: e.opponentScore, awayScore: e.teamScore }
+    : { homeScore: e.teamScore, awayScore: e.opponentScore }
 }
 
 interface ImportFeedBody {
@@ -147,7 +188,13 @@ export const importFeedHandler: PayloadHandler = async (req) => {
     if (!seenExternalIdsByTeam.has(teamId)) seenExternalIdsByTeam.set(teamId, new Set())
     seenExternalIdsByTeam.get(teamId)!.add(e.eventId)
 
-    // Sync-owned fields only — never homeScore/awayScore/result/notes.
+    const result = mapResult(e.result)
+    if (e.result != null && result === undefined) {
+      warnings.push(`Unrecognized result "${e.result}" on event ${e.eventId} (${e.opponent ?? 'unknown opponent'}) — left unset.`)
+    }
+
+    // notes is the one field left fully editor-owned — everything else,
+    // including homeScore/awayScore/result now, is sync-owned.
     const data = {
       team: teamId,
       season: seasonId,
@@ -164,6 +211,8 @@ export const importFeedHandler: PayloadHandler = async (req) => {
       isConferenceGame: e.conferenceGame,
       isCancelled: e.isCancelled,
       isPostponed: e.isPostponed,
+      ...mapScores(e),
+      result,
       status: 'active' as const,
     }
 
