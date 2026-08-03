@@ -357,19 +357,19 @@ export interface Game {
   isCancelled?: boolean | null;
   isPostponed?: boolean | null;
   /**
-   * Editor-owned — the external sync process must never write to this field.
+   * Sync-owned — set automatically from EventLink. Manual edits are overwritten on the next sync.
    */
   homeScore?: number | null;
   /**
-   * Editor-owned — the external sync process must never write to this field.
+   * Sync-owned — set automatically from EventLink. Manual edits are overwritten on the next sync.
    */
   awayScore?: number | null;
   /**
-   * Editor-owned — the external sync process must never write to this field.
+   * Sync-owned — set automatically from EventLink. Manual edits are overwritten on the next sync. Not yet set for multi-opponent meets (track/swim/golf invitationals, wrestling duals).
    */
   result?: ('W' | 'L' | 'T') | null;
   /**
-   * Editor-owned — the external sync process must never write to this field.
+   * Editor-owned — the external sync process never writes to this field.
    */
   notes?: string | null;
   /**
