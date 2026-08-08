@@ -59,8 +59,9 @@ function pillLabel(game: Game): string {
 }
 
 function resultLabel(game: Game): string | null {
+  if (!game.result) return null;
   const hasScore = typeof game.homeScore === "number" && typeof game.awayScore === "number";
-  return game.result && hasScore ? `${game.result} ${game.homeScore}-${game.awayScore}` : null;
+  return hasScore ? `${game.result} ${game.homeScore}-${game.awayScore}` : game.result;
 }
 
 // Second line under the opponent name — whichever's more useful: the final
