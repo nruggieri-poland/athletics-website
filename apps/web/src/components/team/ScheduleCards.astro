@@ -19,7 +19,11 @@ function formatDate(dateStr: string): string {
     const vsOrAt = game.homeOrAway === "Home" ? "vs" : game.homeOrAway === "Away" ? "@" : "";
     const timeLabel = game.isTimeTBD || !game.time ? "TBD" : game.time;
     const hasScore = typeof game.homeScore === "number" && typeof game.awayScore === "number";
-    const resultLabel = game.result && hasScore ? `${game.result} ${game.homeScore}-${game.awayScore}` : null;
+    const resultLabel = game.result
+      ? hasScore
+        ? `${game.result} ${game.homeScore}-${game.awayScore}`
+        : game.result
+      : null;
     const showLocation = game.homeOrAway !== "Home" && game.location;
     return (
       <div
@@ -78,6 +82,9 @@ function formatDate(dateStr: string): string {
                 game.result === "W" && "text-green-700",
                 game.result === "L" && "text-red-700",
                 game.result === "T" && "text-ink-600",
+                game.result === "1st" && "text-amber-600",
+                game.result === "2nd" && "text-slate-500",
+                game.result === "3rd" && "text-orange-700",
               ]}
             >
               {resultLabel}

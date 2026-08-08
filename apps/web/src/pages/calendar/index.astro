@@ -182,7 +182,7 @@ const sportsJson = JSON.stringify(sportsForFilter).replace(/</g, "\\u003c");
     isConferenceGame: boolean;
     isCancelled: boolean;
     isPostponed: boolean;
-    result: "W" | "L" | "T" | "" | null;
+    result: "W" | "L" | "T" | "1st" | "2nd" | "3rd" | "" | null;
     homeScore: number | null;
     awayScore: number | null;
     teamName: string;
@@ -247,6 +247,22 @@ const sportsJson = JSON.stringify(sportsForFilter).replace(/</g, "\\u003c");
     return el("span", `shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${className}`, text);
   }
 
+  // W/L/T need the score suffix (e.g. "W 21-14"); 1st/2nd/3rd are a team's
+  // overall meet placement, with no home/away score pair to show alongside.
+  function resultClass(result: string | null): string {
+    if (result === "W") return "text-green-700";
+    if (result === "L") return "text-red-700";
+    if (result === "1st") return "text-amber-600";
+    if (result === "2nd") return "text-slate-500";
+    if (result === "3rd") return "text-orange-700";
+    return "text-ink-600";
+  }
+
+  function resultText(ev: { result: string | null; homeScore: number | null; awayScore: number | null }): string {
+    if (ev.homeScore !== null && ev.awayScore !== null) return `${ev.result} ${ev.homeScore}-${ev.awayScore}`;
+    return ev.result ?? "";
+  }
+
   function buildEventRow(ev: CalEvent): HTMLElement {
     // Tighter padding + fewer lines than the original 3-line layout, so a
     // phone screen fits noticeably more games before scrolling — the
@@ -293,9 +309,8 @@ const sportsJson = JSON.stringify(sportsForFilter).replace(/</g, "\\u003c");
       right.appendChild(badge("Cancelled", "bg-ink-100 text-ink-600"));
     } else if (ev.isPostponed) {
       right.appendChild(badge("Postponed", "bg-ink-100 text-ink-600"));
-    } else if (ev.result && ev.homeScore !== null && ev.awayScore !== null) {
-      const cls = ev.result === "W" ? "text-green-700" : ev.result === "L" ? "text-red-700" : "text-ink-600";
-      right.appendChild(el("span", `text-sm font-semibold ${cls}`, `${ev.result} ${ev.homeScore}-${ev.awayScore}`));
+    } else if (ev.result) {
+      right.appendChild(el("span", `text-sm font-semibold ${resultClass(ev.result)}`, resultText(ev)));
     }
     if (ev.isScrimmage) right.appendChild(badge("Scrimmage", "bg-amber-50 text-amber-700"));
     if (ev.isConferenceGame) right.appendChild(badge("Conf", "bg-primary-50 text-primary-700"));
@@ -506,13 +521,12 @@ const sportsJson = JSON.stringify(sportsForFilter).replace(/</g, "\\u003c");
     if (ev.location) metaBits.push(ev.location);
     card.appendChild(el("p", "mt-1 truncate text-[10px] text-ink-400", metaBits.join(" · ")));
 
-    if (ev.isCancelled || ev.isPostponed || ev.isScrimmage || ev.isConferenceGame || (ev.result && ev.homeScore !== null)) {
+    if (ev.isCancelled || ev.isPostponed || ev.isScrimmage || ev.isConferenceGame || ev.result) {
       const statusRow = el("div", "mt-1 flex flex-wrap items-center gap-1");
       if (ev.isCancelled) statusRow.appendChild(badge("Cancelled", "bg-ink-100 text-ink-600"));
       else if (ev.isPostponed) statusRow.appendChild(badge("Postponed", "bg-ink-100 text-ink-600"));
-      else if (ev.result && ev.homeScore !== null && ev.awayScore !== null) {
-        const cls = ev.result === "W" ? "text-green-700" : ev.result === "L" ? "text-red-700" : "text-ink-600";
-        statusRow.appendChild(el("span", `text-[10px] font-semibold ${cls}`, `${ev.result} ${ev.homeScore}-${ev.awayScore}`));
+      else if (ev.result) {
+        statusRow.appendChild(el("span", `text-[10px] font-semibold ${resultClass(ev.result)}`, resultText(ev)));
       }
       if (ev.isScrimmage) statusRow.appendChild(badge("Scrimmage", "bg-amber-50 text-amber-700"));
       if (ev.isConferenceGame) statusRow.appendChild(badge("Conf", "bg-primary-50 text-primary-700"));

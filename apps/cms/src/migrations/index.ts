@@ -11,6 +11,7 @@ import * as migration_20260721_155325_add_links_cta_and_nav_group from './202607
 import * as migration_20260722_180833_add_sync_status from './20260722_180833_add_sync_status';
 import * as migration_20260723_023140_add_media_placement from './20260723_023140_add_media_placement';
 import * as migration_20260729_143129_add_site_settings_social_image from './20260729_143129_add_site_settings_social_image';
+import * as migration_20260808_211432_game_result_place_finishes from './20260808_211432_game_result_place_finishes';
 
 export const migrations = [
   {
@@ -76,6 +77,11 @@ export const migrations = [
   {
     up: migration_20260729_143129_add_site_settings_social_image.up,
     down: migration_20260729_143129_add_site_settings_social_image.down,
-    name: '20260729_143129_add_site_settings_social_image'
+    name: '20260729_143129_add_site_settings_social_image',
+  },
+  {
+    up: migration_20260808_211432_game_result_place_finishes.up,
+    down: migration_20260808_211432_game_result_place_finishes.down,
+    name: '20260808_211432_game_result_place_finishes'
   },
 ];

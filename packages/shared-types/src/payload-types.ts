@@ -365,9 +365,9 @@ export interface Game {
    */
   awayScore?: number | null;
   /**
-   * Sync-owned — set automatically from EventLink. Manual edits are overwritten on the next sync. Not yet set for multi-opponent meets (track/swim/golf invitationals, wrestling duals).
+   * Sync-owned — set automatically from EventLink. Manual edits are overwritten on the next sync. Per-opponent breakdowns for multi-opponent meets are not yet synced, only the team's overall result.
    */
-  result?: ('W' | 'L' | 'T') | null;
+  result?: ('W' | 'L' | 'T' | '1st' | '2nd' | '3rd') | null;
   /**
    * Editor-owned — the external sync process never writes to this field.
    */

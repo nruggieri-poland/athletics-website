@@ -91,7 +91,7 @@ export interface Opponent {
 
 export type EventType = "Game" | "Practice" | "Scrimmage" | "Other";
 export type HomeOrAway = "Home" | "Away" | "Neutral";
-export type GameResult = "W" | "L" | "T" | "";
+export type GameResult = "W" | "L" | "T" | "1st" | "2nd" | "3rd" | "";
 
 export interface Game {
   id: string;
