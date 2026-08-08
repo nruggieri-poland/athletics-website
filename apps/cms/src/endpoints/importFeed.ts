@@ -44,14 +44,19 @@ interface RawEvent {
   result?: string | null
 }
 
-// "Win"/"Loss" confirmed live; anything else (a future tie/no-decision
-// string, or just null before the game's played) is deliberately left
-// unmapped rather than guessed at — the Games.result field is a strict
-// W/L/T select, so passing an unrecognized string through would fail
-// validation and abort that game's whole upsert.
-function mapResult(raw: string | null | undefined): 'W' | 'L' | 'T' | undefined {
+// "Win"/"Loss" confirmed live for dual matchups; "First"/"Second"/"Third"
+// cover a team's overall placement in an invitational/meet with more than
+// two teams. Anything else (a future tie/no-decision string, or just null
+// before the event's played) is deliberately left unmapped rather than
+// guessed at — the Games.result field is a strict select, so passing an
+// unrecognized string through would fail validation and abort that event's
+// whole upsert.
+function mapResult(raw: string | null | undefined): 'W' | 'L' | 'T' | '1st' | '2nd' | '3rd' | undefined {
   if (raw === 'Win') return 'W'
   if (raw === 'Loss') return 'L'
+  if (raw === 'First') return '1st'
+  if (raw === 'Second') return '2nd'
+  if (raw === 'Third') return '3rd'
   return undefined
 }
 

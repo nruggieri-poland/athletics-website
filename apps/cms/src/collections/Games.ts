@@ -145,13 +145,20 @@ export const Games: CollectionConfig = {
     {
       name: 'result',
       type: 'select',
+      // W/L/T for a dual (two-team) matchup; 1st/2nd/3rd for a team's
+      // overall placement in an invitational/meet with more than two teams
+      // (track, swim, golf, wrestling). Both come through the same feed
+      // field — see mapResult() in importFeed.ts.
       options: [
         { label: 'W', value: 'W' },
         { label: 'L', value: 'L' },
         { label: 'T', value: 'T' },
+        { label: '1st', value: '1st' },
+        { label: '2nd', value: '2nd' },
+        { label: '3rd', value: '3rd' },
       ],
       admin: {
-        description: 'Sync-owned — set automatically from EventLink. Manual edits are overwritten on the next sync. Not yet set for multi-opponent meets (track/swim/golf invitationals, wrestling duals).',
+        description: 'Sync-owned — set automatically from EventLink. Manual edits are overwritten on the next sync. Per-opponent breakdowns for multi-opponent meets are not yet synced, only the team\'s overall result.',
       },
     },
     {
