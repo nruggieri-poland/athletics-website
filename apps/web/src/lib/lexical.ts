@@ -7,7 +7,7 @@
 // site.
 
 import { sanitizeUrl } from "./sanitize-url";
-import { mediaUrl } from "./payload";
+import { gameResultLabel, mediaUrl } from "./payload";
 import type { Media, Team, Game } from "./payload";
 
 interface LexicalNode {
@@ -338,10 +338,10 @@ function renderScheduleSnippet(fields: LexicalNode["fields"], ctx: RenderContext
       const opponent = escapeHtml(game.opponentName ?? "TBD");
       const dateLabel = escapeHtml(formatSnippetDate(game.date));
       const timeLabel = game.isTimeTBD || !game.time ? "" : ` · ${escapeHtml(game.time)}`;
-      const result =
-        mode === "recent" && game.result
-          ? `<span class="shrink-0 text-sm font-bold text-ink-900">${escapeHtml(game.result)}${game.homeScore != null && game.awayScore != null ? ` ${game.homeScore}-${game.awayScore}` : ""}</span>`
-          : "";
+      const snippetResultLabel = mode === "recent" ? gameResultLabel(game) : null;
+      const result = snippetResultLabel
+        ? `<span class="shrink-0 text-sm font-bold text-ink-900">${escapeHtml(snippetResultLabel)}</span>`
+        : "";
       return `<div class="flex items-center justify-between gap-3 px-4 py-3"><div><p class="text-sm font-semibold text-ink-900">${vsOrAt} ${opponent}</p><p class="text-xs text-ink-500">${dateLabel}${timeLabel}</p></div>${result}</div>`;
     })
     .join("");

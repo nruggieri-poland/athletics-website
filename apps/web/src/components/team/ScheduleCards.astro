@@ -1,6 +1,6 @@
 ---
 import type { Game } from "../../lib/payload";
-import { mediaUrl } from "../../lib/payload";
+import { gameResultLabel, mediaUrl } from "../../lib/payload";
 
 interface Props {
   games: Game[];
@@ -18,12 +18,7 @@ function formatDate(dateStr: string): string {
   {games.map((game) => {
     const vsOrAt = game.homeOrAway === "Home" ? "vs" : game.homeOrAway === "Away" ? "@" : "";
     const timeLabel = game.isTimeTBD || !game.time ? "TBD" : game.time;
-    const hasScore = typeof game.homeScore === "number" && typeof game.awayScore === "number";
-    const resultLabel = game.result
-      ? hasScore
-        ? `${game.result} ${game.homeScore}-${game.awayScore}`
-        : game.result
-      : null;
+    const resultLabel = gameResultLabel(game);
     const showLocation = game.homeOrAway !== "Home" && game.location;
     return (
       <div

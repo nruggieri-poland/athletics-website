@@ -1,6 +1,6 @@
 ---
 import "../../../styles/global.css";
-import { getTeams, getGamesForTeam, getSiteSettings, levelSlug } from "../../../lib/payload";
+import { gameResultLabel, getTeams, getGamesForTeam, getSiteSettings, levelSlug } from "../../../lib/payload";
 
 export async function getStaticPaths() {
   const teams = await getTeams();
@@ -22,14 +22,11 @@ function formatDate(dateStr: string): string {
 }
 
 const rows = games.map((game) => {
-  const hasScore = typeof game.homeScore === "number" && typeof game.awayScore === "number";
   const result = game.isCancelled
     ? "Cancelled"
     : game.isPostponed
       ? "Postponed"
-      : game.result && hasScore
-        ? `${game.result} ${game.homeScore}-${game.awayScore}`
-        : "";
+      : gameResultLabel(game) ?? "";
   return {
     date: game.date.slice(0, 10),
     time: game.isTimeTBD || !game.time ? "TBD" : game.time,

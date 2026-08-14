@@ -1,6 +1,6 @@
 ---
 import type { Game } from "../../lib/payload";
-import { mediaUrl } from "../../lib/payload";
+import { gameResultLabel, mediaUrl } from "../../lib/payload";
 
 interface Props {
   games: Game[];
@@ -23,12 +23,7 @@ function formatDate(dateStr: string): string {
 <div class="divide-y divide-ink-100 rounded-lg border border-ink-100 sm:hidden">
   {games.map((game) => {
     const timeLabel = game.isTimeTBD || !game.time ? "TBD" : game.time;
-    const hasScore = typeof game.homeScore === "number" && typeof game.awayScore === "number";
-    const resultLabel = game.result
-      ? hasScore
-        ? `${game.result} ${game.homeScore}-${game.awayScore}`
-        : game.result
-      : null;
+    const resultLabel = gameResultLabel(game);
     const showLocation = game.homeOrAway !== "Home" && game.location;
     return (
       <div class:list={["flex items-center gap-2.5 px-3 py-2", (game.isCancelled || game.isPostponed) && "opacity-60"]}>
@@ -105,12 +100,7 @@ function formatDate(dateStr: string): string {
     <tbody>
       {games.map((game) => {
         const timeLabel = game.isTimeTBD || !game.time ? "TBD" : game.time;
-        const hasScore = typeof game.homeScore === "number" && typeof game.awayScore === "number";
-        const resultLabel = game.result
-          ? hasScore
-            ? `${game.result} ${game.homeScore}-${game.awayScore}`
-            : game.result
-          : null;
+        const resultLabel = gameResultLabel(game);
         // Home games are always at the same venue — showing the full
         // location for every single row is repeat noise once the
         // Home/Away column already says "HOME". Away/neutral games are
