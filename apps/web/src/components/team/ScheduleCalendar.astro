@@ -1,6 +1,6 @@
 ---
 import type { Game } from "../../lib/payload";
-import { mediaUrl } from "../../lib/payload";
+import { gameResultLabel, mediaUrl } from "../../lib/payload";
 
 interface Props {
   games: Game[];
@@ -58,24 +58,18 @@ function pillLabel(game: Game): string {
   return `${vsOrAt} ${game.opponentName}`.trim();
 }
 
-function resultLabel(game: Game): string | null {
-  if (!game.result) return null;
-  const hasScore = typeof game.homeScore === "number" && typeof game.awayScore === "number";
-  return hasScore ? `${game.result} ${game.homeScore}-${game.awayScore}` : game.result;
-}
-
 // Second line under the opponent name — whichever's more useful: the final
 // score once played, otherwise the scheduled time.
 function pillSecondLine(game: Game): string {
   if (game.isCancelled) return "Cancelled";
   if (game.isPostponed) return "Postponed";
-  const base = resultLabel(game) ?? (game.isTimeTBD || !game.time ? "TBD" : game.time ?? "");
+  const base = gameResultLabel(game) ?? (game.isTimeTBD || !game.time ? "TBD" : game.time ?? "");
   return game.eventType === "Scrimmage" ? `Scrimmage · ${base}` : base;
 }
 
 function pillTitle(game: Game): string {
   const timeLabel = game.isTimeTBD || !game.time ? "Time TBD" : game.time;
-  const result = resultLabel(game);
+  const result = gameResultLabel(game);
   const status = game.isCancelled ? " (Cancelled)" : game.isPostponed ? " (Postponed)" : "";
   const scrimmage = game.eventType === "Scrimmage" ? " (Scrimmage)" : "";
   return `${pillLabel(game)}, ${game.homeOrAway}, ${timeLabel}${result ? ` — ${result}` : ""}${status}${scrimmage}${

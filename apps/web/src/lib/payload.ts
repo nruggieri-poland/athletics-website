@@ -121,6 +121,24 @@ export interface Game {
   status: "active" | "removed";
 }
 
+// homeScore/awayScore are the literal home team's/away team's score (see
+// importFeed.ts's mapScores()) — not "our score" — so which one is Poland's
+// flips with homeOrAway. Every result display across the site should read
+// Poland's score first regardless of sport or home/away, so this is the one
+// place that ordering is computed rather than each component reading
+// homeScore/awayScore directly. Returns null when there's no result to show
+// (e.g. the game hasn't been played yet).
+export function gameResultLabel(
+  game: Pick<Game, "result" | "homeScore" | "awayScore" | "homeOrAway">,
+): string | null {
+  if (!game.result) return null;
+  const hasScore = typeof game.homeScore === "number" && typeof game.awayScore === "number";
+  if (!hasScore) return game.result;
+  const [teamScore, opponentScore] =
+    game.homeOrAway === "Away" ? [game.awayScore, game.homeScore] : [game.homeScore, game.awayScore];
+  return `${game.result} ${teamScore}-${opponentScore}`;
+}
+
 export type ArticleLinkType = "article" | "external" | "pdf";
 
 export interface Article {

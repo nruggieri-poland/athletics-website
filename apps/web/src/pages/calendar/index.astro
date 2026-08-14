@@ -258,9 +258,21 @@ const sportsJson = JSON.stringify(sportsForFilter).replace(/</g, "\\u003c");
     return "text-ink-600";
   }
 
-  function resultText(ev: { result: string | null; homeScore: number | null; awayScore: number | null }): string {
-    if (ev.homeScore !== null && ev.awayScore !== null) return `${ev.result} ${ev.homeScore}-${ev.awayScore}`;
-    return ev.result ?? "";
+  // homeScore/awayScore are the literal home team's/away team's score, not
+  // "our score" — which one is Poland's flips with homeOrAway (mirrors
+  // gameResultLabel() in lib/payload.ts, duplicated here rather than
+  // imported since this is a client-side bundle and that module is meant
+  // for build-time/server use).
+  function resultText(ev: {
+    result: string | null;
+    homeScore: number | null;
+    awayScore: number | null;
+    homeOrAway: "Home" | "Away" | "Neutral";
+  }): string {
+    if (ev.homeScore === null || ev.awayScore === null) return ev.result ?? "";
+    const [teamScore, opponentScore] =
+      ev.homeOrAway === "Away" ? [ev.awayScore, ev.homeScore] : [ev.homeScore, ev.awayScore];
+    return `${ev.result} ${teamScore}-${opponentScore}`;
   }
 
   function buildEventRow(ev: CalEvent): HTMLElement {

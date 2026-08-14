@@ -1,6 +1,6 @@
 ---
 import "../../styles/global.css";
-import { getSchoolYearGames, getSiteSettings, levelSlug } from "../../lib/payload";
+import { gameResultLabel, getSchoolYearGames, getSiteSettings, levelSlug } from "../../lib/payload";
 
 // The full, unfiltered season — a print/PDF view intentionally skips the
 // interactive filters and just gives a clean, dated reference someone can
@@ -43,14 +43,11 @@ for (const game of games) {
       rows: [],
     });
   }
-  const hasScore = typeof game.homeScore === "number" && typeof game.awayScore === "number";
   const result = game.isCancelled
     ? "Cancelled"
     : game.isPostponed
       ? "Postponed"
-      : game.result && hasScore
-        ? `${game.result} ${game.homeScore}-${game.awayScore}`
-        : "";
+      : gameResultLabel(game) ?? "";
   groups.get(key)!.rows.push({
     date: game.date.slice(0, 10),
     time: game.isTimeTBD || !game.time ? "TBD" : game.time,
