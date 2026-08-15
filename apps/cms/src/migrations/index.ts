@@ -15,6 +15,7 @@ import * as migration_20260808_211432_game_result_place_finishes from './2026080
 import * as migration_20260815_031829_add_redirects from './20260815_031829_add_redirects';
 import * as migration_20260815_044252_remove_redirects from './20260815_044252_remove_redirects';
 import * as migration_20260815_134113_add_links_slug from './20260815_134113_add_links_slug';
+import * as migration_20260815_153322_add_special_pages from './20260815_153322_add_special_pages';
 
 export const migrations = [
   {
@@ -100,6 +101,11 @@ export const migrations = [
   {
     up: migration_20260815_134113_add_links_slug.up,
     down: migration_20260815_134113_add_links_slug.down,
-    name: '20260815_134113_add_links_slug'
+    name: '20260815_134113_add_links_slug',
+  },
+  {
+    up: migration_20260815_153322_add_special_pages.up,
+    down: migration_20260815_153322_add_special_pages.down,
+    name: '20260815_153322_add_special_pages'
   },
 ];
