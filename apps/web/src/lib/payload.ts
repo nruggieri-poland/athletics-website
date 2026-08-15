@@ -591,6 +591,36 @@ export async function getLinksByPlacement(placement: "photos" | "watchLive"): Pr
   return data.docs;
 }
 
+export interface Redirect {
+  id: string;
+  slug: string;
+  destinationUrl: string;
+}
+
+// Redirects is the one collection that isn't publicly readable (see
+// Redirects.ts's access.read) — the whole point is that the slug/
+// destination list is never exposed, only individual /go/[slug] pages
+// work once someone has the link. So this can't use payloadFetch() (no
+// custom headers) or a public GET — it authenticates with the same shared
+// build key the CMS checks, and fails soft (returns []) if that key is
+// missing/wrong/the CMS is unreachable, matching every other "external
+// dependency at build time" spot in this codebase rather than failing the
+// whole site build over it.
+export async function getRedirects(): Promise<Redirect[]> {
+  const buildKey = import.meta.env.PAYLOAD_BUILD_API_KEY;
+  if (!buildKey) return [];
+  try {
+    const res = await fetch(`${PAYLOAD_URL}/api/redirects${toQuery({ limit: 200, depth: 0 })}`, {
+      headers: { Authorization: `build-key ${buildKey}` },
+    });
+    if (!res.ok) return [];
+    const data = (await res.json()) as PaginatedDocs<Redirect>;
+    return data.docs;
+  } catch {
+    return [];
+  }
+}
+
 // The Fans page's "next home game" spotlight — earliest upcoming Home game
 // across every sport/team, or null if nothing's scheduled. Not scoped to
 // one team, matching how the Fans page isn't scoped to one team either.

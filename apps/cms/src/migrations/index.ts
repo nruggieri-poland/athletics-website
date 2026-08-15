@@ -12,6 +12,7 @@ import * as migration_20260722_180833_add_sync_status from './20260722_180833_ad
 import * as migration_20260723_023140_add_media_placement from './20260723_023140_add_media_placement';
 import * as migration_20260729_143129_add_site_settings_social_image from './20260729_143129_add_site_settings_social_image';
 import * as migration_20260808_211432_game_result_place_finishes from './20260808_211432_game_result_place_finishes';
+import * as migration_20260815_031829_add_redirects from './20260815_031829_add_redirects';
 
 export const migrations = [
   {
@@ -82,6 +83,11 @@ export const migrations = [
   {
     up: migration_20260808_211432_game_result_place_finishes.up,
     down: migration_20260808_211432_game_result_place_finishes.down,
-    name: '20260808_211432_game_result_place_finishes'
+    name: '20260808_211432_game_result_place_finishes',
+  },
+  {
+    up: migration_20260815_031829_add_redirects.up,
+    down: migration_20260815_031829_add_redirects.down,
+    name: '20260815_031829_add_redirects',
   },
 ];
