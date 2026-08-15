@@ -172,6 +172,43 @@ export function isExternalArticleLink(article: Article): boolean {
   return article.linkType === "external" || article.linkType === "pdf";
 }
 
+// Same shape/mechanism as Article, kept as a separate type rather than an
+// alias so the two are free to diverge — see SpecialPages.ts. No
+// relatedTeams/relatedSports/tags/publishedDate: those only matter for
+// something with a browsable index (team pages, tag filters, a
+// chronological feed), and Special Pages have none of that.
+export interface SpecialPage {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt?: string;
+  linkType: ArticleLinkType;
+  body?: unknown; // Lexical JSON — only present for linkType "article"
+  externalUrl?: string; // only present for linkType "external"
+  pdfFile?: Media; // only present for linkType "pdf"
+  heroImage?: Media;
+}
+
+// Mirrors articleHref, but every linkType resolves under /go/ instead of
+// /news/ — see pages/go/[slug].astro.
+export function specialPageHref(page: SpecialPage): string {
+  if (page.linkType === "external" && page.externalUrl) return sanitizeUrl(page.externalUrl);
+  if (page.linkType === "pdf" && page.pdfFile) return mediaUrl(page.pdfFile);
+  return `/go/${page.slug}`;
+}
+
+export function isExternalSpecialPageLink(page: SpecialPage): boolean {
+  return page.linkType === "external" || page.linkType === "pdf";
+}
+
+// limit=200 rather than paginating — Special Pages are looked up
+// individually by slug at build time (getStaticPaths), not browsed as a
+// list, so there's no listing UI whose page size would need to match this.
+export async function getSpecialPages(): Promise<SpecialPage[]> {
+  const data = await payloadFetch<PaginatedDocs<SpecialPage>>(`/api/special-pages${toQuery({ limit: 200 })}`);
+  return data.docs;
+}
+
 // A single, open taxonomy shared across the whole site — Media, Links,
 // Galleries, and Articles all carry the same `tags` field.
 export interface Tag {
@@ -193,7 +230,6 @@ export interface Link {
   ctaLabel?: string;
   placement?: "none" | "photos" | "watchLive";
   isPublic: boolean;
-  slug?: string; // when set, this link also works as polandathletics.com/go/[slug]
   sortOrder: number;
   tags?: Tag[];
 }
@@ -591,22 +627,6 @@ export async function getLinksByPlacement(placement: "photos" | "watchLive"): Pr
       sort: "sortOrder",
       limit: 10,
     })}`,
-  );
-  return data.docs;
-}
-
-// Every Link with a slug set powers a /go/[slug] page (see
-// pages/go/[slug].astro's getStaticPaths). Deliberately NOT filtered by
-// isPublic — that field only governs whether a link shows up in a Gallery
-// or CTA placement, a separate concern from whether its /go/ redirect
-// works. A redirect-only link normally has isPublic left off specifically
-// so it doesn't also show up as a CTA card, but its /go/ page still
-// generates. This is a public, unauthenticated read like every other
-// collection here — "unlisted" is achieved by not linking to it, not by
-// restricting who can query it (see Links.ts's slug field admin text).
-export async function getRedirectLinks(): Promise<Link[]> {
-  const data = await payloadFetch<PaginatedDocs<Link>>(
-    `/api/links${toQuery({ "where[slug][exists]": true, limit: 200, depth: 0 })}`,
   );
   return data.docs;
 }

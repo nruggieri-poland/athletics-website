@@ -35,6 +35,7 @@ interface Props {
   image?: string;
   imageAlt?: string;
   type?: "website" | "article";
+  noindex?: boolean;
 }
 
 const {
@@ -43,6 +44,7 @@ const {
   image,
   imageAlt,
   type = "website",
+  noindex = false,
 } = Astro.props;
 
 let sports: Awaited<ReturnType<typeof getSports>> = [];
@@ -92,6 +94,7 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site).href;
     <meta name="description" content={description} />
     <link rel="canonical" href={canonicalUrl} />
     <link rel="icon" type={faviconType} href={faviconHref} />
+    {noindex && <meta name="robots" content="noindex" />}
 
     <meta property="og:type" content={type} />
     <meta property="og:site_name" content={siteName} />

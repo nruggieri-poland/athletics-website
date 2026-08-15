@@ -78,6 +78,7 @@ export interface Config {
     tags: Tag;
     links: Link;
     galleries: Gallery;
+    'special-pages': SpecialPage;
     'payload-kv': PayloadKv;
     'payload-folders': FolderInterface;
     'payload-locked-documents': PayloadLockedDocument;
@@ -101,6 +102,7 @@ export interface Config {
     tags: TagsSelect<false> | TagsSelect<true>;
     links: LinksSelect<false> | LinksSelect<true>;
     galleries: GalleriesSelect<false> | GalleriesSelect<true>;
+    'special-pages': SpecialPagesSelect<false> | SpecialPagesSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-folders': PayloadFoldersSelect<false> | PayloadFoldersSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -488,10 +490,6 @@ export interface Link {
    */
   placement?: ('none' | 'photos' | 'watchLive') | null;
   isPublic?: boolean | null;
-  /**
-   * Set this to make this link work as a short redirect at polandathletics.com/go/[slug] — e.g. "football-officials". Leave blank for links only used inside Galleries or a CTA placement. Independent of "Visible on the live site" — a redirect link is normally kept off (so it never shows up in a Gallery or CTA card), the /go/ page works either way.
-   */
-  slug?: string | null;
   sortOrder?: number | null;
   updatedAt: string;
   createdAt: string;
@@ -542,6 +540,58 @@ export interface Gallery {
     | null;
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * Unlisted pages at polandathletics.com/go/[slug] — not linked, indexed, or shown anywhere on the site. Share the link directly.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "special-pages".
+ */
+export interface SpecialPage {
+  id: number;
+  title: string;
+  /**
+   * The path after /go/ — e.g. "football-officials" becomes polandathletics.com/go/football-officials.
+   */
+  slug: string;
+  /**
+   * Used as this page's meta description — not shown anywhere else, since Special Pages have no listing.
+   */
+  excerpt?: string | null;
+  /**
+   * Page: a normal page with its own body content at /go/[slug]. External Link: /go/[slug] redirects straight to a URL. PDF: /go/[slug] redirects straight to an uploaded PDF.
+   */
+  linkType: 'article' | 'external' | 'pdf';
+  /**
+   * Only used for linkType "Page".
+   */
+  body?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * Full URL, e.g. https://example.com/form
+   */
+  externalUrl?: string | null;
+  pdfFile?: (number | null) | Media;
+  /**
+   * Optional — used as this page's social-share preview image. No card/thumbnail uses this, since Special Pages have no listing.
+   */
+  heroImage?: (number | null) | Media;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -610,6 +660,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'galleries';
         value: number | Gallery;
+      } | null)
+    | ({
+        relationTo: 'special-pages';
+        value: number | SpecialPage;
       } | null)
     | ({
         relationTo: 'payload-folders';
@@ -872,7 +926,6 @@ export interface LinksSelect<T extends boolean = true> {
   ctaLabel?: T;
   placement?: T;
   isPublic?: T;
-  slug?: T;
   sortOrder?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -902,6 +955,23 @@ export interface GalleriesSelect<T extends boolean = true> {
       };
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "special-pages_select".
+ */
+export interface SpecialPagesSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  excerpt?: T;
+  linkType?: T;
+  body?: T;
+  externalUrl?: T;
+  pdfFile?: T;
+  heroImage?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

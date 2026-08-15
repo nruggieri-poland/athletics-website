@@ -1,41 +1,93 @@
 ---
-// Short outbound links — polandathletics.com/go/[slug] -> a Link doc's
-// URL/video target, sourced from the CMS's ordinary public Links
-// collection (see lib/payload.ts's getRedirectLinks()). Each one is a
-// real static page generated at build time, standalone rather than
-// wrapped in BaseLayout — there's no site chrome to show for a page whose
-// whole job is to bounce the visitor immediately. Deliberately excluded
-// from the sitemap (astro.config.mjs) and from robots.txt
-// (Disallow: /go/) — being buildable doesn't mean these should be
-// discoverable by crawling or browsing the site.
-import { getRedirectLinks, linkHref } from "../../lib/payload";
+// Unlisted pages — polandathletics.com/go/[slug] — sourced from the
+// CMS's SpecialPages collection. Same three linkType branches as
+// news/[slug].astro: "article" gets a real content page rendered here;
+// "external"/"pdf" have no body to render, so this page is instead an
+// immediate redirect bounce to that target. Both cases share one route
+// (rather than a separate redirect-only page) so a Special Page can
+// switch linkType later without moving to a different URL.
+//
+// Deliberately excluded from the sitemap (astro.config.mjs) and from
+// robots.txt (Disallow: /go/), and never linked from nav or any listing
+// — that's the whole point of "unlisted" here (see SpecialPages.ts).
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getSpecialPages, getGamesForTeam, getTeams, mediaUrl, specialPageHref, isExternalSpecialPageLink } from "../../lib/payload";
+import { lexicalToHtml, extractScheduleSnippetTeamIds } from "../../lib/lexical";
+import type { ScheduleSnippetData } from "../../lib/lexical";
 
 export async function getStaticPaths() {
-  const links = await getRedirectLinks();
-  return links
-    .filter((link) => link.slug)
-    .map((link) => ({
-      params: { slug: link.slug },
-      props: { destinationUrl: linkHref(link) },
-    }));
+  const pages = await getSpecialPages();
+  return pages.map((page) => ({
+    params: { slug: page.slug },
+    props: { page },
+  }));
 }
 
-const { destinationUrl } = Astro.props;
+const { page } = Astro.props;
+const isRedirect = isExternalSpecialPageLink(page);
+const destinationUrl = isRedirect ? specialPageHref(page) : "";
+
+let bodyHtml = "";
+if (!isRedirect) {
+  const snippetTeamIds = extractScheduleSnippetTeamIds(page.body);
+  const scheduleData = new Map<string, ScheduleSnippetData>();
+  if (snippetTeamIds.length > 0) {
+    const allTeams = await getTeams();
+    const teamsById = new Map(allTeams.map((team) => [String(team.id), team]));
+    for (const teamId of snippetTeamIds) {
+      const team = teamsById.get(teamId);
+      if (!team) continue;
+      scheduleData.set(teamId, { team, games: await getGamesForTeam(teamId) });
+    }
+  }
+  bodyHtml = lexicalToHtml(page.body, { scheduleData });
+}
 ---
 
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="robots" content="noindex" />
-    <meta http-equiv="refresh" content={`0;url=${destinationUrl}`} />
-    <title>Redirecting…</title>
-  </head>
-  <body>
-    <p>Redirecting… <a href={destinationUrl}>Click here if you aren't redirected automatically.</a></p>
-    <script is:inline define:vars={{ destinationUrl }}>
-      window.location.replace(destinationUrl);
-    </script>
-  </body>
-</html>
+{isRedirect ? (
+  <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta name="robots" content="noindex" />
+      <meta http-equiv="refresh" content={`0;url=${destinationUrl}`} />
+      <title>Redirecting…</title>
+    </head>
+    <body>
+      <p>Redirecting… <a href={destinationUrl}>Click here if you aren't redirected automatically.</a></p>
+      <script is:inline define:vars={{ destinationUrl }}>
+        window.location.replace(destinationUrl);
+      </script>
+    </body>
+  </html>
+) : (
+  <BaseLayout
+    title={page.title}
+    description={page.excerpt}
+    image={page.heroImage ? mediaUrl(page.heroImage, "card") : undefined}
+    imageAlt={page.heroImage?.alt}
+    type="article"
+    noindex
+  >
+    <article class="mx-auto max-w-content px-6 py-16">
+      <div class="mx-auto max-w-2xl">
+        <h1 class="text-h1 font-bold text-ink-900">{page.title}</h1>
+      </div>
+
+      {page.heroImage && (
+        <div class="mx-auto mt-8 max-w-3xl overflow-hidden rounded-xl bg-ink-100">
+          <img
+            src={mediaUrl(page.heroImage, "hero")}
+            alt={page.heroImage.alt}
+            class="w-full object-cover"
+          />
+        </div>
+      )}
+
+      <div
+        class="prose mx-auto mt-10 max-w-2xl prose-headings:font-semibold"
+        set:html={bodyHtml}
+      />
+    </article>
+  </BaseLayout>
+)}
