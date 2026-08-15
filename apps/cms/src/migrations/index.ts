@@ -13,6 +13,7 @@ import * as migration_20260723_023140_add_media_placement from './20260723_02314
 import * as migration_20260729_143129_add_site_settings_social_image from './20260729_143129_add_site_settings_social_image';
 import * as migration_20260808_211432_game_result_place_finishes from './20260808_211432_game_result_place_finishes';
 import * as migration_20260815_031829_add_redirects from './20260815_031829_add_redirects';
+import * as migration_20260815_044252_remove_redirects from './20260815_044252_remove_redirects';
 
 export const migrations = [
   {
@@ -89,5 +90,10 @@ export const migrations = [
     up: migration_20260815_031829_add_redirects.up,
     down: migration_20260815_031829_add_redirects.down,
     name: '20260815_031829_add_redirects',
+  },
+  {
+    up: migration_20260815_044252_remove_redirects.up,
+    down: migration_20260815_044252_remove_redirects.down,
+    name: '20260815_044252_remove_redirects'
   },
 ];
