@@ -1,11 +1,10 @@
 import type { MigrateUpArgs, MigrateDownArgs } from '@payloadcms/db-postgres'
 import { sql } from '@payloadcms/db-postgres'
 
-// Reverses 20260815_031829_add_redirects.ts. Deploy.sh refuses to
-// auto-apply any migration whose up() contains a DROP, so this one needs
-// a deliberate manual `npm run migrate` once someone has database access
-// — same precedent as every other collection removal in this repo's
-// migration history.
+// payload-deploy:allow-destructive — deliberately reviewed. Reverses
+// 20260815_031829_add_redirects.ts: the redirects feature was pulled
+// (never worked in production, replaced by a slug field on Links
+// instead), so its table is safe to drop — nothing else references it.
 export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   await db.execute(sql`
    DROP INDEX "payload_locked_documents_rels_redirects_id_idx";
