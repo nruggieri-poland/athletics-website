@@ -193,6 +193,7 @@ export interface Link {
   ctaLabel?: string;
   placement?: "none" | "photos" | "watchLive";
   isPublic: boolean;
+  slug?: string; // when set, this link also works as polandathletics.com/go/[slug]
   sortOrder: number;
   tags?: Tag[];
 }
@@ -225,14 +226,17 @@ export interface Gallery {
 
 // Analogous to articleHref, but branches on the polymorphic relationTo
 // discriminator instead of a single collection's own type field.
-export function galleryItemHref(ref: GalleryItemRef): string {
-  if (ref.relationTo === "media") return mediaUrl(ref.value);
-  const link = ref.value;
+export function linkHref(link: Link): string {
   if (link.linkType === "video" && link.videoId) {
     return `https://www.youtube.com/watch?v=${encodeURIComponent(link.videoId)}`;
   }
   if (link.linkType === "external" && link.url) return sanitizeUrl(link.url);
   return "#";
+}
+
+export function galleryItemHref(ref: GalleryItemRef): string {
+  if (ref.relationTo === "media") return mediaUrl(ref.value);
+  return linkHref(ref.value);
 }
 
 export function galleryItemTitle(ref: GalleryItemRef): string {
@@ -587,6 +591,22 @@ export async function getLinksByPlacement(placement: "photos" | "watchLive"): Pr
       sort: "sortOrder",
       limit: 10,
     })}`,
+  );
+  return data.docs;
+}
+
+// Every Link with a slug set powers a /go/[slug] page (see
+// pages/go/[slug].astro's getStaticPaths). Deliberately NOT filtered by
+// isPublic — that field only governs whether a link shows up in a Gallery
+// or CTA placement, a separate concern from whether its /go/ redirect
+// works. A redirect-only link normally has isPublic left off specifically
+// so it doesn't also show up as a CTA card, but its /go/ page still
+// generates. This is a public, unauthenticated read like every other
+// collection here — "unlisted" is achieved by not linking to it, not by
+// restricting who can query it (see Links.ts's slug field admin text).
+export async function getRedirectLinks(): Promise<Link[]> {
+  const data = await payloadFetch<PaginatedDocs<Link>>(
+    `/api/links${toQuery({ "where[slug][exists]": true, limit: 200, depth: 0 })}`,
   );
   return data.docs;
 }

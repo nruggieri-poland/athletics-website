@@ -102,6 +102,19 @@ export const Links: CollectionConfig = {
       label: 'Visible on the live site',
     },
     {
+      name: 'slug',
+      type: 'text',
+      unique: true,
+      admin: {
+        description:
+          'Set this to make this link work as a short redirect at polandathletics.com/go/[slug] — e.g. "football-officials". Leave blank for links only used inside Galleries or a CTA placement. Independent of "Visible on the live site" — a redirect link is normally kept off (so it never shows up in a Gallery or CTA card), the /go/ page works either way.',
+      },
+      validate: (value: string | null | undefined) => {
+        if (!value) return true
+        return /^[a-z0-9-]+$/.test(value) ? true : 'Lowercase letters, numbers, and hyphens only.'
+      },
+    },
+    {
       name: 'sortOrder',
       type: 'number',
       defaultValue: 0,
