@@ -488,6 +488,10 @@ export interface Link {
    */
   placement?: ('none' | 'photos' | 'watchLive') | null;
   isPublic?: boolean | null;
+  /**
+   * Set this to make this link work as a short redirect at polandathletics.com/go/[slug] — e.g. "football-officials". Leave blank for links only used inside Galleries or a CTA placement. Independent of "Visible on the live site" — a redirect link is normally kept off (so it never shows up in a Gallery or CTA card), the /go/ page works either way.
+   */
+  slug?: string | null;
   sortOrder?: number | null;
   updatedAt: string;
   createdAt: string;
@@ -868,6 +872,7 @@ export interface LinksSelect<T extends boolean = true> {
   ctaLabel?: T;
   placement?: T;
   isPublic?: T;
+  slug?: T;
   sortOrder?: T;
   updatedAt?: T;
   createdAt?: T;

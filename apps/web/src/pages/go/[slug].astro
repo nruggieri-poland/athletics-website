@@ -1,0 +1,41 @@
+---
+// Short outbound links — polandathletics.com/go/[slug] -> a Link doc's
+// URL/video target, sourced from the CMS's ordinary public Links
+// collection (see lib/payload.ts's getRedirectLinks()). Each one is a
+// real static page generated at build time, standalone rather than
+// wrapped in BaseLayout — there's no site chrome to show for a page whose
+// whole job is to bounce the visitor immediately. Deliberately excluded
+// from the sitemap (astro.config.mjs) and from robots.txt
+// (Disallow: /go/) — being buildable doesn't mean these should be
+// discoverable by crawling or browsing the site.
+import { getRedirectLinks, linkHref } from "../../lib/payload";
+
+export async function getStaticPaths() {
+  const links = await getRedirectLinks();
+  return links
+    .filter((link) => link.slug)
+    .map((link) => ({
+      params: { slug: link.slug },
+      props: { destinationUrl: linkHref(link) },
+    }));
+}
+
+const { destinationUrl } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <meta http-equiv="refresh" content={`0;url=${destinationUrl}`} />
+    <title>Redirecting…</title>
+  </head>
+  <body>
+    <p>Redirecting… <a href={destinationUrl}>Click here if you aren't redirected automatically.</a></p>
+    <script is:inline define:vars={{ destinationUrl }}>
+      window.location.replace(destinationUrl);
+    </script>
+  </body>
+</html>
