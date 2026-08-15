@@ -1,0 +1,41 @@
+---
+// Short outbound links — polandathletics.com/go/[slug] -> an external URL,
+// sourced from the CMS's Redirects collection (see lib/payload.ts's
+// getRedirects() for why that collection isn't public like everything
+// else here). Each one is a real static page generated at build time,
+// standalone rather than wrapped in BaseLayout — there's no site chrome to
+// show for a page whose whole job is to bounce the visitor immediately.
+// Deliberately excluded from the sitemap (astro.config.mjs) and from
+// robots.txt (Disallow: /go/) — being buildable doesn't mean these should
+// be discoverable by crawling or browsing the site.
+import { getRedirects } from "../../lib/payload";
+import { sanitizeUrl } from "../../lib/sanitize-url";
+
+export async function getStaticPaths() {
+  const redirects = await getRedirects();
+  return redirects.map((r) => ({
+    params: { slug: r.slug },
+    props: { destinationUrl: r.destinationUrl },
+  }));
+}
+
+const { destinationUrl } = Astro.props;
+const safeUrl = sanitizeUrl(destinationUrl);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <meta http-equiv="refresh" content={`0;url=${safeUrl}`} />
+    <title>Redirecting…</title>
+  </head>
+  <body>
+    <p>Redirecting… <a href={safeUrl}>Click here if you aren't redirected automatically.</a></p>
+    <script is:inline define:vars={{ safeUrl }}>
+      window.location.replace(safeUrl);
+    </script>
+  </body>
+</html>

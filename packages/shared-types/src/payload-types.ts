@@ -78,6 +78,7 @@ export interface Config {
     tags: Tag;
     links: Link;
     galleries: Gallery;
+    redirects: Redirect;
     'payload-kv': PayloadKv;
     'payload-folders': FolderInterface;
     'payload-locked-documents': PayloadLockedDocument;
@@ -101,6 +102,7 @@ export interface Config {
     tags: TagsSelect<false> | TagsSelect<true>;
     links: LinksSelect<false> | LinksSelect<true>;
     galleries: GalleriesSelect<false> | GalleriesSelect<true>;
+    redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-folders': PayloadFoldersSelect<false> | PayloadFoldersSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -540,6 +542,29 @@ export interface Gallery {
   createdAt: string;
 }
 /**
+ * Short outbound links — polandathletics.com/go/[slug] redirects to Destination URL. Not publicly listable: this collection is admin-only to read, so the full list of redirects is never exposed, even though each individual link works once someone has it.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "redirects".
+ */
+export interface Redirect {
+  id: number;
+  /**
+   * The short path after /go/ — e.g. "hudl" becomes polandathletics.com/go/hudl.
+   */
+  slug: string;
+  /**
+   * Where /go/[slug] sends visitors — a full URL, e.g. https://hudl.com/team/...
+   */
+  destinationUrl: string;
+  /**
+   * Optional, for your own reference — never shown publicly.
+   */
+  notes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
@@ -606,6 +631,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'galleries';
         value: number | Gallery;
+      } | null)
+    | ({
+        relationTo: 'redirects';
+        value: number | Redirect;
       } | null)
     | ({
         relationTo: 'payload-folders';
@@ -895,6 +924,17 @@ export interface GalleriesSelect<T extends boolean = true> {
             };
         id?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "redirects_select".
+ */
+export interface RedirectsSelect<T extends boolean = true> {
+  slug?: T;
+  destinationUrl?: T;
+  notes?: T;
   updatedAt?: T;
   createdAt?: T;
 }
