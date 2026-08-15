@@ -1,5 +1,4 @@
 User-agent: *
 Allow: /
-Disallow: /go/
 
 Sitemap: https://polandathletics.com/sitemap-index.xml

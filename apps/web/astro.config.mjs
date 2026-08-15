@@ -15,10 +15,7 @@ export default defineConfig({
     sitemap({
       // Print views are the same content as their non-print page, just a
       // different stylesheet — excluding them avoids listing duplicate URLs.
-      // /go/ redirects are deliberately not public-listable at all (see
-      // Redirects.ts) — excluding them here is part of that, not just
-      // sitemap hygiene.
-      filter: (page) => !page.endsWith('/print/') && !page.includes('/go/'),
+      filter: (page) => !page.endsWith('/print/'),
     }),
   ],
   vite: {
