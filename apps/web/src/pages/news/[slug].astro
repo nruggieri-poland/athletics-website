@@ -1,74 +1,100 @@
 ---
+// Every article gets a /news/[slug] page now, regardless of linkType —
+// "article" renders its own body here same as always; "external"/"pdf"
+// have no body to render, so their page is instead an immediate redirect
+// bounce to that target (same idea as SpecialPages' /go/[slug]). This
+// exists so a direct /news/[slug] link works for every article type, not
+// just so cards elsewhere on the site can send visitors straight out
+// (articleHref() still does that for cards — this route is for someone
+// visiting the slug URL itself).
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import { getArticles, getGamesForTeam, getTeams, mediaUrl } from "../../lib/payload";
+import { getArticles, getGamesForTeam, getTeams, mediaUrl, articleHref, isExternalArticleLink } from "../../lib/payload";
 import { lexicalToHtml, extractScheduleSnippetTeamIds } from "../../lib/lexical";
 import type { ScheduleSnippetData } from "../../lib/lexical";
 
 export async function getStaticPaths() {
   const { docs: articles } = await getArticles(500, 1);
-  // External Link and PDF articles never link here — their cards go
-  // straight to the external URL or the PDF file — so there is nothing to
-  // render for them (no body content is even collected for those types).
-  return articles
-    .filter((article) => article.linkType === "article")
-    .map((article) => ({
-      params: { slug: article.slug },
-      props: { article },
-    }));
+  return articles.map((article) => ({
+    params: { slug: article.slug },
+    props: { article },
+  }));
 }
 
 const { article } = Astro.props;
+const isRedirect = isExternalArticleLink(article);
+const destinationUrl = isRedirect ? articleHref(article) : "";
 
-// Schedule Snippet blocks render live schedule data — fetched here (not
-// inside lexicalToHtml, which stays a pure sync function) so each
-// referenced team's real games/team record are ready before rendering.
-const snippetTeamIds = extractScheduleSnippetTeamIds(article.body);
-const scheduleData = new Map<string, ScheduleSnippetData>();
-if (snippetTeamIds.length > 0) {
-  const allTeams = await getTeams();
-  // Team.id is typed as string but is a raw Postgres integer at runtime —
-  // normalize to string on both sides of this lookup (extractScheduleSnippetTeamIds
-  // already returns string IDs) so the Map.get() below actually matches.
-  const teamsById = new Map(allTeams.map((team) => [String(team.id), team]));
-  for (const teamId of snippetTeamIds) {
-    const team = teamsById.get(teamId);
-    if (!team) continue;
-    scheduleData.set(teamId, { team, games: await getGamesForTeam(teamId) });
+let bodyHtml = "";
+let formattedDate = "";
+if (!isRedirect) {
+  // Schedule Snippet blocks render live schedule data — fetched here (not
+  // inside lexicalToHtml, which stays a pure sync function) so each
+  // referenced team's real games/team record are ready before rendering.
+  const snippetTeamIds = extractScheduleSnippetTeamIds(article.body);
+  const scheduleData = new Map<string, ScheduleSnippetData>();
+  if (snippetTeamIds.length > 0) {
+    const allTeams = await getTeams();
+    // Team.id is typed as string but is a raw Postgres integer at runtime —
+    // normalize to string on both sides of this lookup (extractScheduleSnippetTeamIds
+    // already returns string IDs) so the Map.get() below actually matches.
+    const teamsById = new Map(allTeams.map((team) => [String(team.id), team]));
+    for (const teamId of snippetTeamIds) {
+      const team = teamsById.get(teamId);
+      if (!team) continue;
+      scheduleData.set(teamId, { team, games: await getGamesForTeam(teamId) });
+    }
   }
+  bodyHtml = lexicalToHtml(article.body, { scheduleData });
+  formattedDate = new Date(article.publishedDate).toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
 }
-
-const bodyHtml = lexicalToHtml(article.body, { scheduleData });
-const formattedDate = new Date(article.publishedDate).toLocaleDateString("en-US", {
-  month: "long",
-  day: "numeric",
-  year: "numeric",
-});
 ---
 
-<BaseLayout
-  title={article.title}
-  description={article.excerpt}
-  image={mediaUrl(article.heroImage, "card")}
-  imageAlt={article.heroImage.alt}
-  type="article"
->
-  <article class="mx-auto max-w-content px-6 py-16">
-    <div class="mx-auto max-w-2xl">
-      <p class="text-sm font-medium uppercase tracking-wide text-primary-600">{formattedDate}</p>
-      <h1 class="mt-2 text-h1 font-bold text-ink-900">{article.title}</h1>
-    </div>
+{isRedirect ? (
+  <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta name="robots" content="noindex" />
+      <meta http-equiv="refresh" content={`0;url=${destinationUrl}`} />
+      <title>Redirecting…</title>
+    </head>
+    <body>
+      <p>Redirecting… <a href={destinationUrl}>Click here if you aren't redirected automatically.</a></p>
+      <script is:inline define:vars={{ destinationUrl }}>
+        window.location.replace(destinationUrl);
+      </script>
+    </body>
+  </html>
+) : (
+  <BaseLayout
+    title={article.title}
+    description={article.excerpt}
+    image={mediaUrl(article.heroImage, "card")}
+    imageAlt={article.heroImage.alt}
+    type="article"
+  >
+    <article class="mx-auto max-w-content px-6 py-16">
+      <div class="mx-auto max-w-2xl">
+        <p class="text-sm font-medium uppercase tracking-wide text-primary-600">{formattedDate}</p>
+        <h1 class="mt-2 text-h1 font-bold text-ink-900">{article.title}</h1>
+      </div>
 
-    <div class="mx-auto mt-8 max-w-3xl overflow-hidden rounded-xl bg-ink-100">
-      <img
-        src={mediaUrl(article.heroImage, "hero")}
-        alt={article.heroImage.alt}
-        class="w-full object-cover"
+      <div class="mx-auto mt-8 max-w-3xl overflow-hidden rounded-xl bg-ink-100">
+        <img
+          src={mediaUrl(article.heroImage, "hero")}
+          alt={article.heroImage.alt}
+          class="w-full object-cover"
+        />
+      </div>
+
+      <div
+        class="prose mx-auto mt-10 max-w-2xl prose-headings:font-semibold"
+        set:html={bodyHtml}
       />
-    </div>
-
-    <div
-      class="prose mx-auto mt-10 max-w-2xl prose-headings:font-semibold"
-      set:html={bodyHtml}
-    />
-  </article>
-</BaseLayout>
+    </article>
+  </BaseLayout>
+)}
