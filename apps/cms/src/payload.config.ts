@@ -37,6 +37,19 @@ const csrfOrigins = (process.env.CSRF_ORIGINS || 'http://localhost:3000')
   .map((origin) => origin.trim())
   .filter(Boolean)
 
+// Lets a browser on another origin — the district's separate Finalsite
+// site, polandbulldogs.com, pulling Articles client-side — read this
+// CMS's public REST API directly. Only matters for collections that are
+// already publicly readable (read: () => true, e.g. Articles): CORS
+// never grants access to anything that wasn't already fetchable via curl
+// or a server-side request, it only permits a *browser* to make that
+// same request cross-origin. Empty by default (no external consumer in
+// local dev) — comma-separated if more than one origin ever needs this.
+const corsOrigins = (process.env.CORS_ORIGINS || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean)
+
 // A missing secret must fail loudly at startup, not silently sign every
 // auth cookie/token with an empty (forgeable) string — the `|| ''`
 // fallback this replaced would have done exactly that.
@@ -47,6 +60,7 @@ if (!process.env.PAYLOAD_SECRET) {
 export default buildConfig({
   secret: process.env.PAYLOAD_SECRET,
   csrf: csrfOrigins,
+  cors: corsOrigins,
   admin: {
     user: Users.slug,
     importMap: {
