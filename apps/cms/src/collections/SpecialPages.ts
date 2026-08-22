@@ -53,6 +53,14 @@ export const SpecialPages: CollectionConfig = {
       index: true,
       admin: {
         description: 'The path after /go/ — e.g. "football-officials" becomes polandathletics.com/go/football-officials.',
+        components: {
+          afterInput: [
+            {
+              path: './components/SlugUrlPreview.tsx#SlugUrlPreview',
+              clientProps: { prefix: 'polandathletics.com/go/' },
+            },
+          ],
+        },
       },
       validate: (value: string | null | undefined) => {
         if (!value) return 'Slug is required.'
