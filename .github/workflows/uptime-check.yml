@@ -1,0 +1,46 @@
+name: Uptime Check
+
+# Pings the live site and the CMS every 5 minutes and fails the run if
+# either is down — GitHub emails the repo's watchers on a failed scheduled
+# workflow by default (Settings > Notifications > Actions), so this is a
+# free "something's down" alert with no external monitoring service.
+#
+# This exists because nothing else notices a CMS crash that isn't caused
+# by a code deploy: deploy.sh only restarts the CMS as a side effect of
+# apps/cms/ changing, so an unrelated crash (OOM, an unhandled exception,
+# a lost DB connection) previously just sat broken until someone happened
+# to notice missing images on the site. Two separate steps (not one
+# combined check) so a failure clearly says which one is down — a 502 on
+# just the CMS looks very different from the whole site being unreachable.
+#
+# No actions/checkout — this only ever curls external URLs, never touches
+# repo files, so there's nothing to check out.
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check polandathletics.com
+        run: |
+          CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 "https://polandathletics.com/" || echo "000")
+          if [ "$CODE" != "200" ]; then
+            echo "::error::polandathletics.com returned $CODE"
+            exit 1
+          fi
+          echo "polandathletics.com is up ($CODE)."
+
+      - name: Check cms.polandathletics.com
+        run: |
+          CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 "https://cms.polandathletics.com/api/sports" || echo "000")
+          if [ "$CODE" != "200" ]; then
+            echo "::error::cms.polandathletics.com returned $CODE"
+            exit 1
+          fi
+          echo "cms.polandathletics.com is up ($CODE)."
