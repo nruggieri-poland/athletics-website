@@ -43,6 +43,16 @@ export const Articles: CollectionConfig = {
       required: true,
       unique: true,
       index: true,
+      admin: {
+        components: {
+          afterInput: [
+            {
+              path: './components/SlugUrlPreview.tsx#SlugUrlPreview',
+              clientProps: { prefix: 'polandathletics.com/news/' },
+            },
+          ],
+        },
+      },
     },
     {
       name: 'excerpt',
