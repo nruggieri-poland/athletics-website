@@ -8,9 +8,12 @@
 # through the CMS admin never need it, they deploy themselves automatically
 # via the rebuild-on-publish hook (apps/cms/src/hooks/rebuildWeb.ts). This
 # script also runs the schedule data sync (scripts/schedule-sync) on every
-# tick, unconditionally — see the "Schedule data sync" step below — since
-# that's a separate, code-independent concern that needs its own regular
-# cadence and this cron is the one reliable heartbeat already running here.
+# tick, unconditionally — see the "Schedule data sync + CMS watchdog" step
+# below — since that's a separate, code-independent concern that needs its
+# own regular cadence and this cron is the one reliable heartbeat already
+# running here. That same step also acts as a watchdog: if the CMS isn't
+# responding and nothing changed, it attempts a capped, spaced-out restart
+# rather than sitting broken until a code push happens to touch apps/cms/.
 #
 # Designed to run unattended from cron with no SSH access for debugging:
 # every run publishes its own status to the live static site at
@@ -52,9 +55,11 @@ fi
 STATE_FILE=".deploy-state"          # last commit that fully, successfully deployed
 FAILSTATE_FILE=".deploy-failstate"  # "<commit> <consecutive failure count>"
 FAIL_LOG=".deploy-last-failure.log" # full output of the most recent failed run
+WATCHDOG_STATE_FILE=".deploy-watchdog-state" # consecutive watchdog-restart attempts for the current outage
 BUILD_DIR="apps/cms/.next"
 BUILD_BACKUP="apps/cms/.next.last-good"
 MAX_RETRIES=2
+MAX_WATCHDOG_RESTARTS=3
 # A migration whose up() contains DROP is refused below — unless the file
 # itself carries this marker, added by a human who reviewed the drop.
 DESTRUCTIVE_MARKER="payload-deploy:allow-destructive"
@@ -100,7 +105,7 @@ run_with_timeout() {
   fi
 }
 
-# --- Schedule data sync -------------------------------------------------
+# --- Schedule data sync + CMS watchdog ----------------------------------
 # Independent of whether any CODE changed this tick — the upstream
 # schedules feed (nruggieri-poland/schedules) can publish new games,
 # cancellations, or event-type corrections (e.g. Scrimmage) at any time,
@@ -111,9 +116,15 @@ run_with_timeout() {
 # against) so there's no separate secret file to keep in sync on this
 # server. A failure here is never a deploy failure — it just means this
 # tick's data refresh didn't happen; it retries again in 5 minutes.
-if [ -f scripts/schedule-sync/pull-and-sync.js ]; then
-  CMS_UP="$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3000/api/sports 2>/dev/null || true)"
-  if [ "$CMS_UP" = "200" ]; then
+CMS_UP="$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3000/api/sports 2>/dev/null || true)"
+
+if [ "$CMS_UP" = "200" ]; then
+  # Healthy — clear any watchdog-restart streak left over from a past
+  # outage, so a future, unrelated outage gets its own fresh set of
+  # attempts instead of inheriting a stale count.
+  rm -f "$WATCHDOG_STATE_FILE"
+
+  if [ -f scripts/schedule-sync/pull-and-sync.js ]; then
     SYNC_KEY="$(grep -m1 '^PAYLOAD_SYNC_API_KEY=' apps/cms/.env 2>/dev/null | cut -d= -f2- | sed -e "s/^[\"']//" -e "s/[\"']\$//" || true)"
     if [ -n "$SYNC_KEY" ]; then
       log "[deploy] Running schedule sync..."
@@ -124,8 +135,58 @@ if [ -f scripts/schedule-sync/pull-and-sync.js ]; then
     else
       log "[deploy] (PAYLOAD_SYNC_API_KEY not found in apps/cms/.env — skipping schedule sync)"
     fi
+  fi
+else
+  log "[deploy] (CMS not responding on 127.0.0.1:3000 — skipping schedule sync this tick)"
+
+  # --- CMS watchdog -------------------------------------------------------
+  # Nothing else notices a CMS crash that isn't caused by a code deploy —
+  # the restart-on-change logic further down only fires when apps/cms/
+  # actually changed this tick. Without this, an unrelated crash (OOM, an
+  # unhandled exception, a lost DB connection) sits broken until someone
+  # happens to notice and a code push happens to touch apps/cms/ — exactly
+  # what happened before this existed. This restarts the CURRENTLY BUILT
+  # process in place — no rebuild, no git pull — so it's cheap and fast,
+  # but it also means it can't fix a genuinely broken build; that still
+  # needs a real code fix or a manual restart.
+  #
+  # Capped at $MAX_WATCHDOG_RESTARTS attempts, one per outage (not per
+  # tick, and never retried faster than the 5-minute cron cadence itself),
+  # so a persistent problem doesn't turn into a restart loop — it tries a
+  # few times, spaced out, then gives up loudly and waits for a real
+  # deploy or a human rather than hammering pm2 forever.
+  WATCHDOG_COUNT=0
+  if [ -f "$WATCHDOG_STATE_FILE" ]; then
+    WATCHDOG_COUNT="$(cat "$WATCHDOG_STATE_FILE" 2>/dev/null || echo 0)"
+  fi
+
+  if [ "$WATCHDOG_COUNT" -ge "$MAX_WATCHDOG_RESTARTS" ]; then
+    log "[deploy] CMS still down after $WATCHDOG_COUNT watchdog restart attempt(s) — giving up until a new deploy or manual intervention. Not retrying again this outage."
+  elif ! command -v pm2 >/dev/null 2>&1; then
+    log "[deploy] CMS is down and pm2 is not on PATH ($PATH) — watchdog cannot restart it. Fix: install pm2 globally for the cron user, or set PATH in the crontab."
   else
-    log "[deploy] (CMS not responding on 127.0.0.1:3000 — skipping schedule sync this tick)"
+    WATCHDOG_COUNT=$((WATCHDOG_COUNT + 1))
+    echo "$WATCHDOG_COUNT" > "$WATCHDOG_STATE_FILE"
+    log "[deploy] CMS watchdog: attempting restart ($WATCHDOG_COUNT of $MAX_WATCHDOG_RESTARTS)..."
+    if run_with_timeout 60 pm2 restart athletics-cms 200>&- 2>&1 | tee -a "$RUN_LOG"; then
+      WATCHDOG_HEALTHY=false
+      for i in $(seq 1 15); do
+        CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3000/api/sports || true)
+        if [ "$CODE" = "200" ]; then
+          WATCHDOG_HEALTHY=true
+          break
+        fi
+        sleep 1
+      done
+      if [ "$WATCHDOG_HEALTHY" = true ]; then
+        log "[deploy] CMS watchdog: restart succeeded, CMS is back up."
+        rm -f "$WATCHDOG_STATE_FILE"
+      else
+        log "[deploy] CMS watchdog: restarted pm2 but the CMS still isn't responding — will try again next tick if under the attempt cap."
+      fi
+    else
+      log "[deploy] CMS watchdog: pm2 restart itself failed."
+    fi
   fi
 fi
 

@@ -32,13 +32,17 @@ apps/cms/media/
 scripts/opponent-logos/*.png
 
 # deploy.sh's own record of the last commit it successfully finished
-# deploying, and its consecutive-failure counter for the current commit —
-# server-local state, never meant to be shared or committed. Committing
-# either would recreate the exact "local file drift blocks git pull"
-# problem deploy.sh works around for package-lock.json and next-env.d.ts:
-# every server would fight over whose deploy state is real.
+# deploying, its consecutive-failure counter for the current commit, the
+# full output of the most recent failed run, and its CMS-watchdog restart
+# counter for the current outage — all server-local state, never meant to
+# be shared or committed. Committing any of these would recreate the exact
+# "local file drift blocks git pull" problem deploy.sh works around for
+# package-lock.json and next-env.d.ts: every server would fight over whose
+# deploy state is real.
 .deploy-state
 .deploy-failstate
+.deploy-last-failure.log
+.deploy-watchdog-state
 
 # deploy.sh's rollback copy of the last known-good CMS build — renamed
 # here right before a risky build, restored if the new one fails its
