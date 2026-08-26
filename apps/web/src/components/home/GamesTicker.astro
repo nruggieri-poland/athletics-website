@@ -12,7 +12,9 @@ function formatEntry(game: Game) {
   const vsOrAt = game.homeOrAway === "Home" ? "vs" : game.homeOrAway === "Away" ? "@" : "";
   const dateObj = new Date(`${game.date.slice(0, 10)}T00:00:00`);
   const date = dateObj.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
-  const time = game.isTimeTBD || !game.time ? "TBD" : game.time;
+  // Cancelled/postponed games replace the time with that status instead —
+  // a stale kickoff time next to "Cancelled" reads as a contradiction.
+  const time = game.isCancelled ? "Cancelled" : game.isPostponed ? "Postponed" : game.isTimeTBD || !game.time ? "TBD" : game.time;
   return { vsOrAt, date, time };
 }
 ---
@@ -43,7 +45,10 @@ function formatEntry(game: Game) {
           return (
             <a
               href={`/${game.team.sport.slug}/${levelSlug(game.team.level)}`}
-              class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-white/80 hover:text-white"
+              class:list={[
+                "flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-white/80 hover:text-white",
+                (game.isCancelled || game.isPostponed) && "opacity-60",
+              ]}
             >
               <span class="text-primary-300">{game.team.shortName || game.team.sport.name}</span>
               <span>{vsOrAt} {game.opponentName}</span>
@@ -62,7 +67,10 @@ function formatEntry(game: Game) {
               <a
                 href={`/${game.team.sport.slug}/${levelSlug(game.team.level)}`}
                 tabindex="-1"
-                class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-white/80"
+                class:list={[
+                  "flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-white/80",
+                  (game.isCancelled || game.isPostponed) && "opacity-60",
+                ]}
               >
                 <span class="text-primary-300">{game.team.shortName || game.team.sport.name}</span>
                 <span>{vsOrAt} {game.opponentName}</span>
