@@ -16,7 +16,10 @@ const timeLabel = game.isTimeTBD || !game.time ? "TBD" : game.time;
 
 <a
   href={`/${game.team.sport.slug}/${levelSlug(game.team.level)}`}
-  class="flex w-64 shrink-0 snap-start flex-col justify-between rounded-xl border border-ink-100 bg-surface p-5 shadow-sm transition hover:border-primary-200 hover:shadow-md"
+  class:list={[
+    "flex w-64 shrink-0 snap-start flex-col justify-between rounded-xl border border-ink-100 bg-surface p-5 shadow-sm transition hover:border-primary-200 hover:shadow-md",
+    (game.isCancelled || game.isPostponed) && "opacity-60",
+  ]}
 >
   <div>
     <p class="text-xs font-semibold uppercase tracking-wide text-primary-600">
@@ -40,7 +43,13 @@ const timeLabel = game.isTimeTBD || !game.time ? "TBD" : game.time;
   </div>
 
   <div class="mt-4 flex items-center justify-between border-t border-ink-100 pt-3">
-    <span class="text-sm font-semibold text-ink-700">{timeLabel}</span>
+    {game.isCancelled ? (
+      <span class="text-sm font-semibold text-ink-600">Cancelled</span>
+    ) : game.isPostponed ? (
+      <span class="text-sm font-semibold text-ink-600">Postponed</span>
+    ) : (
+      <span class="text-sm font-semibold text-ink-700">{timeLabel}</span>
+    )}
     <div class="flex items-center gap-1.5">
       {game.homeOrAway && (
         <span
