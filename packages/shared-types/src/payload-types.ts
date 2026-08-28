@@ -293,6 +293,10 @@ export interface Sport {
    * Background photo for this sport's tile on the /sports grid. Leave blank to fall back to a plain dark tile.
    */
   coverImage?: (number | null) | Media;
+  /**
+   * YouTube playlist ID (the part after "list=" in a playlist URL) featuring this sport's hype/highlight videos — shown as a click-to-play section on the sport's hub page. Leave blank to hide that section entirely.
+   */
+  hypePlaylistId?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -805,6 +809,7 @@ export interface SportsSelect<T extends boolean = true> {
   sortOrder?: T;
   heroVideoId?: T;
   coverImage?: T;
+  hypePlaylistId?: T;
   updatedAt?: T;
   createdAt?: T;
 }

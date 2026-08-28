@@ -1,0 +1,94 @@
+---
+// A YouTube playlist ID from Sports.hypePlaylistId, rendered as a
+// click-to-play facade rather than an always-on embed:
+//  - Performance: nothing from YouTube loads until someone actually
+//    wants to watch — no third-party JS/network cost paid by every
+//    visitor for a section most will only glance at.
+//  - Accessibility: the facade is a real <button> with a clear
+//    aria-label (WCAG 4.1.2 Name/Role/Value), reachable and operable by
+//    keyboard alone (native button semantics — Enter/Space just work),
+//    with a visible focus ring (WCAG 2.4.7). Nothing autoplays until
+//    that explicit click, so there's no unexpected/uncontrollable audio
+//    (the concern behind WCAG 1.4.2) — the autoplay param below only
+//    fires as the direct result of the click that requested it.
+// A plain "Watch on YouTube" link sits alongside it — works with no JS,
+// and covers anyone who'd rather not load an embedded iframe at all.
+interface Props {
+  sportName: string;
+  playlistId: string;
+  coverImageUrl?: string;
+}
+
+const { sportName, playlistId, coverImageUrl } = Astro.props;
+// youtube-nocookie.com: same player, doesn't set tracking cookies until
+// playback actually starts.
+const embedSrc = `https://www.youtube-nocookie.com/embed/videoseries?list=${encodeURIComponent(playlistId)}&autoplay=1&rel=0`;
+const watchUrl = `https://www.youtube.com/playlist?list=${encodeURIComponent(playlistId)}`;
+---
+
+<section class="mx-auto max-w-content px-6 py-14">
+  <div class="mb-6 flex items-end justify-between gap-4">
+    <h2 class="text-h3 font-semibold text-ink-900">Hype Videos</h2>
+    <a
+      href={watchUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      class="shrink-0 text-sm font-semibold text-primary-600 hover:text-primary-700"
+    >
+      Watch on YouTube <span aria-hidden="true">&rarr;</span>
+    </a>
+  </div>
+
+  <div class="relative aspect-video w-full overflow-hidden rounded-xl bg-[#101114]" data-hype-video-container>
+    <template data-hype-video-template>
+      <iframe
+        class="absolute inset-0 h-full w-full"
+        src={embedSrc}
+        title={`${sportName} hype video playlist`}
+        style="border:0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        allowfullscreen
+      ></iframe>
+    </template>
+
+    {coverImageUrl && (
+      <img src={coverImageUrl} alt="" class="absolute inset-0 h-full w-full object-cover" data-hype-video-thumb />
+    )}
+    <div class="absolute inset-0 bg-black/40" data-hype-video-scrim></div>
+
+    <button
+      type="button"
+      data-hype-video-play
+      class="group absolute inset-0 flex flex-col items-center justify-center gap-3 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+      aria-label={`Play ${sportName} hype video playlist`}
+    >
+      <span class="flex h-16 w-16 items-center justify-center rounded-full bg-white/90 text-primary-700 shadow-lg transition group-hover:scale-105 group-hover:bg-white sm:h-20 sm:w-20">
+        <svg class="ml-1 h-6 w-6 sm:h-7 sm:w-7" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M8 5v14l11-7z"></path>
+        </svg>
+      </span>
+      <span class="text-xs font-semibold uppercase tracking-[0.2em]">Watch Highlights</span>
+    </button>
+  </div>
+</section>
+
+<script>
+  document.querySelectorAll<HTMLElement>("[data-hype-video-container]").forEach((container) => {
+    const template = container.querySelector<HTMLTemplateElement>("[data-hype-video-template]");
+    const playButton = container.querySelector<HTMLButtonElement>("[data-hype-video-play]");
+    const thumb = container.querySelector<HTMLElement>("[data-hype-video-thumb]");
+    const scrim = container.querySelector<HTMLElement>("[data-hype-video-scrim]");
+
+    playButton?.addEventListener("click", () => {
+      if (template && !container.querySelector("iframe")) {
+        container.appendChild(template.content.cloneNode(true));
+      }
+      playButton.remove();
+      thumb?.remove();
+      scrim?.remove();
+      // Move focus into the now-loaded player rather than leaving it on a
+      // button that no longer exists.
+      container.querySelector("iframe")?.focus();
+    });
+  });
+</script>

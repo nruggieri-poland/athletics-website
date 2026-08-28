@@ -72,5 +72,13 @@ export const Sports: CollectionConfig = {
           'Background photo for this sport\'s tile on the /sports grid. Leave blank to fall back to a plain dark tile.',
       },
     },
+    {
+      name: 'hypePlaylistId',
+      type: 'text',
+      admin: {
+        description:
+          'YouTube playlist ID (the part after "list=" in a playlist URL) featuring this sport\'s hype/highlight videos — shown as a click-to-play section on the sport\'s hub page. Leave blank to hide that section entirely.',
+      },
+    },
   ],
 }
