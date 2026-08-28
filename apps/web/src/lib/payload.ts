@@ -31,6 +31,7 @@ export interface Sport {
   sortOrder: number;
   heroVideoId?: string;
   coverImage?: Media;
+  hypePlaylistId?: string;
 }
 
 export interface Season {

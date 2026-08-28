@@ -16,6 +16,7 @@ import * as migration_20260815_031829_add_redirects from './20260815_031829_add_
 import * as migration_20260815_044252_remove_redirects from './20260815_044252_remove_redirects';
 import * as migration_20260815_134113_add_links_slug from './20260815_134113_add_links_slug';
 import * as migration_20260815_153322_add_special_pages from './20260815_153322_add_special_pages';
+import * as migration_20260828_143810_add_sport_hype_playlist from './20260828_143810_add_sport_hype_playlist';
 
 export const migrations = [
   {
@@ -106,6 +107,11 @@ export const migrations = [
   {
     up: migration_20260815_153322_add_special_pages.up,
     down: migration_20260815_153322_add_special_pages.down,
-    name: '20260815_153322_add_special_pages'
+    name: '20260815_153322_add_special_pages',
+  },
+  {
+    up: migration_20260828_143810_add_sport_hype_playlist.up,
+    down: migration_20260828_143810_add_sport_hype_playlist.down,
+    name: '20260828_143810_add_sport_hype_playlist'
   },
 ];
