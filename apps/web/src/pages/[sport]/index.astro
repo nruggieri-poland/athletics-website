@@ -50,14 +50,6 @@ for (const game of seasonGames) {
 <BaseLayout title={sport.name} description={`Schedules and news for ${sport.name} at Poland Seminary`}>
   <VideoHero videoId={sport.heroVideoId} kicker="Poland Seminary High School" heading={sport.name} />
 
-  {sport.hypePlaylistId && (
-    <HypeVideoSection
-      sportName={sport.name}
-      playlistId={sport.hypePlaylistId}
-      coverImageUrl={sport.coverImage ? mediaUrl(sport.coverImage, "hero") : undefined}
-    />
-  )}
-
   <section class="mx-auto max-w-content px-6 py-14">
     <h2 class="mb-6 text-h3 font-semibold text-ink-900">Upcoming Games</h2>
     {upcomingGames.length > 0 ? (
@@ -132,6 +124,14 @@ for (const game of seasonGames) {
         {articles.map((article) => <ArticleCard article={article} />)}
       </div>
     </section>
+  )}
+
+  {sport.hypePlaylistId && (
+    <HypeVideoSection
+      sportName={sport.name}
+      playlistId={sport.hypePlaylistId}
+      coverImageUrl={sport.coverImage ? mediaUrl(sport.coverImage, "hero") : undefined}
+    />
   )}
 </BaseLayout>
 
