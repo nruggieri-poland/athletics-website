@@ -8,12 +8,14 @@
 // (articleHref() still does that for cards — this route is for someone
 // visiting the slug URL itself).
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import { getArticles, getGamesForTeam, getTeams, mediaUrl, articleHref, isExternalArticleLink } from "../../lib/payload";
+import { getAllArticles, getGamesForTeam, getTeams, mediaUrl, articleHref, isExternalArticleLink } from "../../lib/payload";
 import { lexicalToHtml, extractScheduleSnippetTeamIds } from "../../lib/lexical";
 import type { ScheduleSnippetData } from "../../lib/lexical";
 
 export async function getStaticPaths() {
-  const { docs: articles } = await getArticles(500, 1);
+  // Unfiltered on purpose — an excludeFromNewsFeed article still needs
+  // its own real page here, just not a listing on the homepage/News index.
+  const { docs: articles } = await getAllArticles();
   return articles.map((article) => ({
     params: { slug: article.slug },
     props: { article },
