@@ -456,6 +456,10 @@ export interface Article {
    */
   tags?: (number | Tag)[] | null;
   publishedDate: string;
+  /**
+   * Off by default — leave unchecked for a normal article, it still shows on the homepage and /news like always. Check this only for something meant to live solely on a tag-specific page (e.g. an NE8 conference update) that would just be clutter in the general feed. The article still gets its own page and still shows anywhere its tags are pulled directly (like /ne8) — this only removes it from the homepage "Latest News" module and the /news index.
+   */
+  excludeFromNewsFeed?: boolean | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -902,6 +906,7 @@ export interface ArticlesSelect<T extends boolean = true> {
   relatedSports?: T;
   tags?: T;
   publishedDate?: T;
+  excludeFromNewsFeed?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;

@@ -156,6 +156,7 @@ export interface Article {
   relatedSports?: Sport[];
   tags?: Tag[];
   publishedDate: string;
+  excludeFromNewsFeed?: boolean;
 }
 
 // Where clicking an article/news card should actually go — a normal
@@ -513,7 +514,29 @@ export async function getUpcomingGamesForSport(sportId: string, limit = 10): Pro
   return attachOpponentLogos(data.docs);
 }
 
+// Powers the homepage "Latest News" module and the /news index — the two
+// general/unscoped news surfaces. excludeFromNewsFeed is opt-out (defaults
+// false), so this stays a no-op for every article unless someone
+// deliberately flags one as belonging only on a tag-specific page (e.g.
+// getArticlesForTag("ne8")) rather than the general feed.
 export async function getArticles(limit = 20, page = 1): Promise<PaginatedDocs<Article>> {
+  return payloadFetch<PaginatedDocs<Article>>(
+    `/api/articles${toQuery({
+      "where[excludeFromNewsFeed][not_equals]": true,
+      sort: "-publishedDate",
+      limit,
+      page,
+    })}`,
+  );
+}
+
+// Unfiltered — every published article regardless of excludeFromNewsFeed.
+// For anything that needs to know about ALL articles rather than just the
+// general-feed subset (news/[slug].astro's getStaticPaths is the reason
+// this exists: an excludeFromNewsFeed article still gets its own real
+// page, it just isn't listed on the homepage/News index — see Articles.ts's
+// admin description for that field).
+export async function getAllArticles(limit = 500, page = 1): Promise<PaginatedDocs<Article>> {
   return payloadFetch<PaginatedDocs<Article>>(
     `/api/articles${toQuery({ sort: "-publishedDate", limit, page })}`,
   );
@@ -528,12 +551,15 @@ export async function getArticleBySlug(slug: string): Promise<Article | null> {
 
 // An article with no relatedSports selected is treated as broadly relevant
 // and shows on every sport's page — only an article that explicitly picks
-// OTHER sports (and not this one) is excluded.
+// OTHER sports (and not this one) is excluded. Also respects
+// excludeFromNewsFeed (same reasoning as getArticles) — a sport hub page
+// is still a general listing, not a tag-scoped one.
 export async function getArticlesForSport(sportId: string, limit = 5): Promise<Article[]> {
   const data = await payloadFetch<PaginatedDocs<Article>>(
     `/api/articles${toQuery({
-      "where[or][0][relatedSports][exists]": false,
-      "where[or][1][relatedSports][in]": sportId,
+      "where[and][0][or][0][relatedSports][exists]": false,
+      "where[and][0][or][1][relatedSports][in]": sportId,
+      "where[and][1][excludeFromNewsFeed][not_equals]": true,
       sort: "-publishedDate",
       limit,
     })}`,
