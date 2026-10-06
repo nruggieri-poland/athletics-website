@@ -482,6 +482,27 @@ export async function getSchoolYearGames(): Promise<Game[]> {
   return attachOpponentLogos(data.docs);
 }
 
+// Every finished Game (anything carrying a result) across every team since
+// `sinceDate`, newest first — the data source for the homepage's season
+// records and scoreboard (see lib/records.ts). Scrimmages are excluded:
+// they don't count toward records and aren't scored. Callers pass a date
+// reaching back past the current school year's start (the homepage uses the
+// previous July 1) so that in the summer, before the next season's first
+// game, the most recent season is still in range to be shown.
+export async function getCompletedGames(sinceDate: string, limit = 2000): Promise<Game[]> {
+  const data = await payloadFetch<PaginatedDocs<Game>>(
+    `/api/games${toQuery({
+      "where[status][equals]": "active",
+      "where[eventType][equals]": "Game",
+      "where[result][exists]": true,
+      "where[date][greater_than_equal]": sinceDate,
+      sort: "-date,-time24",
+      limit,
+    })}`,
+  );
+  return attachOpponentLogos(data.docs);
+}
+
 export async function getUpcomingGames(limit = 8): Promise<Game[]> {
   const today = new Date().toISOString().slice(0, 10);
   const data = await payloadFetch<PaginatedDocs<Game>>(

@@ -32,6 +32,17 @@
      regardless of site theme, and can't share this token. */
   --color-surface: #ffffff;
 
+  /* Result colors (W/L and meet-placement finishes). Semantic tokens rather
+     than raw Tailwind green/red so dark mode can swap in lighter shades:
+     the -700 shades are ~5:1 on white but only ~2.7-3.5:1 on the dark
+     surface, under WCAG AA's 4.5:1 for small text. The light values here
+     are those exact shades, so light mode is unchanged. */
+  --color-win: #15803d;
+  --color-loss: #b91c1c;
+  --color-place-first: #b45309;
+  --color-place-second: #475569;
+  --color-place-third: #c2410c;
+
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
 
   --container-content: 1200px;
@@ -113,6 +124,12 @@ article .prose {
   --color-ink-700: #dcdee3;
   --color-ink-800: #ececef;
   --color-ink-900: #f5f6f8;
+
+  --color-win: #4ade80;
+  --color-loss: #f87171;
+  --color-place-first: #fbbf24;
+  --color-place-second: #cbd5e1;
+  --color-place-third: #fb923c;
 }
 
 [data-theme="dark"] .text-primary-600,
@@ -142,6 +159,12 @@ article .prose {
     --color-ink-700: #dcdee3;
     --color-ink-800: #ececef;
     --color-ink-900: #f5f6f8;
+
+    --color-win: #4ade80;
+    --color-loss: #f87171;
+    --color-place-first: #fbbf24;
+    --color-place-second: #cbd5e1;
+    --color-place-third: #fb923c;
   }
   :root:not([data-theme="light"]) .text-primary-600,
   :root:not([data-theme="light"]) .hover\:text-primary-600:hover {
