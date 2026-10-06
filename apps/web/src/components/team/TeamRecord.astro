@@ -1,0 +1,38 @@
+---
+// Overall + conference record for a team's current season, shown in the
+// team page header (varsity only — see the page for why). Numerals are
+// visual-only (aria-hidden) with a spoken equivalent alongside: "5–2" is
+// read as "5 2" or "5 to 2" by screen readers, which says nothing about
+// wins and losses. A <dl> because this really is label/value data.
+import { formatTally, describeTally, gamesPlayed } from "../../lib/records";
+import type { TeamRecord } from "../../lib/records";
+
+interface Props {
+  record: TeamRecord;
+  seasonLabel: string;
+}
+
+const { record, seasonLabel } = Astro.props;
+
+// Conference only appears once a conference game has been decided — no
+// conference games on the schedule (or none played yet) isn't "0–0".
+const tiles = [
+  { label: "Overall", tally: record.overall },
+  ...(gamesPlayed(record.conference) > 0 ? [{ label: "Conference", tally: record.conference }] : []),
+];
+---
+
+<div class="mt-8" role="group" aria-label={`${seasonLabel} record`}>
+  <p class="text-xs font-semibold uppercase tracking-[0.2em] text-ink-500">{seasonLabel}</p>
+  <dl class="mt-3 flex flex-wrap gap-4">
+    {tiles.map(({ label, tally }) => (
+      <div class="min-w-[9.5rem] rounded-xl border border-ink-100 border-l-4 border-l-primary-500 bg-surface px-6 py-4 shadow-sm">
+        <dt class="text-xs font-semibold uppercase tracking-wide text-ink-500">{label}</dt>
+        <dd class="mt-1.5">
+          <span aria-hidden="true" class="text-4xl font-black leading-none tabular-nums text-ink-900">{formatTally(tally)}</span>
+          <span class="sr-only">{describeTally(tally)}</span>
+        </dd>
+      </div>
+    ))}
+  </dl>
+</div>

@@ -1,0 +1,64 @@
+---
+// Homepage: current-season varsity records, most wins first. A real
+// <table> (not a styled list) — it's rank-ordered tabular data, and header
+// associations are what let a screen reader announce "Football, Overall,
+// 5 wins, 2 losses" instead of a stream of disconnected numbers.
+import { formatTally, describeTally, gamesPlayed } from "../../lib/records";
+import type { SeasonSummary } from "../../lib/records";
+import { levelSlug } from "../../lib/payload";
+
+interface Props {
+  season: SeasonSummary;
+}
+
+const { season } = Astro.props;
+---
+
+<section aria-labelledby="season-records-heading">
+  <div class="mb-6 flex items-baseline justify-between gap-4">
+    <h2 id="season-records-heading" class="text-h3 font-semibold text-ink-900">{season.label} Records</h2>
+    <span class="shrink-0 text-xs font-medium uppercase tracking-wide text-ink-500">Varsity</span>
+  </div>
+
+  <div class="overflow-hidden rounded-xl border border-ink-100 bg-surface shadow-sm">
+    <table class="w-full text-left text-sm">
+      <caption class="sr-only">{season.label} varsity records, ordered by most wins</caption>
+      <thead class="bg-ink-50 text-xs uppercase tracking-wide text-ink-500">
+        <tr>
+          <th scope="col" class="px-4 py-2.5 font-semibold">Team</th>
+          <th scope="col" class="px-4 py-2.5 text-right font-semibold">Overall</th>
+          <th scope="col" class="px-4 py-2.5 text-right font-semibold">Conf.</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-ink-100">
+        {season.rows.map(({ team, record }) => (
+          <tr class="hover:bg-ink-50">
+            <th scope="row" class="px-4 py-3 font-semibold text-ink-900">
+              <a
+                href={`/${team.sport.slug}/${levelSlug(team.level)}`}
+                class="hover:text-primary-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500"
+              >{team.sport.name}</a>
+            </th>
+            <td class="px-4 py-3 text-right text-base font-bold tabular-nums text-ink-900">
+              <span aria-hidden="true">{formatTally(record.overall)}</span>
+              <span class="sr-only">{describeTally(record.overall)}</span>
+            </td>
+            <td class="px-4 py-3 text-right tabular-nums text-ink-600">
+              {gamesPlayed(record.conference) > 0 ? (
+                <>
+                  <span aria-hidden="true">{formatTally(record.conference)}</span>
+                  <span class="sr-only">{describeTally(record.conference)}</span>
+                </>
+              ) : (
+                <>
+                  <span aria-hidden="true">&mdash;</span>
+                  <span class="sr-only">No conference games played yet</span>
+                </>
+              )}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+</section>

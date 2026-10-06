@@ -1,8 +1,10 @@
 ---
 import BaseLayout from "../../../layouts/BaseLayout.astro";
 import ScheduleList from "../../../components/team/ScheduleList.astro";
+import TeamRecord from "../../../components/team/TeamRecord.astro";
 import EventLinkPromo from "../../../components/shared/EventLinkPromo.astro";
 import { getTeams, getGamesForTeam, levelSlug } from "../../../lib/payload";
+import { isDecided, tallyRecord, schoolYearStartYear, seasonLabel } from "../../../lib/records";
 
 export async function getStaticPaths() {
   const teams = await getTeams();
@@ -16,6 +18,16 @@ export async function getStaticPaths() {
 
 const { team } = Astro.props;
 const games = await getGamesForTeam(team.id);
+
+// Varsity only. getGamesForTeam is already scoped to the current school
+// year, so this is exactly the record for the schedule shown below it.
+// tallyRecord returns null until something has been decided, which hides
+// the whole block rather than showing a 0–0.
+const record = team.level === "Varsity" ? tallyRecord(games) : null;
+const latestDecided = games.filter(isDecided).at(-1);
+const recordSeasonLabel = latestDecided
+  ? seasonLabel(team.sport.seasonType, schoolYearStartYear(latestDecided.date))
+  : "";
 ---
 
 <BaseLayout title={team.displayName} description={`Schedule for ${team.displayName}`}>
@@ -26,6 +38,7 @@ const games = await getGamesForTeam(team.id);
         &middot; {team.gender}
       </p>
       <h1 class="mt-1 text-h1 font-bold text-ink-900">{team.displayName}</h1>
+      {record && <TeamRecord record={record} seasonLabel={recordSeasonLabel} />}
     </div>
   </section>
 
