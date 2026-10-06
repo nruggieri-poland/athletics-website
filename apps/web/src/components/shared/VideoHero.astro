@@ -4,7 +4,12 @@
 // soft/marketing: bottom-anchored, oversized black-weight uppercase type,
 // a thin accent rule, and a squared (not pill) outlined CTA — closer to a
 // team-branding title card than a SaaS landing page.
+import { parseYouTubeSource, heroEmbedSrc } from "../../lib/youtube";
+
 interface Props {
+  // Despite the name, accepts whatever an editor pasted into the CMS field
+  // — a video ID, a playlist ID, or a full YouTube link (see lib/youtube.ts).
+  // Anything that doesn't parse renders no video, same as leaving it blank.
   videoId?: string;
   kicker?: string;
   heading: string;
@@ -14,15 +19,17 @@ interface Props {
 }
 
 const { videoId, kicker, heading, tagline, ctaHref, ctaLabel } = Astro.props;
+const source = parseYouTubeSource(videoId);
+const embedSrc = source ? heroEmbedSrc(source) : null;
 ---
 
 <section class="relative isolate flex h-[64vh] min-h-[380px] items-end overflow-hidden bg-[#101114]">
-  {videoId && (
+  {embedSrc && (
     <div class="absolute inset-0 -z-20" aria-hidden="true" data-hero-video-container>
       <template data-hero-video-template>
         <iframe
           class="pointer-events-none absolute left-1/2 top-1/2 h-[56.25vw] min-h-full w-[177.78vh] min-w-full -translate-x-1/2 -translate-y-1/2"
-          src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&showinfo=0&modestbranding=1&playsinline=1&rel=0&iv_load_policy=3&disablekb=1`}
+          src={embedSrc}
           title=""
           tabindex="-1"
           style="border:0"
@@ -55,7 +62,7 @@ const { videoId, kicker, heading, tagline, ctaHref, ctaLabel } = Astro.props;
     )}
   </div>
 
-  {videoId && (
+  {embedSrc && (
     <button
       type="button"
       data-hero-video-toggle

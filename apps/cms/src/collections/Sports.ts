@@ -60,7 +60,7 @@ export const Sports: CollectionConfig = {
       type: 'text',
       admin: {
         description:
-          'YouTube video ID (the part after "v=" in the URL) to play muted/looped as this sport\'s hub-page hero background. Leave blank to fall back to a plain background.',
+          'YouTube link to play muted/looped as this sport\'s hub-page hero background — paste a playlist link (plays through the whole playlist, then repeats) or a single video link. Copying straight from the address bar works; a bare video/playlist ID does too. Leave blank to fall back to a plain background.',
       },
     },
     {
