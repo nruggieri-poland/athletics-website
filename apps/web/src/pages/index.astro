@@ -4,21 +4,35 @@ import GamesTicker from "../components/home/GamesTicker.astro";
 import VideoHero from "../components/shared/VideoHero.astro";
 import GamesCarousel from "../components/home/GamesCarousel.astro";
 import ArticleCard from "../components/articles/ArticleCard.astro";
-import { getUpcomingGames, getArticles, getSiteSettings } from "../lib/payload";
+import SeasonRecords from "../components/home/SeasonRecords.astro";
+import Scoreboard from "../components/home/Scoreboard.astro";
+import { getUpcomingGames, getArticles, getSiteSettings, getCompletedGames } from "../lib/payload";
+import { schoolYearStartYear, summarizeCurrentSeason, latestResults } from "../lib/records";
 
 let upcomingGames: Awaited<ReturnType<typeof getUpcomingGames>> = [];
 let articles: Awaited<ReturnType<typeof getArticles>>["docs"] = [];
 let siteSettings: Awaited<ReturnType<typeof getSiteSettings>> | null = null;
+let completedGames: Awaited<ReturnType<typeof getCompletedGames>> = [];
+
+// Reach back to the previous school year's start (July 1) so that in the
+// summer — before the next season's first game — last spring's results are
+// still in range and the records module has something true to show.
+const today = new Date().toISOString().slice(0, 10);
+const completedSince = `${schoolYearStartYear(today) - 1}-07-01`;
 
 try {
-  [upcomingGames, { docs: articles }, siteSettings] = await Promise.all([
+  [upcomingGames, { docs: articles }, siteSettings, completedGames] = await Promise.all([
     getUpcomingGames(10),
     getArticles(3, 1),
     getSiteSettings(),
+    getCompletedGames(completedSince),
   ]);
 } catch {
   // CMS unreachable at build time
 }
+
+const seasonSummary = summarizeCurrentSeason(completedGames);
+const scoreboardGames = latestResults(completedGames, 10);
 
 const heroHeading = siteSettings?.heroHeading || "Bulldogs Athletics";
 const heroTagline =
@@ -64,4 +78,27 @@ const heroTagline =
       )}
     </div>
   </section>
+
+  {(seasonSummary || scoreboardGames.length > 0) && (
+    <section class="mx-auto max-w-content px-6 py-16">
+      <div class="grid items-start gap-12 lg:grid-cols-2 lg:gap-10">
+        {seasonSummary ? (
+          <SeasonRecords season={seasonSummary} />
+        ) : (
+          <div>
+            <h2 class="mb-6 text-h3 font-semibold text-ink-900">Season Records</h2>
+            <p class="text-ink-400">Records will appear here once varsity results are in.</p>
+          </div>
+        )}
+        {scoreboardGames.length > 0 ? (
+          <Scoreboard games={scoreboardGames} />
+        ) : (
+          <div>
+            <h2 class="mb-6 text-h3 font-semibold text-ink-900">Scoreboard</h2>
+            <p class="text-ink-400">Scores will appear here as results come in.</p>
+          </div>
+        )}
+      </div>
+    </section>
+  )}
 </BaseLayout>

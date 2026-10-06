@@ -1,0 +1,91 @@
+---
+// Homepage: the latest results across every team and level, newest first,
+// in a scrollable panel. The panel's height is deliberately a little short
+// of fitting its rows so the next one peeks out at the bottom — touch
+// browsers hide scrollbars, and that half-row is the cue that there's more.
+// Focusable (tabindex) so keyboard users can scroll it with the arrow keys
+// without having to tab through every row's link first.
+import type { Game } from "../../lib/payload";
+import { gameResultLabel, levelSlug, mediaUrl } from "../../lib/payload";
+
+interface Props {
+  games: Game[];
+}
+
+const { games } = Astro.props;
+
+// Full class names (not built by concatenation) so Tailwind sees them. The
+// colors are theme tokens (see global.css) — they swap to lighter shades in
+// dark mode to stay above WCAG AA contrast.
+const resultColor: Record<string, string> = {
+  W: "text-win",
+  L: "text-loss",
+  T: "text-ink-600",
+  "1st": "text-place-first",
+  "2nd": "text-place-second",
+  "3rd": "text-place-third",
+};
+
+function dateLabel(game: Game): string {
+  const date = new Date(`${game.date.slice(0, 10)}T00:00:00`);
+  return date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+}
+
+// "W 28-14" -> "Win, 28 to 14"; "2nd" -> "2nd place". The letter and the
+// hyphenated score read poorly aloud.
+function spoken(label: string): string {
+  return label
+    .replace(/^W\b/, "Win,")
+    .replace(/^L\b/, "Loss,")
+    .replace(/^T\b/, "Tie,")
+    .replace(/(\d+)-(\d+)$/, "$1 to $2")
+    .replace(/^(\d(?:st|nd|rd))$/, "$1 place");
+}
+---
+
+<div>
+  <div class="mb-6 flex items-baseline justify-between gap-4">
+    <h2 id="scoreboard-heading" class="text-h3 font-semibold text-ink-900">Scoreboard</h2>
+    <a href="/calendar" class="shrink-0 text-sm font-medium text-primary-600">Full calendar &rarr;</a>
+  </div>
+
+  <div
+    role="region"
+    aria-labelledby="scoreboard-heading"
+    tabindex="0"
+    class="max-h-[22rem] overflow-y-auto overscroll-contain rounded-xl border border-ink-100 bg-surface shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500"
+  >
+    <ol class="divide-y divide-ink-100">
+      {games.map((game) => {
+        const label = gameResultLabel(game) ?? "";
+        const vsOrAt = game.homeOrAway === "Home" ? "vs" : game.homeOrAway === "Away" ? "@" : "";
+        return (
+          <li>
+            <a
+              href={`/${game.team.sport.slug}/${levelSlug(game.team.level)}`}
+              class="flex items-center gap-4 px-4 py-3 transition hover:bg-ink-50 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary-500"
+            >
+              <div class="min-w-0 flex-1">
+                <p class="truncate text-xs font-medium uppercase tracking-wide text-ink-500">
+                  {dateLabel(game)} &middot; {game.team.sport.name}{game.team.level !== "Varsity" && ` · ${game.team.level}`}
+                </p>
+                <div class="mt-0.5 flex items-center gap-2">
+                  {game.opponentLogo && (
+                    <img src={mediaUrl(game.opponentLogo)} alt="" class="h-6 w-6 shrink-0 object-contain" loading="lazy" />
+                  )}
+                  <p class="min-w-0 truncate font-semibold text-ink-900">
+                    <span class="text-ink-500">{vsOrAt}</span> {game.opponentName}
+                  </p>
+                </div>
+              </div>
+              <span class:list={["shrink-0 text-lg font-bold tabular-nums", resultColor[game.result ?? ""] ?? "text-ink-600"]}>
+                <span aria-hidden="true">{label}</span>
+                <span class="sr-only">{spoken(label)}</span>
+              </span>
+            </a>
+          </li>
+        );
+      })}
+    </ol>
+  </div>
+</div>
