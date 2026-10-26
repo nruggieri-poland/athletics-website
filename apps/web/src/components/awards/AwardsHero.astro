@@ -1,0 +1,102 @@
+---
+// The navy banner every awards page opens with — breadcrumb trail back up
+// the NE8 → Awards → school year → season hierarchy, the page title, and an
+// optional row of headline numbers. Always dark (like the cards), so it
+// reads the same in both site themes.
+import type { AwardPhoto } from "../../lib/awards";
+import { photoPosition, photoUrl } from "../../lib/awards";
+
+interface Props {
+  crumbs: { label: string; href: string }[];
+  eyebrow: string;
+  title: string;
+  lede?: string;
+  stats?: { value: number; label: string; color?: string }[];
+  image?: AwardPhoto;
+}
+
+const { crumbs, eyebrow, title, lede, stats = [], image } = Astro.props;
+---
+
+<section class="relative isolate overflow-hidden bg-primary-900 text-white">
+  {
+    image?.url && (
+      <img
+        src={photoUrl(image, "card")}
+        alt=""
+        class="absolute inset-y-0 right-0 -z-10 hidden h-full w-1/2 object-cover opacity-50 md:block"
+        style={`object-position: ${photoPosition(image)}; mask-image: linear-gradient(to right, transparent, #000 60%); -webkit-mask-image: linear-gradient(to right, transparent, #000 60%)`}
+      />
+    )
+  }
+  <div class="awards-hero-pattern absolute inset-0 -z-20" aria-hidden="true"></div>
+  <div
+    class="absolute inset-0 -z-10 bg-gradient-to-br from-primary-700/60 via-transparent to-black/40"
+    aria-hidden="true"
+  >
+  </div>
+
+  <div class="mx-auto max-w-content px-6 pb-12 pt-10 md:pb-16 md:pt-12">
+    <nav aria-label="Breadcrumb" class="mb-8">
+      <ol
+        class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-semibold uppercase tracking-wide text-white/60"
+      >
+        {
+          crumbs.map((crumb, i) => (
+            <li class="flex items-center gap-2">
+              {i > 0 && <span aria-hidden="true">/</span>}
+              {i === crumbs.length - 1 ? (
+                <span aria-current="page" class="text-white">
+                  {crumb.label}
+                </span>
+              ) : (
+                <a href={crumb.href} class="hover:text-white hover:underline">
+                  {crumb.label}
+                </a>
+              )}
+            </li>
+          ))
+        }
+      </ol>
+    </nav>
+
+    <p class="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-[#f5c542]">{eyebrow}</p>
+    <h1
+      class="max-w-[18ch] text-4xl font-black uppercase leading-[0.95] tracking-tight md:text-hero"
+    >
+      {title}
+    </h1>
+    {lede && <p class="mt-5 max-w-[60ch] text-lg text-white/80">{lede}</p>}
+
+    {
+      stats.length > 0 && (
+        <dl class="mt-10 flex flex-wrap gap-x-10 gap-y-6">
+          {stats.map((stat) => (
+            <div class="flex flex-col-reverse">
+              <dt class="mt-2 text-xs font-semibold uppercase tracking-wider text-white/60">
+                {stat.label}
+              </dt>
+              <dd
+                class="text-5xl font-black leading-none tracking-tight"
+                style={stat.color ? `color: ${stat.color}` : undefined}
+              >
+                {stat.value}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      )
+    }
+
+    <slot />
+  </div>
+</section>
+
+<style>
+  .awards-hero-pattern {
+    background-image: radial-gradient(rgba(255, 255, 255, 0.09) 1px, transparent 1px);
+    background-size: 22px 22px;
+    mask-image: linear-gradient(to bottom right, #000, transparent 70%);
+    -webkit-mask-image: linear-gradient(to bottom right, #000, transparent 70%);
+  }
+</style>

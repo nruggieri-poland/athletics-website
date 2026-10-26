@@ -1,0 +1,211 @@
+---
+// polandathletics.com/ne8/awards — the front door to every NE8
+// All-Conference season. Leads with the most recently announced season,
+// then lists every school year (newest first) as a row of Fall/Winter/
+// Spring tiles. School-year and season pages hang off this one.
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import AwardsHero from "../../../components/awards/AwardsHero.astro";
+import AwardCard from "../../../components/awards/AwardCard.astro";
+import SeasonTile from "../../../components/awards/SeasonTile.astro";
+import type { AwardSeason } from "../../../lib/awards";
+import {
+  SEASON_ORDER,
+  getAwardSeasons,
+  groupBySchoolYear,
+  honorCounts,
+  honoreeCount,
+  latestSeason,
+  photoUrl,
+  schoolYearHref,
+  seasonCover,
+  seasonHref,
+  seasonName,
+  sortAwards,
+} from "../../../lib/awards";
+
+let seasons: AwardSeason[] = [];
+try {
+  seasons = await getAwardSeasons();
+} catch {
+  // CMS unreachable at build time — render the empty state.
+}
+
+const years = groupBySchoolYear(seasons);
+const allAwards = seasons.flatMap((season) => season.awards);
+const playersOfTheYear = allAwards.filter((award) => award.honor === "player-of-the-year").length;
+const latest = latestSeason(seasons);
+const latestCards = latest ? sortAwards(latest.awards).slice(0, 3) : [];
+const latestCounts = latest ? honorCounts(latest.awards) : [];
+const cover = latest ? seasonCover(latest) : undefined;
+---
+
+<BaseLayout
+  title="NE8 All-Conference Awards"
+  description="Every Poland Bulldog honored as NE8 All-Conference — Players of the Year, First Team, and Second Team selections, season by season."
+  image={cover ? photoUrl(cover) : undefined}
+>
+  <AwardsHero
+    crumbs={[
+      { label: "NE8", href: "/ne8" },
+      { label: "Awards", href: "/ne8/awards" },
+    ]}
+    eyebrow="Northeast 8 Athletic Conference"
+    title="All-Conference Awards"
+    lede="Celebrating every Bulldog recognized by the NE8's coaches and administrators, season by season."
+    stats={seasons.length > 0
+      ? [
+          { value: allAwards.length, label: "All-Conference honors" },
+          { value: playersOfTheYear, label: "Players of the Year", color: "#f5c542" },
+          { value: seasons.length, label: seasons.length === 1 ? "Season" : "Seasons" },
+        ]
+      : []}
+  />
+
+  {
+    latest ? (
+      <>
+        <section class="mx-auto max-w-content px-6 pt-14" aria-labelledby="latest-heading">
+          <div class="grid items-center gap-10 overflow-hidden rounded-3xl bg-[#101114] p-6 text-white sm:p-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+            <div>
+              <p class="text-xs font-bold uppercase tracking-[0.2em] text-[#f5c542]">
+                Latest announcement
+              </p>
+              <h2
+                id="latest-heading"
+                class="mt-3 text-4xl font-black uppercase leading-none tracking-tight md:text-5xl"
+              >
+                {seasonName(latest)}
+              </h2>
+              <p class="mt-4 text-white/75">
+                {honoreeCount(latest.awards)} Bulldogs earned {latest.awards.length} NE8
+                All-Conference honors.
+              </p>
+              {latestCounts.length > 0 && (
+                <ul class="mt-6 flex flex-wrap gap-2">
+                  {latestCounts.map(({ honor, count }) => (
+                    <li
+                      class="rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide"
+                      style={`color: ${honor.accent}; background: color-mix(in srgb, ${honor.accent}, transparent 82%)`}
+                    >
+                      {count} {count === 1 ? honor.label : honor.plural}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <a
+                href={seasonHref(latest)}
+                class="mt-8 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-bold text-primary-900 hover:bg-primary-50"
+              >
+                See all {latest.awards.length} cards
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M5 12h14M13 6l6 6-6 6" />
+                </svg>
+              </a>
+            </div>
+            {latestCards.length > 0 && (
+              <ul class="latest-fan grid grid-cols-3 gap-3 sm:gap-5">
+                {latestCards.map((award) => (
+                  <li>
+                    <AwardCard award={award} season={latest} />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </section>
+
+        {years.map((year) => (
+          <section
+            class="mx-auto max-w-content px-6 py-14"
+            aria-labelledby={`year-${year.schoolYear}`}
+          >
+            <div class="mb-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-2 border-b border-ink-100 pb-3">
+              <h2
+                id={`year-${year.schoolYear}`}
+                class="text-h2 font-black tracking-tight text-ink-900"
+              >
+                <a href={schoolYearHref(year.schoolYear)} class="hover:text-primary-600">
+                  {year.schoolYear}
+                </a>
+              </h2>
+              <p class="text-sm text-ink-500">
+                {year.awards.length} honors · {honoreeCount(year.awards)} Bulldogs
+                <a
+                  href={schoolYearHref(year.schoolYear)}
+                  class="mt-1 block font-semibold text-primary-600 hover:underline sm:ml-3 sm:mt-0 sm:inline"
+                >
+                  School year overview &rarr;
+                </a>
+              </p>
+            </div>
+            <div class="grid gap-5 sm:grid-cols-3">
+              {SEASON_ORDER.map((seasonType) => (
+                <SeasonTile
+                  schoolYear={year.schoolYear}
+                  seasonType={seasonType}
+                  season={year.seasons.find((season) => season.season === seasonType)}
+                />
+              ))}
+            </div>
+          </section>
+        ))}
+      </>
+    ) : (
+      <section class="mx-auto max-w-content px-6 py-20 text-center">
+        <p class="text-lg font-semibold text-ink-900">The first awards season is on its way.</p>
+        <p class="mt-2 text-ink-500">
+          Check back once the NE8 announces its All-Conference selections.
+        </p>
+      </section>
+    )
+  }
+</BaseLayout>
+
+<style>
+  /* The three preview cards sit in a fraction of the banner — they're a
+     teaser for the season page, so they drop everything but the photo,
+     honor, and name, with type scaled to the card. */
+  .latest-fan :global(.profile-card__footer),
+  .latest-fan :global(.profile-card__badge),
+  .latest-fan :global(.profile-card__title) {
+    display: none;
+  }
+  .latest-fan :global(.profile-card__name) {
+    font-size: clamp(11px, 1.6vw, 19px);
+  }
+  .latest-fan :global(.profile-card__honor) {
+    margin-bottom: 5px;
+    padding: 2px 6px;
+    font-size: clamp(6.5px, 0.62vw, 10px);
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+  .latest-fan :global(.profile-card__info) {
+    left: 10%;
+    right: 10%;
+    bottom: 8%;
+  }
+  .latest-fan :global(.profile-card__year) {
+    top: 8%;
+    left: 9%;
+    font-size: clamp(13px, 1.6vw, 22px);
+  }
+  /* Phone width: too small for any text — just the photos, as a teaser. */
+  @media (max-width: 639px) {
+    .latest-fan :global(.profile-card__info),
+    .latest-fan :global(.profile-card__scrim),
+    .latest-fan :global(.profile-card__year) {
+      display: none;
+    }
+  }
+</style>

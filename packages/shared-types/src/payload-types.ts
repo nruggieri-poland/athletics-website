@@ -79,6 +79,8 @@ export interface Config {
     links: Link;
     galleries: Gallery;
     'special-pages': SpecialPage;
+    'award-seasons': AwardSeason;
+    'award-photos': AwardPhoto;
     'payload-kv': PayloadKv;
     'payload-folders': FolderInterface;
     'payload-locked-documents': PayloadLockedDocument;
@@ -103,6 +105,8 @@ export interface Config {
     links: LinksSelect<false> | LinksSelect<true>;
     galleries: GalleriesSelect<false> | GalleriesSelect<true>;
     'special-pages': SpecialPagesSelect<false> | SpecialPagesSelect<true>;
+    'award-seasons': AwardSeasonsSelect<false> | AwardSeasonsSelect<true>;
+    'award-photos': AwardPhotosSelect<false> | AwardPhotosSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-folders': PayloadFoldersSelect<false> | PayloadFoldersSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -602,6 +606,114 @@ export interface SpecialPage {
   _status?: ('draft' | 'published') | null;
 }
 /**
+ * One entry per season (e.g. 2025-2026 Winter) holding all of its NE8 All-Conference award cards. Use "Quick fill" to paste the list from the awards spreadsheet and drop in all the photos at once.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "award-seasons".
+ */
+export interface AwardSeason {
+  id: number;
+  title?: string | null;
+  /**
+   * e.g. "2025-2026"
+   */
+  schoolYear: string;
+  season: 'Fall' | 'Winter' | 'Spring';
+  /**
+   * Set from the school year and season when you save — there can only be one entry per season.
+   */
+  slug?: string | null;
+  /**
+   * Leave off while you're still building the list — the season stays hidden until this is checked.
+   */
+  isPublic?: boolean | null;
+  /**
+   * Optional message at the top of the season page. Leave blank for an automatic one ("28 Bulldogs earned NE8 honors this Winter…").
+   */
+  intro?: string | null;
+  /**
+   * Shown on this season's tile and link previews. Leave blank to use a Player of the Year's photo.
+   */
+  coverImage?: (number | null) | AwardPhoto;
+  /**
+   * Optional link to the full photo gallery (e.g. a Google Photos album).
+   */
+  galleryUrl?: string | null;
+  /**
+   * Copy rows straight out of the awards spreadsheet — columns in the order Name, Grade, Award, Sport (a header row is fine). Each row becomes a card. "Boys"/"Girls" in the sport column is kept, so "Girls Swim and Dive" works.
+   */
+  pasteList?: string | null;
+  /**
+   * Upload a batch of photos named after the athletes (e.g. "aaron-vandervort.jpg") — each is attached to the matching card on save. Any photo still listed here after saving didn't match a name: rename it, or attach it to its card by hand.
+   */
+  dropPhotos?: (number | AwardPhoto)[] | null;
+  /**
+   * The order here doesn't matter — the site sorts cards by honor, then sport, then last name.
+   */
+  awards?:
+    | {
+        athleteName: string;
+        honor: 'player-of-the-year' | 'coach-of-the-year' | 'first-team' | 'second-team' | 'honorable-mention';
+        grade?: ('Freshman' | 'Sophomore' | 'Junior' | 'Senior') | null;
+        sport: number | Sport;
+        /**
+         * For co-ed sports, e.g. Girls Swimming & Diving.
+         */
+        division?: ('Boys' | 'Girls') | null;
+        /**
+         * Optional, e.g. "Offensive Player of the Year".
+         */
+        honorTitle?: string | null;
+        photo?: (number | null) | AwardPhoto;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Photos used on NE8 award cards. Usually added from an award season's "Quick fill" box rather than here. Set a focal point on a photo to control how it's framed on its card.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "award-photos".
+ */
+export interface AwardPhoto {
+  id: number;
+  /**
+   * Filled in from the filename if left blank.
+   */
+  alt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+  sizes?: {
+    thumbnail?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    card?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+  };
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
@@ -672,6 +784,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'special-pages';
         value: number | SpecialPage;
+      } | null)
+    | ({
+        relationTo: 'award-seasons';
+        value: number | AwardSeason;
+      } | null)
+    | ({
+        relationTo: 'award-photos';
+        value: number | AwardPhoto;
       } | null)
     | ({
         relationTo: 'payload-folders';
@@ -982,6 +1102,78 @@ export interface SpecialPagesSelect<T extends boolean = true> {
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "award-seasons_select".
+ */
+export interface AwardSeasonsSelect<T extends boolean = true> {
+  title?: T;
+  schoolYear?: T;
+  season?: T;
+  slug?: T;
+  isPublic?: T;
+  intro?: T;
+  coverImage?: T;
+  galleryUrl?: T;
+  pasteList?: T;
+  dropPhotos?: T;
+  awards?:
+    | T
+    | {
+        athleteName?: T;
+        honor?: T;
+        grade?: T;
+        sport?: T;
+        division?: T;
+        honorTitle?: T;
+        photo?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "award-photos_select".
+ */
+export interface AwardPhotosSelect<T extends boolean = true> {
+  alt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+  focalX?: T;
+  focalY?: T;
+  sizes?:
+    | T
+    | {
+        thumbnail?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+        card?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+      };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
