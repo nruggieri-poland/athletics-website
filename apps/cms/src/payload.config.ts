@@ -17,6 +17,8 @@ import { Tags } from './collections/Tags.ts'
 import { Links } from './collections/Links.ts'
 import { Galleries } from './collections/Galleries.ts'
 import { SpecialPages } from './collections/SpecialPages.ts'
+import { AwardSeasons } from './collections/AwardSeasons.ts'
+import { AwardPhotos } from './collections/AwardPhotos.ts'
 import { SiteSettings } from './globals/SiteSettings.ts'
 import { Navigation } from './globals/Navigation.ts'
 import { SyncStatus } from './globals/SyncStatus.ts'
@@ -68,7 +70,22 @@ export default buildConfig({
     },
   },
   editor: lexicalEditor(),
-  collections: [Users, Media, Sports, Seasons, Teams, Games, Opponents, Articles, Tags, Links, Galleries, SpecialPages],
+  collections: [
+    Users,
+    Media,
+    Sports,
+    Seasons,
+    Teams,
+    Games,
+    Opponents,
+    Articles,
+    Tags,
+    Links,
+    Galleries,
+    SpecialPages,
+    AwardSeasons,
+    AwardPhotos,
+  ],
   globals: [SiteSettings, Navigation, SyncStatus],
   // Public read access on the auto-generated payload-folders collection —
   // without this, folder names never populate on public REST reads (a

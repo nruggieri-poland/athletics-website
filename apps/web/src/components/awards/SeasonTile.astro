@@ -1,0 +1,98 @@
+---
+// A season's doorway from the awards hub and school-year pages: cover
+// photo, season name, and its honor breakdown. With no `season` (not
+// announced yet, or not published), renders a quiet placeholder in the
+// same footprint so a school year's Fall/Winter/Spring row stays aligned.
+import type { AwardSeason } from "../../lib/awards";
+import type { SeasonType } from "../../lib/payload";
+import {
+  honorCounts,
+  honorMeta,
+  photoPosition,
+  photoUrl,
+  seasonCover,
+  seasonHref,
+  seasonYear,
+} from "../../lib/awards";
+
+interface Props {
+  schoolYear: string;
+  seasonType: SeasonType;
+  season?: AwardSeason;
+}
+
+const { schoolYear, seasonType, season } = Astro.props;
+const cover = season ? seasonCover(season) : undefined;
+const counts = season ? honorCounts(season.awards) : [];
+const year = seasonYear({ schoolYear, season: seasonType });
+---
+
+{
+  season ? (
+    <a
+      href={seasonHref(season)}
+      class="group relative flex aspect-[4/5] flex-col justify-end overflow-hidden rounded-2xl bg-[#101114] p-5 text-white shadow-sm
+      transition-[translate,box-shadow] duration-300 ease-out motion-reduce:transition-none
+      hover:-translate-y-1 hover:shadow-2xl focus-visible:-translate-y-1 sm:aspect-[3/4]"
+    >
+      {cover ? (
+        <img
+          src={photoUrl(cover)}
+          alt=""
+          loading="lazy"
+          class="absolute inset-0 h-full w-full object-cover transition-[scale] duration-500 ease-out group-hover:scale-105 motion-reduce:transition-none"
+          style={`object-position: ${photoPosition(cover)}`}
+        />
+      ) : (
+        <div class="absolute inset-0 bg-gradient-to-br from-primary-600 to-primary-900" />
+      )}
+      <div class="absolute inset-0 bg-gradient-to-b from-black/30 via-black/10 to-black/85" />
+
+      <span class="absolute left-5 top-5 rounded-full bg-black/40 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider ring-1 ring-white/25 backdrop-blur">
+        {season.awards.length} {season.awards.length === 1 ? "honor" : "honors"}
+      </span>
+
+      <div class="relative">
+        <p class="text-sm font-semibold uppercase tracking-wider text-white/70">{year}</p>
+        <h3 class="text-4xl font-black uppercase leading-none tracking-tight">{seasonType}</h3>
+        {counts.length > 0 && (
+          <ul class="mt-4 flex flex-wrap gap-1.5">
+            {counts.map(({ honor, count }) => (
+              <li
+                class="rounded-full px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide ring-1"
+                style={`color: ${honor.accent}; background: color-mix(in srgb, ${honor.accent}, transparent 82%); --tw-ring-color: color-mix(in srgb, ${honor.accent}, transparent 50%)`}
+              >
+                {count} {honorMeta(honor.value).short}
+              </li>
+            ))}
+          </ul>
+        )}
+        <span class="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-white/90 group-hover:text-white">
+          View the cards
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+            class="transition-[translate] duration-300 group-hover:translate-x-1"
+          >
+            <path d="M5 12h14M13 6l6 6-6 6" />
+          </svg>
+        </span>
+      </div>
+    </a>
+  ) : (
+    <div class="flex aspect-[4/5] flex-col justify-end rounded-2xl border-2 border-dashed border-ink-200 p-5 sm:aspect-[3/4]">
+      <p class="text-sm font-semibold uppercase tracking-wider text-ink-400">{year}</p>
+      <h3 class="text-4xl font-black uppercase leading-none tracking-tight text-ink-300">
+        {seasonType}
+      </h3>
+      <p class="mt-4 text-sm text-ink-400">Not announced yet</p>
+    </div>
+  )
+}

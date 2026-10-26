@@ -1,0 +1,190 @@
+---
+// polandathletics.com/ne8/awards/2025-2026 — one school year at a glance:
+// its Fall/Winter/Spring seasons as doorways, the year's Players (and
+// Coaches) of the Year, and every sport's honor count linking straight
+// into that sport's cards on the season page.
+import BaseLayout from "../../../../layouts/BaseLayout.astro";
+import AwardsHero from "../../../../components/awards/AwardsHero.astro";
+import AwardCard from "../../../../components/awards/AwardCard.astro";
+import SeasonTile from "../../../../components/awards/SeasonTile.astro";
+import type { SchoolYearGroup } from "../../../../lib/awards";
+import {
+  HONORS,
+  SEASON_ORDER,
+  awardSportKey,
+  awardSportLabel,
+  getAwardSeasons,
+  groupBySchoolYear,
+  honorCounts,
+  honoreeCount,
+  photoUrl,
+  schoolYearHref,
+  seasonCover,
+  seasonHref,
+  sortAwards,
+} from "../../../../lib/awards";
+
+export async function getStaticPaths() {
+  let groups: SchoolYearGroup[] = [];
+  try {
+    groups = groupBySchoolYear(await getAwardSeasons());
+  } catch {
+    // CMS unreachable at build time — skip these pages rather than fail.
+  }
+  return groups.map((group) => ({ params: { year: group.schoolYear }, props: { group } }));
+}
+
+interface Props {
+  group: SchoolYearGroup;
+}
+
+const { group } = Astro.props;
+const { schoolYear, seasons, awards } = group;
+const counts = honorCounts(awards);
+const people = honoreeCount(awards);
+
+const spotlight = seasons.flatMap((season) =>
+  sortAwards(season.awards)
+    .filter((award) => award.honor === "player-of-the-year" || award.honor === "coach-of-the-year")
+    .map((award) => ({ award, season })),
+);
+
+// One row per sport per season — "Boys Basketball · Winter" — so each row
+// can link to exactly that sport's filtered cards.
+const bySport = seasons.flatMap((season) => {
+  const rows = new Map<string, { label: string; awards: typeof awards }>();
+  for (const award of sortAwards(season.awards)) {
+    const key = awardSportKey(award);
+    const row = rows.get(key) ?? { label: awardSportLabel(award), awards: [] };
+    row.awards.push(award);
+    rows.set(key, row);
+  }
+  return [...rows.entries()].map(([key, row]) => ({ key, season, ...row }));
+});
+
+const cover = seasons.map(seasonCover).find(Boolean);
+---
+
+<BaseLayout
+  title={`${schoolYear} NE8 All-Conference Awards`}
+  description={`Every Poland Bulldog honored by the NE8 in the ${schoolYear} school year — ${awards.length} All-Conference honors across Fall, Winter, and Spring.`}
+  image={cover ? photoUrl(cover) : undefined}
+>
+  <AwardsHero
+    crumbs={[
+      { label: "NE8", href: "/ne8" },
+      { label: "Awards", href: "/ne8/awards" },
+      { label: schoolYear, href: schoolYearHref(schoolYear) },
+    ]}
+    eyebrow="NE8 All-Conference"
+    title={`${schoolYear} Awards`}
+    lede="Every Bulldog the NE8 recognized this school year, season by season."
+    stats={[
+      { value: awards.length, label: "Total honors" },
+      { value: people, label: "Bulldogs honored" },
+      ...counts
+        .filter(({ honor }) => honor.value === "player-of-the-year")
+        .map(({ honor, count }) => ({
+          value: count,
+          label: count === 1 ? honor.label : honor.plural,
+          color: honor.accent,
+        })),
+    ]}
+    image={cover}
+  />
+
+  <section class="mx-auto max-w-content px-6 py-14" aria-labelledby="seasons-heading">
+    <h2 id="seasons-heading" class="mb-6 text-h3 font-black uppercase tracking-tight text-ink-900">
+      Seasons
+    </h2>
+    <div class="grid gap-5 sm:grid-cols-3">
+      {
+        SEASON_ORDER.map((seasonType) => (
+          <SeasonTile
+            schoolYear={schoolYear}
+            seasonType={seasonType}
+            season={seasons.find((season) => season.season === seasonType)}
+          />
+        ))
+      }
+    </div>
+  </section>
+
+  {
+    spotlight.length > 0 && (
+      <section class="border-y border-ink-100 bg-ink-50" aria-labelledby="spotlight-heading">
+        <div class="mx-auto max-w-content px-6 py-14">
+          <h2
+            id="spotlight-heading"
+            class="text-h3 font-black uppercase tracking-tight text-ink-900"
+          >
+            Players of the Year
+          </h2>
+          <p class="mt-2 text-ink-600">The NE8's top honor in each sport.</p>
+          <ul class="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">
+            {spotlight.map(({ award, season }) => (
+              <li>
+                <AwardCard award={award} season={season} />
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+    )
+  }
+
+  {
+    bySport.length > 0 && (
+      <section class="mx-auto max-w-content px-6 py-14" aria-labelledby="sports-heading">
+        <h2
+          id="sports-heading"
+          class="mb-6 text-h3 font-black uppercase tracking-tight text-ink-900"
+        >
+          By sport
+        </h2>
+        <ul class="grid gap-3 md:grid-cols-2">
+          {bySport.map((row) => (
+            <li>
+              <a
+                href={`${seasonHref(row.season)}?sport=${row.key}`}
+                class="group flex items-center gap-4 rounded-xl border border-ink-100 bg-surface px-5 py-4 transition-colors hover:border-primary-300 hover:bg-ink-50"
+              >
+                <div class="min-w-0 flex-1">
+                  <p class="truncate font-bold text-ink-900 group-hover:text-primary-600">
+                    {row.label}
+                  </p>
+                  <p class="text-xs font-semibold uppercase tracking-wide text-ink-400">
+                    {row.season.season}
+                  </p>
+                </div>
+                <ul class="flex flex-wrap justify-end gap-1.5">
+                  {HONORS.map((honor) => {
+                    const count = row.awards.filter((award) => award.honor === honor.value).length;
+                    return (
+                      count > 0 && (
+                        <li class="flex items-center gap-1.5 rounded-full bg-ink-100 px-2.5 py-1 text-xs font-bold text-ink-700">
+                          <span
+                            class="h-2 w-2 rounded-full"
+                            style={`background: ${honor.color}`}
+                            aria-hidden="true"
+                          />
+                          {count} {honor.short}
+                        </li>
+                      )
+                    );
+                  })}
+                </ul>
+                <span
+                  class="text-2xl font-black text-ink-300 group-hover:text-primary-600"
+                  aria-label={`${row.awards.length} honors`}
+                >
+                  {row.awards.length}
+                </span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
+  }
+</BaseLayout>
