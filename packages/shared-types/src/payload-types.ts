@@ -606,7 +606,7 @@ export interface SpecialPage {
   _status?: ('draft' | 'published') | null;
 }
 /**
- * One entry per season (e.g. 2025-2026 Winter) holding all of its NE8 All-Conference award cards. Use "Quick fill" to paste the list from the awards spreadsheet and drop in all the photos at once.
+ * One entry per season (e.g. 2025-2026 Winter) holding all of its NE8 All-Conference award cards. Use "Quick fill" to paste the list from the awards spreadsheet and drop in all the photos at once. "Save Draft" while you build it, "Publish" to put it on the site, and "Unpublish" (in the ⋮ menu) to take it back down.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "award-seasons".
@@ -623,10 +623,6 @@ export interface AwardSeason {
    * Set from the school year and season when you save — there can only be one entry per season.
    */
   slug?: string | null;
-  /**
-   * Leave off while you're still building the list — the season stays hidden until this is checked.
-   */
-  isPublic?: boolean | null;
   /**
    * Optional message at the top of the season page. Leave blank for an automatic one ("28 Bulldogs earned NE8 honors this Winter…").
    */
@@ -670,6 +666,7 @@ export interface AwardSeason {
     | null;
   updatedAt: string;
   createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * Photos used on NE8 award cards. Usually added from an award season's "Quick fill" box rather than here. Set a focal point on a photo to control how it's framed on its card.
@@ -1112,7 +1109,6 @@ export interface AwardSeasonsSelect<T extends boolean = true> {
   schoolYear?: T;
   season?: T;
   slug?: T;
-  isPublic?: T;
   intro?: T;
   coverImage?: T;
   galleryUrl?: T;
@@ -1132,6 +1128,7 @@ export interface AwardSeasonsSelect<T extends boolean = true> {
       };
   updatedAt?: T;
   createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

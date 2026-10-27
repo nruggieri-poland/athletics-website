@@ -1,0 +1,419 @@
+---
+// polandathletics.com/football/all-conference — every NE8 All-Conference
+// honor one sport has earned, newest school year first. Two views of the
+// same data: award cards grouped by year (the default), and a compact
+// honor-roll list for scanning many years at once. A year bar jumps between
+// years; co-ed sports (Swimming & Diving, Track, Cross Country) also get a
+// Boys/Girls filter. Built for every sport, so the URL is stable before a
+// sport's first honors are posted.
+//
+// A static route beside [level]/ — Astro ranks a static segment above a
+// dynamic one, so this never collides with a team level's page.
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import AwardsHero from "../../components/awards/AwardsHero.astro";
+import AwardCard from "../../components/awards/AwardCard.astro";
+import type { AwardSeason } from "../../lib/awards";
+import {
+  awardSportKey,
+  awardsForSport,
+  getAwardSeasons,
+  honorCounts,
+  honorLabel,
+  honorMeta,
+  honoreeCount,
+  photoUrl,
+  seasonHref,
+  seasonName,
+  sportAwardsHref,
+} from "../../lib/awards";
+import { getSports } from "../../lib/payload";
+
+export async function getStaticPaths() {
+  const sports = await getSports();
+  let seasons: AwardSeason[] = [];
+  try {
+    seasons = await getAwardSeasons();
+  } catch {
+    // CMS unreachable at build time — every sport gets its empty state.
+  }
+  return sports.map((sport) => ({
+    params: { sport: sport.slug },
+    props: { sport, years: awardsForSport(seasons, sport.slug) },
+  }));
+}
+
+const { sport, years } = Astro.props;
+const allAwards = years.flatMap((year) => year.awards);
+const playersOfTheYear = allAwards.filter((award) => award.honor === "player-of-the-year").length;
+const divisions = (["Boys", "Girls"] as const).filter((division) =>
+  allAwards.some((award) => award.division === division),
+);
+const cover = allAwards.find((award) => award.photo?.url)?.photo;
+const yearId = (schoolYear: string, season: string) => `year-${schoolYear}-${season.toLowerCase()}`;
+const shortYear = (schoolYear: string) => schoolYear.replace(/^(\d{4})-\d{2}(\d{2})$/, "$1-$2");
+---
+
+<BaseLayout
+  title={`${sport.name} NE8 All-Conference`}
+  description={`Every Poland Bulldog named NE8 All-Conference in ${sport.name}, year by year.`}
+  image={cover ? photoUrl(cover) : undefined}
+>
+  <AwardsHero
+    crumbs={[
+      { label: sport.name, href: `/${sport.slug}` },
+      { label: "All-Conference", href: sportAwardsHref(sport.slug) },
+    ]}
+    eyebrow="NE8 All-Conference"
+    title={`${sport.name} Honors`}
+    lede={`Every Bulldog the NE8 has recognized in ${sport.name}, year by year.`}
+    stats={allAwards.length > 0
+      ? [
+          {
+            value: allAwards.length,
+            label: allAwards.length === 1 ? "Honor" : "All-Conference honors",
+          },
+          { value: honoreeCount(allAwards), label: "Bulldogs honored" },
+          ...(playersOfTheYear > 0
+            ? [
+                {
+                  value: playersOfTheYear,
+                  label: playersOfTheYear === 1 ? "Player of the Year" : "Players of the Year",
+                  color: "#f5c542",
+                },
+              ]
+            : []),
+          { value: new Set(years.map((year) => year.schoolYear)).size, label: "Years" },
+        ]
+      : []}
+    image={cover}
+  >
+    <a
+      href="/ne8/awards"
+      class="mt-10 inline-flex items-center gap-2 text-sm font-semibold text-white/80 hover:text-white hover:underline"
+    >
+      All NE8 awards, every sport &rarr;
+    </a>
+  </AwardsHero>
+
+  {
+    years.length > 0 ? (
+      <>
+        <div
+          class="z-30 border-b border-ink-100 bg-surface/90 backdrop-blur lg:sticky lg:top-[61px]"
+          data-sport-awards-bar
+        >
+          <div class="mx-auto flex max-w-content flex-col gap-3 px-6 py-4 lg:flex-row lg:items-center lg:gap-8">
+            <nav aria-label="Jump to a year" class="min-w-0 flex-1">
+              <ul class="-my-1 flex gap-1.5 overflow-x-auto py-1">
+                {years.map((year) => (
+                  <li class="flex-none">
+                    <a
+                      href={`#${yearId(year.schoolYear, year.season.season)}`}
+                      class="year-chip"
+                      data-year-link={yearId(year.schoolYear, year.season.season)}
+                    >
+                      {shortYear(year.schoolYear)}
+                      <span class="year-chip__count" data-year-count>
+                        {year.awards.length}
+                      </span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+            <div class="flex flex-wrap items-center gap-3">
+              {divisions.length > 1 && (
+                <div role="group" aria-label="Team" class="flex gap-1.5">
+                  <button type="button" class="filter-chip" data-division="" aria-pressed="true">
+                    All
+                  </button>
+                  {divisions.map((division) => (
+                    <button
+                      type="button"
+                      class="filter-chip"
+                      data-division={division}
+                      aria-pressed="false"
+                    >
+                      {division}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <div
+                role="group"
+                aria-label="View"
+                class="flex rounded-full bg-ink-50 p-0.5 ring-1 ring-ink-200"
+              >
+                <button type="button" class="view-toggle" data-view="cards" aria-pressed="true">
+                  Cards
+                </button>
+                <button type="button" class="view-toggle" data-view="list" aria-pressed="false">
+                  List
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mx-auto max-w-content px-6 py-12 md:py-16">
+          {years.map((year) => {
+            const counts = honorCounts(year.awards);
+            return (
+              <section
+                id={yearId(year.schoolYear, year.season.season)}
+                class="mb-16 scroll-mt-40 last:mb-0"
+                data-year-section
+                aria-labelledby={`${yearId(year.schoolYear, year.season.season)}-heading`}
+              >
+                <header class="mb-6 flex flex-col gap-3 border-b border-ink-100 pb-4 md:flex-row md:items-end md:justify-between">
+                  <div>
+                    <p class="text-xs font-semibold uppercase tracking-wide text-primary-600">
+                      {seasonName(year.season)}
+                    </p>
+                    <h2
+                      id={`${yearId(year.schoolYear, year.season.season)}-heading`}
+                      class="text-h2 font-black tracking-tight text-ink-900"
+                    >
+                      {year.schoolYear}
+                    </h2>
+                  </div>
+                  <div class="flex flex-wrap items-center gap-2">
+                    {counts.map(({ honor, count }) => (
+                      <span
+                        class="flex items-center gap-1.5 rounded-full bg-ink-100 px-2.5 py-1 text-xs font-bold text-ink-700"
+                        data-honor-chip={honor.value}
+                      >
+                        <span
+                          class="h-2 w-2 rounded-full"
+                          style={`background: ${honor.color}`}
+                          aria-hidden="true"
+                        />
+                        <span data-honor-count>{count}</span> {honor.short}
+                      </span>
+                    ))}
+                    <a
+                      href={`${seasonHref(year.season)}?sport=${awardSportKey(year.awards[0])}`}
+                      class="ml-1 text-sm font-semibold text-primary-600 hover:underline"
+                    >
+                      Full {seasonName(year.season)} season &rarr;
+                    </a>
+                  </div>
+                </header>
+
+                <ul
+                  class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                  data-view-panel="cards"
+                >
+                  {year.awards.map((award) => (
+                    <li
+                      data-award-item
+                      data-division={award.division ?? ""}
+                      data-honor={award.honor}
+                    >
+                      <AwardCard award={award} season={year.season} />
+                    </li>
+                  ))}
+                </ul>
+
+                <ol
+                  class="hidden divide-y divide-ink-100 overflow-hidden rounded-xl border border-ink-100"
+                  data-view-panel="list"
+                >
+                  {year.awards.map((award) => {
+                    const honor = honorMeta(award.honor);
+                    return (
+                      <li
+                        class="flex items-center gap-4 bg-surface px-4 py-3"
+                        data-award-item
+                        data-division={award.division ?? ""}
+                        data-honor={award.honor}
+                      >
+                        <span
+                          class="h-9 w-1.5 shrink-0 rounded-full"
+                          style={`background: ${honor.color}`}
+                          aria-hidden="true"
+                        />
+                        <div class="min-w-0 flex-1">
+                          <p class="truncate font-bold text-ink-900">{award.athleteName}</p>
+                          <p class="text-sm text-ink-500">
+                            {[
+                              award.honor === "coach-of-the-year" ? "Head Coach" : award.grade,
+                              award.division,
+                            ]
+                              .filter(Boolean)
+                              .join(" · ")}
+                          </p>
+                        </div>
+                        <span
+                          class="shrink-0 rounded-full px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-white"
+                          style={`background: ${honor.color}`}
+                        >
+                          {honorLabel(award)}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ol>
+              </section>
+            );
+          })}
+        </div>
+      </>
+    ) : (
+      <section class="mx-auto max-w-content px-6 py-20 text-center">
+        <p class="text-lg font-semibold text-ink-900">
+          No NE8 All-Conference honors posted for {sport.name} yet.
+        </p>
+        <p class="mt-2 text-ink-500">
+          They'll show up here as soon as a season is published. Meanwhile,{" "}
+          <a href="/ne8/awards" class="font-semibold text-primary-600 hover:underline">
+            browse every sport's awards
+          </a>
+          .
+        </p>
+      </section>
+    )
+  }
+</BaseLayout>
+
+<script>
+  // Cards/List view toggle, Boys/Girls filter, and the year bar's "you are
+  // here" highlight. Everything is server-rendered; this only shows/hides.
+  const bar = document.querySelector<HTMLElement>("[data-sport-awards-bar]");
+  if (bar) {
+    const viewButtons = [...bar.querySelectorAll<HTMLButtonElement>("[data-view]")];
+    const divisionButtons = [...bar.querySelectorAll<HTMLButtonElement>("[data-division]")];
+    const sections = [...document.querySelectorAll<HTMLElement>("[data-year-section]")];
+    const yearLinks = [...bar.querySelectorAll<HTMLAnchorElement>("[data-year-link]")];
+    let view = new URLSearchParams(location.search).get("view") === "list" ? "list" : "cards";
+    let division = "";
+
+    const apply = () => {
+      for (const button of viewButtons)
+        button.setAttribute("aria-pressed", String(button.dataset.view === view));
+      for (const button of divisionButtons)
+        button.setAttribute("aria-pressed", String(button.dataset.division === division));
+      for (const section of sections) {
+        section.querySelectorAll<HTMLElement>("[data-view-panel]").forEach((panel) => {
+          panel.classList.toggle("hidden", panel.dataset.viewPanel !== view);
+        });
+        let shown = 0;
+        const perHonor = new Map<string, number>();
+        section.querySelectorAll<HTMLElement>("[data-award-item]").forEach((item) => {
+          const match = !division || item.dataset.division === division;
+          item.hidden = !match;
+          if (match && item.closest<HTMLElement>("[data-view-panel]")?.dataset.viewPanel === view) {
+            shown++;
+            perHonor.set(
+              item.dataset.honor ?? "",
+              (perHonor.get(item.dataset.honor ?? "") ?? 0) + 1,
+            );
+          }
+        });
+        section.hidden = shown === 0;
+        // Year and honor counts follow the Boys/Girls filter.
+        section.querySelectorAll<HTMLElement>("[data-honor-chip]").forEach((chip) => {
+          const count = perHonor.get(chip.dataset.honorChip ?? "") ?? 0;
+          chip.hidden = count === 0;
+          const countEl = chip.querySelector("[data-honor-count]");
+          if (countEl) countEl.textContent = String(count);
+        });
+        const link = yearLinks.find((entry) => entry.dataset.yearLink === section.id);
+        if (link) {
+          link.closest("li")!.hidden = shown === 0;
+          const countEl = link.querySelector("[data-year-count]");
+          if (countEl) countEl.textContent = String(shown);
+        }
+      }
+      const url = new URL(location.href);
+      if (view === "list") url.searchParams.set("view", "list");
+      else url.searchParams.delete("view");
+      history.replaceState(history.state, "", url);
+    };
+
+    viewButtons.forEach((button) =>
+      button.addEventListener("click", () => {
+        view = button.dataset.view ?? "cards";
+        apply();
+      }),
+    );
+    divisionButtons.forEach((button) =>
+      button.addEventListener("click", () => {
+        division = button.dataset.division ?? "";
+        apply();
+      }),
+    );
+    apply();
+
+    // Highlights the year currently at the top of the screen.
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          for (const link of yearLinks) {
+            if (link.dataset.yearLink === entry.target.id)
+              link.setAttribute("aria-current", "location");
+            else link.removeAttribute("aria-current");
+          }
+        }
+      },
+      { rootMargin: "-30% 0px -60% 0px" },
+    );
+    sections.forEach((section) => observer.observe(section));
+  }
+</script>
+
+<style>
+  .year-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-radius: 999px;
+    padding: 0.375rem 0.5rem 0.375rem 0.875rem;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    white-space: nowrap;
+    color: var(--color-ink-700);
+    background: var(--color-ink-50);
+    box-shadow: inset 0 0 0 1px var(--color-ink-200);
+  }
+  .year-chip:hover {
+    background: var(--color-ink-100);
+  }
+  .year-chip[aria-current] {
+    color: #ffffff;
+    background: var(--color-primary-600);
+    box-shadow: none;
+  }
+  .year-chip__count {
+    min-width: 1.5rem;
+    border-radius: 999px;
+    padding: 0.0625rem 0.375rem;
+    text-align: center;
+    font-size: 0.6875rem;
+    background: color-mix(in srgb, currentColor, transparent 85%);
+  }
+  .filter-chip,
+  .view-toggle {
+    flex: none;
+    border-radius: 999px;
+    padding: 0.375rem 0.875rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    white-space: nowrap;
+    color: var(--color-ink-700);
+  }
+  .filter-chip {
+    background: var(--color-ink-50);
+    box-shadow: inset 0 0 0 1px var(--color-ink-200);
+  }
+  .filter-chip:hover {
+    background: var(--color-ink-100);
+  }
+  .filter-chip[aria-pressed="true"],
+  .view-toggle[aria-pressed="true"] {
+    color: #ffffff;
+    background: var(--color-primary-600);
+    box-shadow: none;
+  }
+</style>

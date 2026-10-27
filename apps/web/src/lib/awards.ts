@@ -204,13 +204,16 @@ export function seasonCover(season: AwardSeason): AwardPhoto | undefined {
 
 // Every published season, newest school year first and Fall → Spring
 // within a year. One fetch per build (cached), shared by all awards pages.
+// Drafts (never published, or unpublished from the CMS) are left out here
+// explicitly rather than trusted to Payload's defaults: a season that's
+// never been published still exists in the collection with _status draft.
 let seasonsPromise: Promise<AwardSeason[]> | null = null;
 
 export function getAwardSeasons(): Promise<AwardSeason[]> {
   if (!seasonsPromise) {
     seasonsPromise = (async () => {
       const params = new URLSearchParams({
-        "where[isPublic][equals]": "true",
+        "where[_status][equals]": "published",
         limit: "200",
         depth: "1",
       });
@@ -255,4 +258,27 @@ export function groupBySchoolYear(seasons: AwardSeason[]): SchoolYearGroup[] {
 export function latestSeason(seasons: AwardSeason[]): AwardSeason | undefined {
   const [newestYear] = groupBySchoolYear(seasons);
   return newestYear?.seasons[newestYear.seasons.length - 1];
+}
+
+export function sportAwardsHref(sportSlug: string): string {
+  return `/${sportSlug}/all-conference`;
+}
+
+export interface SportAwardYear {
+  schoolYear: string;
+  season: AwardSeason;
+  awards: Award[];
+}
+
+// One sport's honors across every published season, newest school year
+// first — the data behind /[sport]/all-conference. A sport only plays in one
+// season, so each school year holds at most one season's worth of cards.
+export function awardsForSport(seasons: AwardSeason[], sportSlug: string): SportAwardYear[] {
+  return seasons
+    .map((season) => ({
+      schoolYear: season.schoolYear,
+      season,
+      awards: sortAwards(season.awards.filter((award) => award.sport?.slug === sportSlug)),
+    }))
+    .filter((year) => year.awards.length > 0);
 }

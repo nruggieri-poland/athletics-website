@@ -7,6 +7,7 @@ import {
 import {
   GRADES,
   HONORS,
+  TEMPLATE_CSV,
   parseAwardRows,
   photoMatchesAthlete,
   type SportOption,
@@ -144,12 +145,36 @@ export const AwardSeasons: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'title',
-    defaultColumns: ['title', 'isPublic', 'updatedAt'],
+    defaultColumns: ['title', '_status', 'updatedAt'],
     group: 'NE8 Awards',
     description:
-      'One entry per season (e.g. 2025-2026 Winter) holding all of its NE8 All-Conference award cards. Use "Quick fill" to paste the list from the awards spreadsheet and drop in all the photos at once.',
+      'One entry per season (e.g. 2025-2026 Winter) holding all of its NE8 All-Conference award cards. Use "Quick fill" to paste the list from the awards spreadsheet and drop in all the photos at once. "Save Draft" while you build it, "Publish" to put it on the site, and "Unpublish" (in the ⋮ menu) to take it back down.',
   },
   defaultSort: '-slug',
+  // Same Publish / Unpublish workflow as Articles and Special Pages. A
+  // season that's never been published stays off the site entirely
+  // (apps/web/src/lib/awards.ts only asks for _status = published), and
+  // draft edits to a live season don't reach the site until it's
+  // published again.
+  versions: {
+    drafts: true,
+  },
+  // /api/award-seasons/template.csv — the blank spreadsheet linked from the
+  // paste box's help panel. Public like the rest of this collection's reads;
+  // it's just a header row.
+  endpoints: [
+    {
+      path: '/template.csv',
+      method: 'get',
+      handler: () =>
+        new Response(TEMPLATE_CSV, {
+          headers: {
+            'Content-Type': 'text/csv; charset=utf-8',
+            'Content-Disposition': 'attachment; filename="ne8-awards-template.csv"',
+          },
+        }),
+    },
+  ],
   hooks: {
     beforeValidate: [applyQuickFill],
     afterChange: [afterChangeTriggerRebuild],
@@ -208,17 +233,6 @@ export const AwardSeasons: CollectionConfig = {
       },
     },
     {
-      name: 'isPublic',
-      type: 'checkbox',
-      defaultValue: false,
-      label: 'Visible on the live site',
-      admin: {
-        position: 'sidebar',
-        description:
-          "Leave off while you're still building the list — the season stays hidden until this is checked.",
-      },
-    },
-    {
       name: 'intro',
       type: 'textarea',
       admin: {
@@ -267,6 +281,9 @@ export const AwardSeasons: CollectionConfig = {
             placeholder: 'Aaron Vandervort\tJunior\tPlayer of the Year\tBoys Swim and Dive',
             description:
               'Copy rows straight out of the awards spreadsheet — columns in the order Name, Grade, Award, Sport (a header row is fine). Each row becomes a card. "Boys"/"Girls" in the sport column is kept, so "Girls Swim and Dive" works.',
+            components: {
+              afterInput: ['./components/AwardPasteHelp.tsx#AwardPasteHelp'],
+            },
           },
         },
         {

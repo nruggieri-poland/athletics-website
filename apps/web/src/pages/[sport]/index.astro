@@ -6,6 +6,7 @@ import GamesCarousel from "../../components/home/GamesCarousel.astro";
 import ScheduleList from "../../components/team/ScheduleList.astro";
 import EventLinkPromo from "../../components/shared/EventLinkPromo.astro";
 import ArticleCard from "../../components/articles/ArticleCard.astro";
+import AwardCard from "../../components/awards/AwardCard.astro";
 import {
   getSports,
   getTeamsBySport,
@@ -17,9 +18,17 @@ import {
   mediaUrl,
 } from "../../lib/payload";
 import type { Game } from "../../lib/payload";
+import type { AwardSeason } from "../../lib/awards";
+import { awardsForSport, getAwardSeasons, seasonName, sportAwardsHref } from "../../lib/awards";
 
 export async function getStaticPaths() {
   const sports = await getSports();
+  let awardSeasons: AwardSeason[] = [];
+  try {
+    awardSeasons = await getAwardSeasons();
+  } catch {
+    // CMS unreachable at build time — the All-Conference section just doesn't render.
+  }
   return Promise.all(
     sports.map(async (sport) => ({
       params: { sport: sport.slug },
@@ -29,12 +38,16 @@ export async function getStaticPaths() {
         articles: await getArticlesForSport(sport.id, 4),
         upcomingGames: await getUpcomingGamesForSport(sport.id, 10),
         seasonGames: await getSchoolYearGamesForSport(sport.id),
+        awardYears: awardsForSport(awardSeasons, sport.slug),
       },
     })),
   );
 }
 
-const { sport, teams, articles, upcomingGames, seasonGames } = Astro.props;
+const { sport, teams, articles, upcomingGames, seasonGames, awardYears } = Astro.props;
+// The sport's most recent NE8 honors as a teaser for /[sport]/all-conference.
+const latestAwards = awardYears[0];
+const totalAwards = awardYears.reduce((sum, year) => sum + year.awards.length, 0);
 const activeTeams = sortTeamsByLevel(teams.filter((t) => t.isActive));
 
 // One ScheduleList per level, cycled via the tabs below rather than
@@ -122,6 +135,36 @@ for (const game of seasonGames) {
       <h2 class="mb-6 text-h3 font-semibold text-ink-900">{sport.name} News</h2>
       <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {articles.map((article) => <ArticleCard article={article} />)}
+      </div>
+    </section>
+  )}
+
+  {latestAwards && (
+    <section class="border-t border-ink-100 bg-ink-50">
+      <div class="mx-auto max-w-content px-6 py-14">
+        <div class="mb-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wide text-primary-600">NE8 All-Conference</p>
+            <h2 class="text-h3 font-semibold text-ink-900">{seasonName(latestAwards.season)} Honors</h2>
+          </div>
+          <a href={sportAwardsHref(sport.slug)} class="text-sm font-semibold text-primary-600 hover:underline">
+            {totalAwards > latestAwards.awards.length
+              ? `All ${totalAwards} ${sport.name} honors, every year →`
+              : `See all ${sport.name} honors →`}
+          </a>
+        </div>
+        <ul class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {latestAwards.awards.slice(0, 3).map((award) => (
+            <li><AwardCard award={award} season={latestAwards.season} /></li>
+          ))}
+        </ul>
+        {latestAwards.awards.length > 3 && (
+          <p class="mt-6 text-center">
+            <a href={sportAwardsHref(sport.slug)} class="inline-flex rounded-full bg-primary-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-primary-700">
+              See all {latestAwards.awards.length} from {seasonName(latestAwards.season)}
+            </a>
+          </p>
+        )}
       </div>
     </section>
   )}

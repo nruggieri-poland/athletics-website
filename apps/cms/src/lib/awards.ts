@@ -120,6 +120,37 @@ export interface ParsedAwardRow {
   division?: Division
 }
 
+// The blank template editors download from the paste box's help panel
+// (served by AwardSeasons.ts at /api/award-seasons/template.csv). Its
+// columns are the ones parseAwardRows reads, in that order.
+export const TEMPLATE_CSV = 'Name,Grade,Award,Sport\r\n'
+
+// One spreadsheet row's cells. Tab-separated when copied out of a
+// spreadsheet; otherwise CSV, where a quoted cell may contain commas
+// ("Smith, Jr.") and "" stands for a literal quote.
+function splitCells(line: string): string[] {
+  if (line.includes('\t')) return line.split('\t').map((cell) => cell.trim())
+  const cells: string[] = []
+  let cell = ''
+  let quoted = false
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i]
+    if (quoted) {
+      if (char === '"' && line[i + 1] === '"') {
+        cell += '"'
+        i++
+      } else if (char === '"') quoted = false
+      else cell += char
+    } else if (char === '"') quoted = true
+    else if (char === ',') {
+      cells.push(cell.trim())
+      cell = ''
+    } else cell += char
+  }
+  cells.push(cell.trim())
+  return cells
+}
+
 // Accepts rows copied straight out of a spreadsheet (tab-separated) or typed
 // by hand (comma-separated), in the column order Name, Grade, Award, Sport —
 // the same columns the old awards spreadsheet used. A header row is
@@ -133,15 +164,16 @@ export function parseAwardRows(
   const rows: ParsedAwardRow[] = []
   const problems: string[] = []
 
+  let firstRow = true
   text.split(/\r?\n/).forEach((line, index) => {
     if (!line.trim()) return
-    const cells = (line.includes('\t') ? line.split('\t') : line.split(',')).map((cell) =>
-      cell.trim(),
-    )
+    const cells = splitCells(line)
     const [name = '', gradeCell = '', honorCell = '', sportCell = ''] = cells
     const lineLabel = `Line ${index + 1} ("${line.trim().slice(0, 40)}")`
 
-    if (index === 0 && /^name$|athlete/i.test(name) && !parseHonor(honorCell)) return
+    const isHeader = firstRow && /^name$|athlete/i.test(name) && !parseHonor(honorCell)
+    firstRow = false
+    if (isHeader) return
 
     const honor = parseHonor(honorCell)
     const grade = gradeCell ? parseGrade(gradeCell) : null

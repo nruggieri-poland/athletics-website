@@ -313,7 +313,15 @@ const style = [
       for (const entry of entries) {
         if (!entry.isIntersecting) continue;
         introObserver.unobserve(entry.target);
-        cards.get(entry.target)?.playIntro();
+        const card = cards.get(entry.target);
+        // Wait for the photo: catching the light over a still-empty card
+        // flashes the bare foil pattern instead of the athlete.
+        const photo = entry.target.querySelector<HTMLImageElement>(".profile-card__photo");
+        if (photo && !photo.complete) {
+          photo.addEventListener("load", () => card?.playIntro(), { once: true });
+        } else {
+          card?.playIntro();
+        }
       }
     },
     { threshold: 0.35 },
