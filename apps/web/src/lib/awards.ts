@@ -2,14 +2,18 @@
 // page renders by (honor order and wording, card sorting, season naming).
 // Data comes from the CMS's award-seasons collection (apps/cms/src/
 // collections/AwardSeasons.ts): one doc per season, each holding its cards
-// in an `awards` array. Honor values/order mirror apps/cms/src/lib/awards.ts.
+// in an `awards` array. Honor values, order, and colors come from the
+// shared card package (packages/award-card), which the CMS's Instagram
+// export draws from too.
 
+import type { HonorMeta, HonorValue } from "@athletics/award-card";
+import { HONORS, honorMeta } from "@athletics/award-card";
 import type { Media, SeasonType, Sport } from "./payload";
 
-const PAYLOAD_URL = import.meta.env.PAYLOAD_URL || "http://localhost:3000";
+export type { HonorMeta, HonorValue } from "@athletics/award-card";
+export { HONORS, honorMeta };
 
-export type HonorValue =
-  "player-of-the-year" | "coach-of-the-year" | "first-team" | "second-team" | "honorable-mention";
+const PAYLOAD_URL = import.meta.env.PAYLOAD_URL || "http://localhost:3000";
 
 export type Grade = "Freshman" | "Sophomore" | "Junior" | "Senior";
 
@@ -41,72 +45,8 @@ export interface AwardSeason {
   awards: Award[];
 }
 
-export interface HonorMeta {
-  value: HonorValue;
-  label: string;
-  plural: string;
-  short: string;
-  // Card backdrop behind cut-out photos, and the accent dot/chip color.
-  color: string;
-  accent: string;
-  // Players/Coaches of the Year get the full-strength foil.
-  holo: number;
-}
-
-export const HONORS: HonorMeta[] = [
-  {
-    value: "player-of-the-year",
-    label: "Player of the Year",
-    plural: "Players of the Year",
-    short: "POY",
-    color: "#8a6a12",
-    accent: "#f5c542",
-    holo: 1,
-  },
-  {
-    value: "coach-of-the-year",
-    label: "Coach of the Year",
-    plural: "Coaches of the Year",
-    short: "COY",
-    color: "#7a5a10",
-    accent: "#f5c542",
-    holo: 1,
-  },
-  {
-    value: "first-team",
-    label: "First Team",
-    plural: "First Team",
-    short: "1st Team",
-    color: "#00328f",
-    accent: "#7aa2ff",
-    holo: 0.7,
-  },
-  {
-    value: "second-team",
-    label: "Second Team",
-    plural: "Second Team",
-    short: "2nd Team",
-    color: "#3a4256",
-    accent: "#cbd5e1",
-    holo: 0.55,
-  },
-  {
-    value: "honorable-mention",
-    label: "Honorable Mention",
-    plural: "Honorable Mention",
-    short: "HM",
-    color: "#2a2c34",
-    accent: "#a7abb8",
-    holo: 0.4,
-  },
-];
-
 export const GRADES: Grade[] = ["Senior", "Junior", "Sophomore", "Freshman"];
 export const SEASON_ORDER: SeasonType[] = ["Fall", "Winter", "Spring"];
-
-export function honorMeta(value: HonorValue): HonorMeta {
-  return HONORS.find((honor) => honor.value === value) ?? HONORS[2];
-}
 
 export function honorLabel(award: Award): string {
   return award.honorTitle || honorMeta(award.honor).label;

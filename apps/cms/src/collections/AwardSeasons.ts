@@ -12,6 +12,12 @@ import {
   photoMatchesAthlete,
   type SportOption,
 } from '../lib/awards.ts'
+import {
+  downloadInstagramExport,
+  instagramExportStatus,
+  instagramPreview,
+  startInstagramExport,
+} from '../endpoints/instagramExport.ts'
 
 // One NE8 All-Conference season — e.g. "2025-2026 Winter" — and every award
 // card in it. Publishes to polandathletics.com/ne8/awards/<school-year>/<season>,
@@ -174,6 +180,11 @@ export const AwardSeasons: CollectionConfig = {
           },
         }),
     },
+    // Instagram graphics for one season — see endpoints/instagramExport.ts.
+    { path: '/:id/instagram/exports', method: 'post', handler: startInstagramExport },
+    { path: '/instagram/exports/:jobId', method: 'get', handler: instagramExportStatus },
+    { path: '/instagram/exports/:jobId/download', method: 'get', handler: downloadInstagramExport },
+    { path: '/:id/instagram', method: 'get', handler: instagramPreview },
   ],
   hooks: {
     beforeValidate: [applyQuickFill],
@@ -229,6 +240,18 @@ export const AwardSeasons: CollectionConfig = {
               clientProps: { prefix: 'polandathletics.com/ne8/awards/' },
             },
           ],
+        },
+      },
+    },
+    {
+      // Display-only (no stored value): the sidebar's Instagram download
+      // panel — see components/AwardExportPanel.tsx.
+      name: 'instagramGraphics',
+      type: 'ui',
+      admin: {
+        position: 'sidebar',
+        components: {
+          Field: './components/AwardExportPanel.tsx#AwardExportPanel',
         },
       },
     },
