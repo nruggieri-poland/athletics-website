@@ -19,6 +19,7 @@ import * as migration_20260815_153322_add_special_pages from './20260815_153322_
 import * as migration_20260828_143810_add_sport_hype_playlist from './20260828_143810_add_sport_hype_playlist';
 import * as migration_20260909_192142_add_articles_exclude_from_news_feed from './20260909_192142_add_articles_exclude_from_news_feed';
 import * as migration_20261026_130112_add_ne8_awards from './20261026_130112_add_ne8_awards';
+import * as migration_20261027_022230_award_seasons_publishing from './20261027_022230_award_seasons_publishing';
 
 export const migrations = [
   {
@@ -125,5 +126,10 @@ export const migrations = [
     up: migration_20261026_130112_add_ne8_awards.up,
     down: migration_20261026_130112_add_ne8_awards.down,
     name: '20261026_130112_add_ne8_awards',
+  },
+  {
+    up: migration_20261027_022230_award_seasons_publishing.up,
+    down: migration_20261027_022230_award_seasons_publishing.down,
+    name: '20261027_022230_award_seasons_publishing',
   },
 ];
