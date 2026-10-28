@@ -15,9 +15,8 @@ import {
   honorCounts,
   honoreeCount,
   latestSeason,
-  photoUrl,
   schoolYearHref,
-  seasonCover,
+  seasonShareImage,
   seasonHref,
   seasonName,
   sortAwards,
@@ -36,13 +35,13 @@ const playersOfTheYear = allAwards.filter((award) => award.honor === "player-of-
 const latest = latestSeason(seasons);
 const latestCards = latest ? sortAwards(latest.awards).slice(0, 3) : [];
 const latestCounts = latest ? honorCounts(latest.awards) : [];
-const cover = latest ? seasonCover(latest) : undefined;
+const shareImage = latest ? seasonShareImage(latest) : undefined;
 ---
 
 <BaseLayout
   title="NE8 All-Conference Awards"
   description="Every Poland Bulldog honored as NE8 All-Conference — Players of the Year, First Team, and Second Team selections, season by season."
-  image={cover ? photoUrl(cover) : undefined}
+  image={shareImage}
 >
   <AwardsHero
     crumbs={[
@@ -113,10 +112,10 @@ const cover = latest ? seasonCover(latest) : undefined;
               </a>
             </div>
             {latestCards.length > 0 && (
-              <ul class="latest-fan grid grid-cols-3 gap-3 sm:gap-5">
+              <ul class="grid grid-cols-3 gap-3 sm:gap-5">
                 {latestCards.map((award) => (
                   <li>
-                    <AwardCard award={award} season={latest} />
+                    <AwardCard award={award} caption={false} />
                   </li>
                 ))}
               </ul>
@@ -170,42 +169,3 @@ const cover = latest ? seasonCover(latest) : undefined;
     )
   }
 </BaseLayout>
-
-<style>
-  /* The three preview cards sit in a fraction of the banner — they're a
-     teaser for the season page, so they drop everything but the photo,
-     honor, and name, with type scaled to the card. */
-  .latest-fan :global(.profile-card__footer),
-  .latest-fan :global(.profile-card__badge),
-  .latest-fan :global(.profile-card__title) {
-    display: none;
-  }
-  .latest-fan :global(.profile-card__name) {
-    font-size: clamp(11px, 1.6vw, 19px);
-  }
-  .latest-fan :global(.profile-card__honor) {
-    margin-bottom: 5px;
-    padding: 2px 6px;
-    font-size: clamp(6.5px, 0.62vw, 10px);
-    letter-spacing: 0.02em;
-    white-space: nowrap;
-  }
-  .latest-fan :global(.profile-card__info) {
-    left: 10%;
-    right: 10%;
-    bottom: 8%;
-  }
-  .latest-fan :global(.profile-card__year) {
-    top: 8%;
-    left: 9%;
-    font-size: clamp(13px, 1.6vw, 22px);
-  }
-  /* Phone width: too small for any text — just the photos, as a teaser. */
-  @media (max-width: 639px) {
-    .latest-fan :global(.profile-card__info),
-    .latest-fan :global(.profile-card__scrim),
-    .latest-fan :global(.profile-card__year) {
-      display: none;
-    }
-  }
-</style>

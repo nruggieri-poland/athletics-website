@@ -44,7 +44,7 @@ export function AwardRowLabel() {
             color: 'var(--theme-warning-800)',
           }}
         >
-          needs photo
+          needs card image
         </span>
       )}
     </span>

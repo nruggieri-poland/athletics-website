@@ -1,0 +1,17 @@
+{
+  "name": "@athletics/award-card",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "default": "./src/index.js"
+    },
+    "./engine": {
+      "types": "./src/engine.d.ts",
+      "default": "./src/engine.js"
+    },
+    "./card.css": "./src/card.css"
+  }
+}

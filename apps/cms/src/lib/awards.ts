@@ -211,3 +211,39 @@ export function photoMatchesAthlete(filename: string, athleteName: string): bool
   const name = slugify(athleteName)
   return Boolean(name) && `-${file}-`.includes(`-${name}-`)
 }
+
+export interface PhotoCandidate {
+  athleteName: string
+  sportName: string
+  honor?: string
+}
+
+// Which awards a dropped card image belongs to. Usually that's just the one
+// award whose athlete is named in the file. When an athlete has two awards
+// in the season, the rest of the filename has to say which — the sport
+// ("angelo-rinaldi-golf.png") or the award ("angelo-rinaldi-first-team.png").
+// A file that names a two-award athlete without saying which matches
+// nothing, rather than guessing: it stays in the drop box to attach by hand.
+// Returns the indexes of the matching candidates.
+export function awardsForPhoto(filename: string, candidates: PhotoCandidate[]): number[] {
+  const named = candidates
+    .map((candidate, index) => ({ candidate, index }))
+    .filter(({ candidate }) => photoMatchesAthlete(filename, candidate.athleteName))
+  if (named.length <= 1) return named.map(({ index }) => index)
+
+  const fileSlug = slugify(filename.replace(/\.[a-z0-9]+$/i, ''))
+  const nameSlug = slugify(named[0].candidate.athleteName)
+  const rest = `-${fileSlug}-`.replace(`-${nameSlug}-`, '-').replace(/-/g, ' ')
+  const restWords = new Set(canonical(rest).split(' ').filter(Boolean))
+  const restHonor = parseHonor(rest)
+
+  const scored = named.map(({ candidate, index }) => {
+    const sportWords = canonical(candidate.sportName).split(' ').filter(Boolean)
+    const sportScore = sportWords.filter((word) => restWords.has(word)).length
+    const honorScore = restHonor && restHonor === candidate.honor ? 1 : 0
+    return { index, score: sportScore * 2 + honorScore }
+  })
+  const best = Math.max(...scored.map(({ score }) => score))
+  const winners = scored.filter(({ score }) => score === best)
+  return best > 0 && winners.length === 1 ? [winners[0].index] : []
+}

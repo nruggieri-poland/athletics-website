@@ -14,6 +14,9 @@ import AwardsHero from "../../components/awards/AwardsHero.astro";
 import AwardCard from "../../components/awards/AwardCard.astro";
 import type { AwardSeason } from "../../lib/awards";
 import {
+  CARD_GRID,
+  SPOTLIGHT_ITEM,
+  SPOTLIGHT_LIST,
   awardSportKey,
   awardsForSport,
   getAwardSeasons,
@@ -21,12 +24,13 @@ import {
   honorLabel,
   honorMeta,
   honoreeCount,
-  photoUrl,
+  originalUrl,
   seasonHref,
   seasonName,
   sportAwardsHref,
 } from "../../lib/awards";
 import { getSports } from "../../lib/payload";
+import { isPremium } from "@athletics/award-card";
 
 export async function getStaticPaths() {
   const sports = await getSports();
@@ -48,7 +52,8 @@ const playersOfTheYear = allAwards.filter((award) => award.honor === "player-of-
 const divisions = (["Boys", "Girls"] as const).filter((division) =>
   allAwards.some((award) => award.division === division),
 );
-const cover = allAwards.find((award) => award.photo?.url)?.photo;
+// Link previews show the sport's most recent card artwork.
+const shareImage = originalUrl(allAwards.find((award) => award.photo?.url)?.photo) || undefined;
 const yearId = (schoolYear: string, season: string) => `year-${schoolYear}-${season.toLowerCase()}`;
 const shortYear = (schoolYear: string) => schoolYear.replace(/^(\d{4})-\d{2}(\d{2})$/, "$1-$2");
 ---
@@ -56,7 +61,7 @@ const shortYear = (schoolYear: string) => schoolYear.replace(/^(\d{4})-\d{2}(\d{
 <BaseLayout
   title={`${sport.name} NE8 All-Conference`}
   description={`Every Poland Bulldog named NE8 All-Conference in ${sport.name}, year by year.`}
-  image={cover ? photoUrl(cover) : undefined}
+  image={shareImage}
 >
   <AwardsHero
     crumbs={[
@@ -85,7 +90,6 @@ const shortYear = (schoolYear: string) => schoolYear.replace(/^(\d{4})-\d{2}(\d{
           { value: new Set(years.map((year) => year.schoolYear)).size, label: "Years" },
         ]
       : []}
-    image={cover}
   >
     <a
       href="/ne8/awards"
@@ -200,20 +204,36 @@ const shortYear = (schoolYear: string) => schoolYear.replace(/^(\d{4})-\d{2}(\d{
                   </div>
                 </header>
 
-                <ul
-                  class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-                  data-view-panel="cards"
-                >
-                  {year.awards.map((award) => (
-                    <li
-                      data-award-item
-                      data-division={award.division ?? ""}
-                      data-honor={award.honor}
-                    >
-                      <AwardCard award={award} season={year.season} />
-                    </li>
-                  ))}
-                </ul>
+                {/* Player/Coach of the Year cards lead, larger; the rest follow. */}
+                <div class="space-y-10" data-view-panel="cards">
+                  {[
+                    {
+                      list: SPOTLIGHT_LIST,
+                      item: SPOTLIGHT_ITEM,
+                      awards: year.awards.filter((a) => isPremium(a.honor)),
+                    },
+                    {
+                      list: CARD_GRID,
+                      item: undefined,
+                      awards: year.awards.filter((a) => !isPremium(a.honor)),
+                    },
+                  ]
+                    .filter((group) => group.awards.length > 0)
+                    .map((group) => (
+                      <ul class={group.list}>
+                        {group.awards.map((award) => (
+                          <li
+                            class={group.item}
+                            data-award-item
+                            data-division={award.division ?? ""}
+                            data-honor={award.honor}
+                          >
+                            <AwardCard award={award} />
+                          </li>
+                        ))}
+                      </ul>
+                    ))}
+                </div>
 
                 <ol
                   class="hidden divide-y divide-ink-100 overflow-hidden rounded-xl border border-ink-100"

@@ -606,7 +606,7 @@ export interface SpecialPage {
   _status?: ('draft' | 'published') | null;
 }
 /**
- * One entry per season (e.g. 2025-2026 Winter) holding all of its NE8 All-Conference award cards. Use "Quick fill" to paste the list from the awards spreadsheet and drop in all the photos at once. "Save Draft" while you build it, "Publish" to put it on the site, and "Unpublish" (in the ⋮ menu) to take it back down.
+ * One entry per season (e.g. 2025-2026 Winter) holding all of its NE8 All-Conference award cards. Use "Quick fill" to paste the list from the awards spreadsheet and drop in all the finished card images at once. "Save Draft" while you build it, "Publish" to put it on the site, and "Unpublish" (in the ⋮ menu) to take it back down.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "award-seasons".
@@ -628,7 +628,7 @@ export interface AwardSeason {
    */
   intro?: string | null;
   /**
-   * Shown on this season's tile and link previews. Leave blank to use a Player of the Year's photo.
+   * Optional photo behind this season's tile and page header. Leave blank and the tile shows a fan of its first few cards.
    */
   coverImage?: (number | null) | AwardPhoto;
   /**
@@ -640,7 +640,7 @@ export interface AwardSeason {
    */
   pasteList?: string | null;
   /**
-   * Upload a batch of photos named after the athletes (e.g. "aaron-vandervort.jpg") — each is attached to the matching card on save. Any photo still listed here after saving didn't match a name: rename it, or attach it to its card by hand.
+   * Upload a batch of finished card images named after the athletes (e.g. "aaron-vandervort.png") — each is attached to the matching card on save. An athlete with two awards this season needs the sport in each file name too: "angelo-rinaldi-golf.png", "angelo-rinaldi-basketball.png". Any image still listed here after saving didn't match: rename it, or attach it to its card by hand.
    */
   dropPhotos?: (number | AwardPhoto)[] | null;
   /**
@@ -660,6 +660,9 @@ export interface AwardSeason {
          * Optional, e.g. "Offensive Player of the Year".
          */
         honorTitle?: string | null;
+        /**
+         * The finished card, designed in Photoshop: 1500 × 2100 px PNG — a trading card at 600 dpi — with anything outside the card shape left transparent. The site adds the tilt, glare and foil.
+         */
         photo?: (number | null) | AwardPhoto;
         id?: string | null;
       }[]
@@ -669,7 +672,7 @@ export interface AwardSeason {
   _status?: ('draft' | 'published') | null;
 }
 /**
- * Photos used on NE8 award cards. Usually added from an award season's "Quick fill" box rather than here. Set a focal point on a photo to control how it's framed on its card.
+ * Finished NE8 award card images (1500 × 2100 px PNG — a trading card at 600 dpi — with anything outside the card shape left transparent) and season cover photos. Usually added from an award season's "Quick fill" box rather than here.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "award-photos".

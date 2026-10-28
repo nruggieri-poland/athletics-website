@@ -1,0 +1,375 @@
+/* The NE8 award card's reflections, laid over the editor's own finished
+   artwork: a holographic foil (a broad sweeping band of light plus fine
+   prism rays) that slides as the card tilts, and a glare that follows the
+   light. Both are masked to the artwork's alpha (--card-image), so only the
+   card itself shines, whatever its outline. The motion comes from the CSS
+   variables engine.js writes as the pointer moves. */
+
+.award-card {
+  --pc-light-x: 50%;
+  --pc-light-y: 50%;
+  --pc-pointer-x: 50%;
+  --pc-pointer-y: 50%;
+  --pc-band-x: 50%;
+  --pc-band-y: 50%;
+  --pc-reach: 0;
+  --pc-rotate-x: 0deg;
+  --pc-rotate-y: 0deg;
+  --pc-shift-x: 0px;
+  --pc-shift-y: 0px;
+  --pc-tilt: 0;
+  --pc-active: 0;
+  --pc-holo: 0.6;
+
+  position: relative;
+  width: 100%;
+  /* The recommended artwork size's shape (1500 × 2100, a real trading
+     card); cardHtml() overrides it with each artwork's actual proportions. */
+  aspect-ratio: 5 / 7;
+  perspective: 1200px;
+  touch-action: pan-y;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.award-card__body {
+  position: absolute;
+  inset: 0;
+  transform: rotateX(var(--pc-rotate-x)) rotateY(var(--pc-rotate-y));
+  will-change: transform;
+}
+
+/* A soft shadow that follows the artwork's outline (not a box). */
+.award-card--lifted .award-card__body {
+  filter: drop-shadow(0 14px 18px rgba(0, 10, 30, 0.35)) drop-shadow(0 3px 5px rgba(0, 10, 30, 0.25));
+}
+
+.award-card__art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.award-card__sheen,
+.award-card__foil,
+.award-card__glare,
+.award-card__shimmer,
+.award-card__sparkle {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  -webkit-mask: var(--card-image) center / contain no-repeat;
+  mask: var(--card-image) center / contain no-repeat;
+}
+
+/* Holographic foil: silver-to-blue light, so it reads as foil on any design.
+   This default is First Team's "refractor" — a sweeping band plus prism rays
+   fanning from the light. Second Team and Honorable Mention swap the rays for
+   their own patterns (below) at the same strength, so each honor looks
+   different without one looking more important than another. */
+.award-card__foil {
+  background-image:
+    linear-gradient(
+      115deg,
+      transparent 28%,
+      rgba(219, 227, 247, 0.55) 42%,
+      rgba(255, 255, 255, 0.85) 46%,
+      rgba(183, 199, 239, 0.55) 50%,
+      transparent 64%
+    ),
+    repeating-conic-gradient(
+      from 0deg at var(--pc-pointer-x) var(--pc-pointer-y),
+      rgba(219, 227, 247, 0.4) 0deg 2deg,
+      transparent 2deg 7deg,
+      rgba(139, 163, 226, 0.32) 7deg 8.5deg,
+      transparent 8.5deg 14deg
+    ),
+    linear-gradient(
+      115deg,
+      rgba(139, 163, 226, 0.5) 0%,
+      rgba(238, 242, 251, 0.6) 25%,
+      rgba(88, 119, 205, 0.45) 50%,
+      rgba(219, 227, 247, 0.55) 75%,
+      rgba(44, 79, 176, 0.45) 100%
+    );
+  background-size:
+    250% 250%,
+    100% 100%,
+    300% 300%;
+  background-position:
+    calc(100% - var(--pc-band-x) * 1.7) var(--pc-band-y),
+    0 0,
+    var(--pc-band-x) var(--pc-band-y);
+  mix-blend-mode: color-dodge;
+  opacity: calc(var(--pc-holo) * (0.1 + 0.5 * var(--pc-active)));
+}
+
+/* Foil can only brighten, so on a white or very light design it has
+   nothing to show. This tints instead: faint blue-silver streaks that read
+   on white (and all but vanish on the dark areas, where the foil shows). */
+.award-card__sheen {
+  background-image: linear-gradient(
+    115deg,
+    transparent 30%,
+    rgba(139, 163, 226, 0.35) 41%,
+    rgba(183, 199, 239, 0.15) 44%,
+    transparent 46%,
+    transparent 49%,
+    rgba(139, 163, 226, 0.28) 52%,
+    transparent 57%
+  );
+  background-size: 250% 250%;
+  background-position: calc(100% - var(--pc-band-x) * 1.7) var(--pc-band-y);
+  mix-blend-mode: multiply;
+  opacity: calc(var(--pc-holo) * (0.15 + 0.65 * var(--pc-active)));
+}
+
+.award-card__glare {
+  background: radial-gradient(
+    farthest-corner circle at var(--pc-light-x) var(--pc-light-y),
+    rgba(255, 255, 255, 0.75) 0%,
+    rgba(255, 255, 255, 0.28) 22%,
+    rgba(255, 255, 255, 0) 55%
+  );
+  mix-blend-mode: overlay;
+  opacity: calc(0.7 * var(--pc-active));
+}
+
+/* Until the artwork is uploaded: a plain card with the name and award. */
+.award-card__placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.35em;
+  padding: 10% 8%;
+  border-radius: 5%/3.6%;
+  background: linear-gradient(180deg, #2c4fb0 0%, #00328f 55%, #001d54 100%);
+  box-shadow: inset 0 0 0 2px rgba(219, 227, 247, 0.35);
+  color: #fff;
+  text-align: center;
+  font-family: inherit;
+}
+
+.award-card__placeholder-name {
+  margin: 0;
+  font-size: 1.4em;
+  font-weight: 800;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.award-card__placeholder-award {
+  margin: 0;
+  font-size: 0.85em;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* The placeholder has no artwork to mask to, so its reflections fill the
+   card's own rounded box. */
+.award-card--placeholder .award-card__sheen,
+.award-card--placeholder .award-card__foil,
+.award-card--placeholder .award-card__glare,
+.award-card--placeholder .award-card__shimmer,
+.award-card--placeholder .award-card__sparkle {
+  -webkit-mask: none;
+  mask: none;
+  border-radius: 5%/3.6%;
+}
+
+/* ── Team honors: same strength, different patterns ───────────────────── */
+
+/* Second Team: fine etched diagonal lines that slide with the tilt. */
+.award-card--second-team .award-card__foil {
+  background-image:
+    linear-gradient(
+      115deg,
+      transparent 28%,
+      rgba(219, 227, 247, 0.55) 42%,
+      rgba(255, 255, 255, 0.85) 46%,
+      rgba(183, 199, 239, 0.55) 50%,
+      transparent 64%
+    ),
+    repeating-linear-gradient(-35deg, rgba(219, 227, 247, 0.38) 0 1.5px, transparent 1.5px 7px),
+    linear-gradient(
+      115deg,
+      rgba(139, 163, 226, 0.5) 0%,
+      rgba(238, 242, 251, 0.6) 25%,
+      rgba(88, 119, 205, 0.45) 50%,
+      rgba(219, 227, 247, 0.55) 75%,
+      rgba(44, 79, 176, 0.45) 100%
+    );
+  background-size:
+    250% 250%,
+    140% 140%,
+    300% 300%;
+  background-position:
+    calc(100% - var(--pc-band-x) * 1.7) var(--pc-band-y),
+    var(--pc-band-x) var(--pc-band-y),
+    var(--pc-band-x) var(--pc-band-y);
+}
+
+/* Honorable Mention: ripple rings spreading out from the light. */
+.award-card--honorable-mention .award-card__foil {
+  background-image:
+    linear-gradient(
+      115deg,
+      transparent 28%,
+      rgba(219, 227, 247, 0.55) 42%,
+      rgba(255, 255, 255, 0.85) 46%,
+      rgba(183, 199, 239, 0.55) 50%,
+      transparent 64%
+    ),
+    repeating-radial-gradient(
+      circle at var(--pc-pointer-x) var(--pc-pointer-y),
+      rgba(219, 227, 247, 0.36) 0 2px,
+      transparent 2px 11px
+    ),
+    linear-gradient(
+      115deg,
+      rgba(139, 163, 226, 0.5) 0%,
+      rgba(238, 242, 251, 0.6) 25%,
+      rgba(88, 119, 205, 0.45) 50%,
+      rgba(219, 227, 247, 0.55) 75%,
+      rgba(44, 79, 176, 0.45) 100%
+    );
+}
+
+/* ── Premium: Player / Coach of the Year ──────────────────────────────── */
+
+/* Iridescent foil — the blues run through cyan and violet as it tilts — with
+   finer, denser prism rays, and always a little lit even at rest. */
+.award-card--premium .award-card__foil {
+  background-image:
+    linear-gradient(
+      115deg,
+      transparent 26%,
+      rgba(219, 247, 255, 0.6) 40%,
+      rgba(255, 255, 255, 0.95) 46%,
+      rgba(214, 200, 255, 0.6) 52%,
+      transparent 66%
+    ),
+    repeating-conic-gradient(
+      from 0deg at var(--pc-pointer-x) var(--pc-pointer-y),
+      rgba(219, 247, 255, 0.42) 0deg 1.5deg,
+      transparent 1.5deg 4.5deg,
+      rgba(190, 176, 255, 0.34) 4.5deg 5.5deg,
+      transparent 5.5deg 9deg
+    ),
+    linear-gradient(
+      115deg,
+      rgba(110, 200, 255, 0.55) 0%,
+      rgba(238, 242, 251, 0.65) 18%,
+      rgba(150, 130, 255, 0.5) 36%,
+      rgba(122, 162, 255, 0.55) 54%,
+      rgba(160, 235, 255, 0.55) 72%,
+      rgba(88, 119, 205, 0.5) 100%
+    );
+  opacity: calc(var(--pc-holo) * (0.14 + 0.38 * var(--pc-active)));
+}
+
+/* A band of light that sweeps across the card on its own every few
+   seconds, so the top honors catch the eye before anyone touches them. */
+.award-card__shimmer {
+  display: none;
+  background-image: linear-gradient(
+    115deg,
+    transparent 38%,
+    rgba(255, 255, 255, 0.15) 45%,
+    rgba(255, 255, 255, 0.7) 50%,
+    rgba(255, 255, 255, 0.15) 55%,
+    transparent 62%
+  );
+  background-size: 300% 300%;
+  background-position: 150% 50%;
+  mix-blend-mode: overlay;
+  animation: award-card-shimmer 6s ease-in-out infinite;
+}
+
+/* Fine glitter that twinkles, brighter when the card is in the light. */
+.award-card__sparkle {
+  display: none;
+  background-image:
+    radial-gradient(circle, rgba(255, 255, 255, 0.95) 0 0.8px, transparent 1.6px),
+    radial-gradient(circle, rgba(219, 247, 255, 0.9) 0 1.1px, transparent 2px),
+    radial-gradient(circle, rgba(214, 200, 255, 0.85) 0 0.7px, transparent 1.4px);
+  background-size:
+    37px 41px,
+    53px 59px,
+    29px 31px;
+  background-position:
+    calc(var(--pc-band-x) * 0.4) calc(var(--pc-band-y) * 0.4),
+    calc(var(--pc-band-x) * -0.3) 11px,
+    7px calc(var(--pc-band-y) * 0.6);
+  mix-blend-mode: screen;
+  opacity: calc(0.35 + 0.5 * var(--pc-active));
+  animation: award-card-twinkle 3.2s ease-in-out infinite alternate;
+}
+
+.award-card--premium .award-card__shimmer,
+.award-card--premium .award-card__sparkle {
+  display: block;
+}
+
+/* A soft blue glow behind the card. */
+.award-card--premium {
+  isolation: isolate;
+}
+
+.award-card--premium::before {
+  content: "";
+  position: absolute;
+  inset: -5% -6%;
+  z-index: -1;
+  border-radius: 12%;
+  background: radial-gradient(closest-side, rgba(122, 162, 255, 0.55), rgba(88, 119, 205, 0.28) 60%, transparent);
+  filter: blur(18px);
+  animation: award-card-glow 4s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+@keyframes award-card-shimmer {
+  0%,
+  55% {
+    background-position: 150% 50%;
+  }
+  85%,
+  100% {
+    background-position: -50% 50%;
+  }
+}
+
+@keyframes award-card-twinkle {
+  from {
+    filter: brightness(0.7);
+  }
+  to {
+    filter: brightness(1.35);
+  }
+}
+
+@keyframes award-card-glow {
+  from {
+    opacity: 0.6;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .award-card__shimmer,
+  .award-card__sparkle,
+  .award-card--premium::before {
+    animation: none;
+  }
+}

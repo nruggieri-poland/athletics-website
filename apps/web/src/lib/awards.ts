@@ -2,14 +2,18 @@
 // page renders by (honor order and wording, card sorting, season naming).
 // Data comes from the CMS's award-seasons collection (apps/cms/src/
 // collections/AwardSeasons.ts): one doc per season, each holding its cards
-// in an `awards` array. Honor values/order mirror apps/cms/src/lib/awards.ts.
+// in an `awards` array. Honor values, order, and colors come from the
+// shared card package (packages/award-card), which the CMS's Instagram
+// export draws from too.
 
+import type { HonorMeta, HonorValue } from "@athletics/award-card";
+import { HONORS, honorMeta } from "@athletics/award-card";
 import type { Media, SeasonType, Sport } from "./payload";
 
-const PAYLOAD_URL = import.meta.env.PAYLOAD_URL || "http://localhost:3000";
+export type { HonorMeta, HonorValue } from "@athletics/award-card";
+export { HONORS, honorMeta };
 
-export type HonorValue =
-  "player-of-the-year" | "coach-of-the-year" | "first-team" | "second-team" | "honorable-mention";
+const PAYLOAD_URL = import.meta.env.PAYLOAD_URL || "http://localhost:3000";
 
 export type Grade = "Freshman" | "Sophomore" | "Junior" | "Senior";
 
@@ -41,72 +45,8 @@ export interface AwardSeason {
   awards: Award[];
 }
 
-export interface HonorMeta {
-  value: HonorValue;
-  label: string;
-  plural: string;
-  short: string;
-  // Card backdrop behind cut-out photos, and the accent dot/chip color.
-  color: string;
-  accent: string;
-  // Players/Coaches of the Year get the full-strength foil.
-  holo: number;
-}
-
-export const HONORS: HonorMeta[] = [
-  {
-    value: "player-of-the-year",
-    label: "Player of the Year",
-    plural: "Players of the Year",
-    short: "POY",
-    color: "#8a6a12",
-    accent: "#f5c542",
-    holo: 1,
-  },
-  {
-    value: "coach-of-the-year",
-    label: "Coach of the Year",
-    plural: "Coaches of the Year",
-    short: "COY",
-    color: "#7a5a10",
-    accent: "#f5c542",
-    holo: 1,
-  },
-  {
-    value: "first-team",
-    label: "First Team",
-    plural: "First Team",
-    short: "1st Team",
-    color: "#00328f",
-    accent: "#7aa2ff",
-    holo: 0.7,
-  },
-  {
-    value: "second-team",
-    label: "Second Team",
-    plural: "Second Team",
-    short: "2nd Team",
-    color: "#3a4256",
-    accent: "#cbd5e1",
-    holo: 0.55,
-  },
-  {
-    value: "honorable-mention",
-    label: "Honorable Mention",
-    plural: "Honorable Mention",
-    short: "HM",
-    color: "#2a2c34",
-    accent: "#a7abb8",
-    holo: 0.4,
-  },
-];
-
 export const GRADES: Grade[] = ["Senior", "Junior", "Sophomore", "Freshman"];
 export const SEASON_ORDER: SeasonType[] = ["Fall", "Winter", "Spring"];
-
-export function honorMeta(value: HonorValue): HonorMeta {
-  return HONORS.find((honor) => honor.value === value) ?? HONORS[2];
-}
 
 export function honorLabel(award: Award): string {
   return award.honorTitle || honorMeta(award.honor).label;
@@ -181,6 +121,12 @@ export function schoolYearHref(schoolYear: string): string {
   return `/ne8/awards/${schoolYear}`;
 }
 
+// A card's full-size original upload — the finished artwork, for the
+// website to optimize itself (see components/awards/AwardCard.astro).
+export function originalUrl(photo?: AwardPhoto): string {
+  return photo?.url ? `${PAYLOAD_URL}${photo.url}` : "";
+}
+
 export function photoUrl(photo?: AwardPhoto, size = "card"): string {
   if (!photo?.url) return "";
   const sized = photo.sizes?.[size]?.url;
@@ -194,12 +140,28 @@ export function photoPosition(photo?: AwardPhoto): string {
   return `${photo.focalX}% ${photo.focalY}%`;
 }
 
-// The image a season is represented by on tiles and link previews: its
-// chosen cover, else a Player of the Year's photo, else any card's photo.
+// A season's chosen cover photo (the CMS's "Cover Image"), for the hero and
+// tile backgrounds. No fallback to a card: cards are finished artwork with
+// their own text and frame, which don't work cropped into a background.
 export function seasonCover(season: AwardSeason): AwardPhoto | undefined {
-  if (season.coverImage?.url) return season.coverImage;
-  const sorted = sortAwards(season.awards);
-  return sorted.find((award) => award.photo?.url)?.photo;
+  return season.coverImage?.url ? season.coverImage : undefined;
+}
+
+// What a season's link preview shows: its cover, else its first card's
+// artwork (in the site's order — a Player of the Year when there is one).
+export function seasonShareImage(season: AwardSeason): string | undefined {
+  const cover = seasonCover(season);
+  if (cover) return photoUrl(cover);
+  const card = sortAwards(season.awards).find((award) => award.photo?.url)?.photo;
+  return card ? originalUrl(card) : undefined;
+}
+
+// Cards with artwork, in the site's order — for tile previews.
+export function seasonCardArt(season: AwardSeason, count = 3): AwardPhoto[] {
+  return sortAwards(season.awards)
+    .map((award) => award.photo)
+    .filter((photo): photo is AwardPhoto => Boolean(photo?.url))
+    .slice(0, count);
 }
 
 // Every published season, newest school year first and Fall → Spring
@@ -259,6 +221,14 @@ export function latestSeason(seasons: AwardSeason[]): AwardSeason | undefined {
   const [newestYear] = groupBySchoolYear(seasons);
   return newestYear?.seasons[newestYear.seasons.length - 1];
 }
+
+// Layout for Player/Coach of the Year cards wherever they're listed: centered,
+// at most two to a row and ~448px wide (vs ~270px for the other honors'
+// four-across grid) — the top honors are bigger as well as more premium
+// (see packages/award-card's premium card).
+export const SPOTLIGHT_LIST = "flex flex-wrap justify-center gap-8 lg:gap-12";
+export const SPOTLIGHT_ITEM = "w-full max-w-[28rem] sm:w-[calc(50%-1rem)] lg:w-[28rem]";
+export const CARD_GRID = "grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4";
 
 export function sportAwardsHref(sportSlug: string): string {
   return `/${sportSlug}/all-conference`;

@@ -11,15 +11,17 @@ import type { SchoolYearGroup } from "../../../../lib/awards";
 import {
   HONORS,
   SEASON_ORDER,
+  SPOTLIGHT_ITEM,
+  SPOTLIGHT_LIST,
   awardSportKey,
   awardSportLabel,
   getAwardSeasons,
   groupBySchoolYear,
   honorCounts,
   honoreeCount,
-  photoUrl,
   schoolYearHref,
   seasonCover,
+  seasonShareImage,
   seasonHref,
   sortAwards,
 } from "../../../../lib/awards";
@@ -63,12 +65,13 @@ const bySport = seasons.flatMap((season) => {
 });
 
 const cover = seasons.map(seasonCover).find(Boolean);
+const shareImage = seasons.map(seasonShareImage).find(Boolean);
 ---
 
 <BaseLayout
   title={`${schoolYear} NE8 All-Conference Awards`}
   description={`Every Poland Bulldog honored by the NE8 in the ${schoolYear} school year — ${awards.length} All-Conference honors across Fall, Winter, and Spring.`}
-  image={cover ? photoUrl(cover) : undefined}
+  image={shareImage}
 >
   <AwardsHero
     crumbs={[
@@ -121,10 +124,10 @@ const cover = seasons.map(seasonCover).find(Boolean);
             Players of the Year
           </h2>
           <p class="mt-2 text-ink-600">The NE8's top honor in each sport.</p>
-          <ul class="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">
-            {spotlight.map(({ award, season }) => (
-              <li>
-                <AwardCard award={award} season={season} />
+          <ul class={`mt-8 ${SPOTLIGHT_LIST}`}>
+            {spotlight.map(({ award }) => (
+              <li class={SPOTLIGHT_ITEM}>
+                <AwardCard award={award} />
               </li>
             ))}
           </ul>
