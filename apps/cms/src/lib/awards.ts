@@ -247,3 +247,71 @@ export function awardsForPhoto(filename: string, candidates: PhotoCandidate[]): 
   const winners = scored.filter(({ score }) => score === best)
   return best > 0 && winners.length === 1 ? [winners[0].index] : []
 }
+
+export interface CardFile {
+  id: number | string
+  filename: string
+  createdAt?: string
+}
+
+export interface CardMatchPlan {
+  // Award index → the Media file to attach.
+  assign: Map<number, CardFile>
+  // Files that name a two-award athlete without saying which award.
+  unclear: CardFile[]
+}
+
+// "2026-fall-…": a file tagged with a year and season (anywhere in its
+// name). Untagged files are fine too — they're just never preferred.
+const SEASON_TAG = /(?:^|-)((?:19|20)\d{2})-(fall|winter|spring)(?:-|$)/
+
+function seasonTag(filename: string): { year: string; season: string } | null {
+  const match = SEASON_TAG.exec(slugify(filename.replace(/\.[a-z0-9]+$/i, '')))
+  return match ? { year: match[1], season: match[2] } : null
+}
+
+// Works out which Media files are this season's cards, for the "Match card
+// images" button (endpoints/matchCards.ts). A file tagged for a different
+// season (last year's "2025-fall-…") is ignored; one tagged for this season
+// — either calendar year of the school year counts, so "2026-winter" and
+// "2027-winter" both fit 2026-2027 Winter — wins over an untagged one, and
+// between equals the newest upload wins (a re-exported, corrected card).
+export function planCardMatches(
+  season: { schoolYear: string; season: string },
+  candidates: PhotoCandidate[],
+  files: CardFile[],
+): CardMatchPlan {
+  const years = season.schoolYear.split('-')
+  const seasonWord = season.season.toLowerCase()
+  const isThisSeason = (file: CardFile) => {
+    const tag = seasonTag(file.filename)
+    return tag ? tag.season === seasonWord && years.includes(tag.year) : null
+  }
+
+  const options = new Map<number, CardFile[]>()
+  const unclear: CardFile[] = []
+  for (const file of files) {
+    if (isThisSeason(file) === false) continue
+    const indexes = awardsForPhoto(file.filename, candidates)
+    if (indexes.length === 0) {
+      if (
+        candidates.some((candidate) => photoMatchesAthlete(file.filename, candidate.athleteName))
+      ) {
+        unclear.push(file)
+      }
+      continue
+    }
+    for (const index of indexes) options.set(index, [...(options.get(index) ?? []), file])
+  }
+
+  const assign = new Map<number, CardFile>()
+  for (const [index, choices] of options) {
+    const best = [...choices].sort(
+      (a, b) =>
+        Number(isThisSeason(b) === true) - Number(isThisSeason(a) === true) ||
+        String(b.createdAt ?? '').localeCompare(String(a.createdAt ?? '')),
+    )[0]
+    assign.set(index, best)
+  }
+  return { assign, unclear }
+}

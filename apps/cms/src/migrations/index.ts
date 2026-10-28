@@ -20,6 +20,8 @@ import * as migration_20260828_143810_add_sport_hype_playlist from './20260828_1
 import * as migration_20260909_192142_add_articles_exclude_from_news_feed from './20260909_192142_add_articles_exclude_from_news_feed';
 import * as migration_20261026_130112_add_ne8_awards from './20261026_130112_add_ne8_awards';
 import * as migration_20261027_022230_award_seasons_publishing from './20261027_022230_award_seasons_publishing';
+import * as migration_20261028_210051_award_cards_in_media from './20261028_210051_award_cards_in_media';
+import * as migration_20261028_210654_award_season_card_folder from './20261028_210654_award_season_card_folder';
 
 export const migrations = [
   {
@@ -131,5 +133,15 @@ export const migrations = [
     up: migration_20261027_022230_award_seasons_publishing.up,
     down: migration_20261027_022230_award_seasons_publishing.down,
     name: '20261027_022230_award_seasons_publishing',
+  },
+  {
+    up: migration_20261028_210051_award_cards_in_media.up,
+    down: migration_20261028_210051_award_cards_in_media.down,
+    name: '20261028_210051_award_cards_in_media',
+  },
+  {
+    up: migration_20261028_210654_award_season_card_folder.up,
+    down: migration_20261028_210654_award_season_card_folder.down,
+    name: '20261028_210654_award_season_card_folder',
   },
 ];

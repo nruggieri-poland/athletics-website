@@ -1,5 +1,8 @@
 import type { CollectionConfig } from 'payload'
-import { afterChangeTriggerRebuild, afterDeleteTriggerRebuild } from '../hooks/scheduleRebuildHooks.ts'
+import {
+  afterChangeTriggerRebuild,
+  afterDeleteTriggerRebuild,
+} from '../hooks/scheduleRebuildHooks.ts'
 import { tagsField } from '../lib/fields/tagsField.ts'
 
 export const Media: CollectionConfig = {
@@ -63,7 +66,31 @@ export const Media: CollectionConfig = {
     {
       name: 'alt',
       type: 'text',
-      required: true,
+      // Not required up front, so a whole batch can be uploaded at once
+      // (e.g. a season's ~40 NE8 award card images) without typing an alt
+      // text for each: left blank, it's filled in from the filename on save
+      // ("2026-fall-angelo-rinaldi.png" → "2026 Fall Angelo Rinaldi"), so
+      // every image still ends up with one.
+      admin: {
+        description:
+          'Describe the image for screen readers. Filled in from the filename if left blank.',
+      },
+      hooks: {
+        beforeChange: [
+          ({ value, data }) => {
+            if (value) return value
+            const filename = typeof data?.filename === 'string' ? data.filename : ''
+            return (
+              filename
+                .replace(/\.[a-z0-9]+$/i, '')
+                .replace(/[-_]+/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim()
+                .replace(/\b\w/g, (letter: string) => letter.toUpperCase()) || value
+            )
+          },
+        ],
+      },
     },
     {
       name: 'caption',
@@ -82,12 +109,15 @@ export const Media: CollectionConfig = {
       // (media.title, media.tags, ...) — same shape as every other
       // collection in this codebase, not nested under media.resource.*.
       fields: [
-        tagsField('Controls which Resources page(s) this shows on — tags are open, use whichever apply.'),
+        tagsField(
+          'Controls which Resources page(s) this shows on — tags are open, use whichever apply.',
+        ),
         {
           name: 'title',
           type: 'text',
           admin: {
-            description: 'Display title in Resources listings — distinct from Alt Text above, which is for screen readers.',
+            description:
+              'Display title in Resources listings — distinct from Alt Text above, which is for screen readers.',
           },
         },
         {
@@ -110,7 +140,8 @@ export const Media: CollectionConfig = {
           type: 'select',
           defaultValue: 'none',
           admin: {
-            description: 'Assigns this file to render on a specific hardcoded page (e.g. the Boosters Program Ads/Sponsorships PDF preview), independent of tags or the Visible checkbox above.',
+            description:
+              'Assigns this file to render on a specific hardcoded page (e.g. the Boosters Program Ads/Sponsorships PDF preview), independent of tags or the Visible checkbox above.',
           },
           options: [
             { label: 'None (tags/galleries only)', value: 'none' },

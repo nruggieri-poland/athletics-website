@@ -1,3 +1,7 @@
+// payload-deploy:allow-destructive — reviewed and approved: up() drops
+// award_seasons.is_public only after copying it into the new _status column
+// (published/draft) in the statement just before it, and loosens NOT NULLs so
+// drafts can be saved. No data is lost.
 import type { MigrateUpArgs, MigrateDownArgs } from '@payloadcms/db-postgres'
 import { sql } from '@payloadcms/db-postgres'
 
@@ -90,25 +94,24 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   // season from its versions — a season saved before this migration has
   // none yet, so without this it would silently drop out of the admin
   // (while still showing on the site). One version per existing season,
-  // carrying its current content and status.
-  const { docs } = await payload.find({
-    collection: 'award-seasons',
-    depth: 0,
-    limit: 0,
-    pagination: false,
-    req,
-  })
-  for (const doc of docs) {
-    await payload.db.createVersion({
-      autosave: false,
-      collectionSlug: 'award-seasons',
-      createdAt: doc.createdAt,
-      parent: doc.id,
-      req,
-      updatedAt: doc.updatedAt,
-      versionData: doc,
-    })
-  }
+  // carrying its current content, status, cards and pending uploads.
+  //
+  // Plain SQL against the tables as they stand at this point in the
+  // migration history — not payload.find()/createVersion(), which query
+  // through the *current* config and so break on a database that's still
+  // missing columns later migrations add (award_seasons.card_folder_id).
+  await db.execute(sql`
+  INSERT INTO "_award_seasons_v" ("parent_id", "version_title", "version_school_year", "version_season", "version_slug", "version_intro", "version_cover_image_id", "version_gallery_url", "version_paste_list", "version_updated_at", "version_created_at", "version__status", "created_at", "updated_at", "latest")
+  SELECT s."id", s."title", s."school_year", s."season"::text::"enum__award_seasons_v_version_season", s."slug", s."intro", s."cover_image_id", s."gallery_url", s."paste_list", s."updated_at", s."created_at", s."_status"::text::"enum__award_seasons_v_version_status", s."created_at", s."updated_at", true
+  FROM "award_seasons" s;
+
+  INSERT INTO "_award_seasons_v_version_awards" ("_order", "_parent_id", "athlete_name", "honor", "grade", "sport_id", "division", "honor_title", "photo_id", "_uuid")
+  SELECT a."_order", v."id", a."athlete_name", a."honor"::text::"enum__award_seasons_v_version_awards_honor", a."grade"::text::"enum__award_seasons_v_version_awards_grade", a."sport_id", a."division"::text::"enum__award_seasons_v_version_awards_division", a."honor_title", a."photo_id", a."id"
+  FROM "award_seasons_awards" a JOIN "_award_seasons_v" v ON v."parent_id" = a."_parent_id";
+
+  INSERT INTO "_award_seasons_v_rels" ("order", "parent_id", "path", "award_photos_id")
+  SELECT r."order", v."id", r."path", r."award_photos_id"
+  FROM "award_seasons_rels" r JOIN "_award_seasons_v" v ON v."parent_id" = r."parent_id";`)
 }
 
 export async function down({ db, payload, req }: MigrateDownArgs): Promise<void> {
