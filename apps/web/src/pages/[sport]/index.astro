@@ -145,12 +145,12 @@ for (const game of seasonGames) {
         <div class="mb-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
           <div>
             <p class="text-xs font-semibold uppercase tracking-wide text-primary-600">NE8 All-Conference</p>
-            <h2 class="text-h3 font-semibold text-ink-900">{seasonName(latestAwards.season)} Honors</h2>
+            <h2 class="text-h3 font-semibold text-ink-900">{seasonName(latestAwards.season)} Awards</h2>
           </div>
           <a href={sportAwardsHref(sport.slug)} class="text-sm font-semibold text-primary-600 hover:underline">
             {totalAwards > latestAwards.awards.length
-              ? `All ${totalAwards} ${sport.name} honors, every year →`
-              : `See all ${sport.name} honors →`}
+              ? `All ${totalAwards} ${sport.name} awards →`
+              : `All ${sport.name} awards →`}
           </a>
         </div>
         <ul class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -161,7 +161,7 @@ for (const game of seasonGames) {
         {latestAwards.awards.length > 3 && (
           <p class="mt-6 text-center">
             <a href={sportAwardsHref(sport.slug)} class="inline-flex rounded-full bg-primary-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-primary-700">
-              See all {latestAwards.awards.length} from {seasonName(latestAwards.season)}
+              View all {latestAwards.awards.length} {seasonName(latestAwards.season)} awards
             </a>
           </p>
         )}

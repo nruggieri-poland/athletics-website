@@ -1,3 +1,7 @@
+// payload-deploy:allow-destructive — reviewed and approved: up() drops
+// award_seasons.is_public only after copying it into the new _status column
+// (published/draft) in the statement just before it, and loosens NOT NULLs so
+// drafts can be saved. No data is lost.
 import type { MigrateUpArgs, MigrateDownArgs } from '@payloadcms/db-postgres'
 import { sql } from '@payloadcms/db-postgres'
 

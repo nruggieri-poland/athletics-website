@@ -19,8 +19,8 @@ export const HONORS = [
     label: "Player of the Year",
     plural: "Players of the Year",
     short: "POY",
-    color: "#8a6a12",
-    accent: "#f5c542",
+    color: "#00328f",
+    accent: "#98d0ff",
     holo: 1,
   },
   {
@@ -28,8 +28,8 @@ export const HONORS = [
     label: "Coach of the Year",
     plural: "Coaches of the Year",
     short: "COY",
-    color: "#7a5a10",
-    accent: "#f5c542",
+    color: "#00328f",
+    accent: "#98d0ff",
     holo: 1,
   },
   {
@@ -37,8 +37,8 @@ export const HONORS = [
     label: "First Team",
     plural: "First Team",
     short: "1st Team",
-    color: "#00328f",
-    accent: "#7aa2ff",
+    color: "#2c4fb0",
+    accent: "#b7c7ef",
     holo: 0.7,
   },
   {

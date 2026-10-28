@@ -14,6 +14,11 @@
   --color-primary-800: #001d54;
   --color-primary-900: #001238;
 
+  /* Light blue — the program's secondary color, from the NE8 award card
+     template ("Player of the Year"). Accent text on the dark blue awards
+     banners. */
+  --color-secondary: #98d0ff;
+
   --color-ink-50: #f7f7f8;
   --color-ink-100: #eeeef0;
   --color-ink-200: #d9dade;
@@ -187,7 +192,12 @@ article .prose {
   :root {
     color-scheme: light;
     --color-surface: #ffffff;
-    --color-ink-50: #f7f7f8;
+    /* Light blue — the program's secondary color, from the NE8 award card
+     template ("Player of the Year"). Accent text on the dark blue awards
+     banners. */
+  --color-secondary: #98d0ff;
+
+  --color-ink-50: #f7f7f8;
     --color-ink-100: #eeeef0;
     --color-ink-200: #d9dade;
     --color-ink-300: #b6b8c0;

@@ -68,10 +68,10 @@ const countPhrase = (count: number, singular: string, plural: string) =>
   `${count} ${count === 1 ? singular : plural}`;
 const autoIntro = (() => {
   const poy = awards.filter((award) => award.honor === "player-of-the-year").length;
-  const base = `In the ${name} season, ${countPhrase(people, "Bulldog was", "Bulldogs were")} recognized by the NE8's coaches and administrators with ${countPhrase(awards.length, "All-Conference honor", "All-Conference honors")}`;
+  const base = `${countPhrase(people, "Poland Seminary athlete", "Poland Seminary athletes")} received ${countPhrase(awards.length, "NE8 All-Conference award", "NE8 All-Conference awards")} for ${name}`;
   return poy > 0
-    ? `${base}, including ${countPhrase(poy, "Player of the Year", "Players of the Year")}. Let's go, Dogs!`
-    : `${base}. Let's go, Dogs!`;
+    ? `${base}, including ${countPhrase(poy, "Player of the Year award", "Player of the Year awards")}.`
+    : `${base}.`;
 })();
 const intro = season.intro?.trim() || autoIntro;
 
@@ -93,7 +93,7 @@ const featured = (value: HonorValue) => isPremium(value);
   title={`${name} NE8 All-Conference`}
   description={intro}
   image={shareImage}
-  imageAlt={shareImage ? `${name} NE8 All-Conference honors` : undefined}
+  imageAlt={shareImage ? `${name} NE8 All-Conference awards` : undefined}
 >
   <AwardsHero
     crumbs={[
@@ -106,7 +106,7 @@ const featured = (value: HonorValue) => isPremium(value);
     title={name}
     lede={intro}
     stats={[
-      { value: people, label: people === 1 ? "Bulldog honored" : "Bulldogs honored" },
+      { value: people, label: people === 1 ? "Athlete" : "Athletes" },
       ...counts.map(({ honor, count }) => ({
         value: count,
         label: count === 1 ? honor.label : honor.plural,

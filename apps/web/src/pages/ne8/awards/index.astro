@@ -50,11 +50,11 @@ const shareImage = latest ? seasonShareImage(latest) : undefined;
     ]}
     eyebrow="Northeast 8 Athletic Conference"
     title="All-Conference Awards"
-    lede="Celebrating every Bulldog recognized by the NE8's coaches and administrators, season by season."
+    lede="NE8 All-Conference awards received by Poland Seminary athletes, by school year and season."
     stats={seasons.length > 0
       ? [
-          { value: allAwards.length, label: "All-Conference honors" },
-          { value: playersOfTheYear, label: "Players of the Year", color: "#f5c542" },
+          { value: allAwards.length, label: "All-Conference awards" },
+          { value: playersOfTheYear, label: "Players of the Year", color: "#98d0ff" },
           { value: seasons.length, label: seasons.length === 1 ? "Season" : "Seasons" },
         ]
       : []}
@@ -66,8 +66,8 @@ const shareImage = latest ? seasonShareImage(latest) : undefined;
         <section class="mx-auto max-w-content px-6 pt-14" aria-labelledby="latest-heading">
           <div class="grid items-center gap-10 overflow-hidden rounded-3xl bg-[#101114] p-6 text-white sm:p-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
             <div>
-              <p class="text-xs font-bold uppercase tracking-[0.2em] text-[#f5c542]">
-                Latest announcement
+              <p class="text-xs font-bold uppercase tracking-[0.2em] text-secondary">
+                Most recent season
               </p>
               <h2
                 id="latest-heading"
@@ -76,8 +76,8 @@ const shareImage = latest ? seasonShareImage(latest) : undefined;
                 {seasonName(latest)}
               </h2>
               <p class="mt-4 text-white/75">
-                {honoreeCount(latest.awards)} Bulldogs earned {latest.awards.length} NE8
-                All-Conference honors.
+                {latest.awards.length} NE8 All-Conference awards to {honoreeCount(latest.awards)}{" "}
+                Poland Seminary athletes.
               </p>
               {latestCounts.length > 0 && (
                 <ul class="mt-6 flex flex-wrap gap-2">
@@ -95,7 +95,7 @@ const shareImage = latest ? seasonShareImage(latest) : undefined;
                 href={seasonHref(latest)}
                 class="mt-8 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-bold text-primary-900 hover:bg-primary-50"
               >
-                See all {latest.awards.length} cards
+                View all {latest.awards.length} awards
                 <svg
                   width="16"
                   height="16"
@@ -138,7 +138,7 @@ const shareImage = latest ? seasonShareImage(latest) : undefined;
                 </a>
               </h2>
               <p class="text-sm text-ink-500">
-                {year.awards.length} honors · {honoreeCount(year.awards)} Bulldogs
+                {year.awards.length} awards · {honoreeCount(year.awards)} athletes
                 <a
                   href={schoolYearHref(year.schoolYear)}
                   class="mt-1 block font-semibold text-primary-600 hover:underline sm:ml-3 sm:mt-0 sm:inline"

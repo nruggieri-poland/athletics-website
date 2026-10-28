@@ -4,19 +4,15 @@ import {
   afterDeleteTriggerRebuild,
 } from '../hooks/scheduleRebuildHooks.ts'
 
-// Finished NE8 award card artwork (one designed image per athlete, used by
-// AwardSeasons.ts), plus any season cover photos — kept out of the main
-// Media library on purpose: ~120 cards a school year would bury the logos,
-// hero photos, and documents editors actually browse Media for.
+// LEGACY — no longer used. NE8 award card images now live in the regular
+// Media library (in whatever folders the editor likes) and are attached by the
+// award season's "Match card images" button (endpoints/matchCards.ts).
 //
-// Unlike Media, alt text isn't required up front — it's filled in from the
-// filename ("aaron-vandervort.png" → "Aaron Vandervort") so a whole season's
-// cards can be dropped in at once from an award season's Quick fill,
-// without stopping to type 40 alt texts. The site's card alt text comes
-// from the award (name and honor), not from here.
-//
-// Files live under the existing media/ upload directory (already
-// gitignored and on the server's disk), in their own subfolder.
+// Kept, hidden, only so nothing uploaded here is deleted: migration
+// 20261028_*_award_cards_in_media copied every file in this collection into
+// Media (folder "NE8 Award Cards") and pointed the awards at the copies. The
+// collection — and its media/award-photos/ files on disk — can be removed in
+// a later cleanup once nobody needs the originals.
 export const AwardPhotos: CollectionConfig = {
   slug: 'award-photos',
   labels: {
@@ -27,6 +23,7 @@ export const AwardPhotos: CollectionConfig = {
     read: () => true,
   },
   admin: {
+    hidden: true,
     useAsTitle: 'alt',
     defaultColumns: ['filename', 'alt', 'updatedAt'],
     group: 'NE8 Awards',

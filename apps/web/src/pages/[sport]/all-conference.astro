@@ -60,7 +60,7 @@ const shortYear = (schoolYear: string) => schoolYear.replace(/^(\d{4})-\d{2}(\d{
 
 <BaseLayout
   title={`${sport.name} NE8 All-Conference`}
-  description={`Every Poland Bulldog named NE8 All-Conference in ${sport.name}, year by year.`}
+  description={`NE8 All-Conference awards received by Poland Seminary athletes in ${sport.name}, by school year.`}
   image={shareImage}
 >
   <AwardsHero
@@ -70,20 +70,20 @@ const shortYear = (schoolYear: string) => schoolYear.replace(/^(\d{4})-\d{2}(\d{
     ]}
     eyebrow="NE8 All-Conference"
     title={`${sport.name} Honors`}
-    lede={`Every Bulldog the NE8 has recognized in ${sport.name}, year by year.`}
+    lede={`NE8 All-Conference awards received by Poland Seminary athletes in ${sport.name}, by school year.`}
     stats={allAwards.length > 0
       ? [
           {
             value: allAwards.length,
-            label: allAwards.length === 1 ? "Honor" : "All-Conference honors",
+            label: allAwards.length === 1 ? "Award" : "All-Conference awards",
           },
-          { value: honoreeCount(allAwards), label: "Bulldogs honored" },
+          { value: honoreeCount(allAwards), label: "Athletes" },
           ...(playersOfTheYear > 0
             ? [
                 {
                   value: playersOfTheYear,
                   label: playersOfTheYear === 1 ? "Player of the Year" : "Players of the Year",
-                  color: "#f5c542",
+                  color: "#98d0ff",
                 },
               ]
             : []),
@@ -282,7 +282,7 @@ const shortYear = (schoolYear: string) => schoolYear.replace(/^(\d{4})-\d{2}(\d{
     ) : (
       <section class="mx-auto max-w-content px-6 py-20 text-center">
         <p class="text-lg font-semibold text-ink-900">
-          No NE8 All-Conference honors posted for {sport.name} yet.
+          No NE8 All-Conference awards posted for {sport.name} yet.
         </p>
         <p class="mt-2 text-ink-500">
           They'll show up here as soon as a season is published. Meanwhile,{" "}

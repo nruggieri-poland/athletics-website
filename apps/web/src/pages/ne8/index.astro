@@ -12,15 +12,17 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 import ArticleCard from "../../components/articles/ArticleCard.astro";
 import { getArticlesForTag } from "../../lib/payload";
 import type { AwardSeason } from "../../lib/awards";
+import AwardCard from "../../components/awards/AwardCard.astro";
+import { isPremium } from "@athletics/award-card";
 import {
+  SPOTLIGHT_ITEM,
+  SPOTLIGHT_LIST,
   getAwardSeasons,
   honoreeCount,
   latestSeason,
-  photoPosition,
-  photoUrl,
-  seasonCover,
   seasonHref,
   seasonName,
+  sortAwards,
 } from "../../lib/awards";
 
 const articles = await getArticlesForTag("ne8", 50);
@@ -29,10 +31,12 @@ let seasons: AwardSeason[] = [];
 try {
   seasons = await getAwardSeasons();
 } catch {
-  // CMS unreachable at build time — the awards banner just doesn't render.
+  // CMS unreachable at build time — the awards section shows its empty state.
 }
 const latest = latestSeason(seasons);
-const cover = latest ? seasonCover(latest) : undefined;
+// The most recent season's Player/Coach of the Year cards, shown here as a
+// preview of /ne8/awards.
+const spotlight = latest ? sortAwards(latest.awards).filter((award) => isPremium(award.honor)) : [];
 ---
 
 <BaseLayout
@@ -49,60 +53,56 @@ const cover = latest ? seasonCover(latest) : undefined;
     </div>
   </div>
 
-  {
-    latest && (
-      <section class="mx-auto max-w-content px-6 pt-10">
-        <a
-          href="/ne8/awards"
-          class="group relative isolate flex min-h-56 flex-col justify-end overflow-hidden rounded-3xl bg-primary-900 p-8 text-white md:min-h-64 md:p-10"
-        >
-          {cover && (
-            <img
-              src={photoUrl(cover, "card")}
-              alt=""
-              class="absolute inset-y-0 right-0 -z-10 h-full w-full object-cover opacity-40 transition-[scale] duration-500 group-hover:scale-105 motion-reduce:transition-none md:w-3/5"
-              style={`object-position: ${photoPosition(cover)}; mask-image: linear-gradient(to right, transparent, #000 50%); -webkit-mask-image: linear-gradient(to right, transparent, #000 50%)`}
-            />
-          )}
-          <p class="text-xs font-bold uppercase tracking-[0.2em] text-[#f5c542]">
-            All-Conference Awards
+  <section class="border-b border-ink-100 bg-ink-50" aria-labelledby="ne8-awards-heading">
+    <div class="mx-auto max-w-content px-6 py-12">
+      <div class="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+        <div>
+          <h2 id="ne8-awards-heading" class="text-h3 font-bold text-ink-900">
+            NE8 All-Conference Awards
+          </h2>
+          <p class="mt-2 text-ink-600">
+            {
+              latest
+                ? `Most recent: ${seasonName(latest)}, ${latest.awards.length} awards to ${honoreeCount(latest.awards)} Poland Seminary athletes.`
+                : "No awards have been posted yet."
+            }
           </p>
-          <p class="mt-2 max-w-[20ch] text-3xl font-black uppercase leading-none tracking-tight md:text-5xl">
-            {seasonName(latest)} honors are in
-          </p>
-          <p class="mt-3 max-w-[50ch] text-white/75">
-            {honoreeCount(latest.awards)} Bulldogs earned NE8 All-Conference recognition. Browse
-            every card, every season.
-          </p>
-          <span class="mt-6 inline-flex w-fit items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-bold text-primary-900 group-hover:bg-primary-50">
-            View the awards
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-              class="transition-[translate] duration-300 group-hover:translate-x-1"
-            >
-              <path d="M5 12h14M13 6l6 6-6 6" />
-            </svg>
-          </span>
-        </a>
-        <p class="mt-3 text-sm text-ink-500">
-          Jump to the latest:{" "}
-          <a href={seasonHref(latest)} class="font-semibold text-primary-600 hover:underline">
-            {seasonName(latest)}
+        </div>
+        <div class="flex flex-wrap gap-3">
+          {
+            latest && (
+              <a
+                href={seasonHref(latest)}
+                class="rounded-full bg-primary-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-primary-700"
+              >
+                {seasonName(latest)} awards
+              </a>
+            )
+          }
+          <a
+            href="/ne8/awards"
+            class="rounded-full border border-ink-200 bg-surface px-5 py-2.5 text-sm font-bold text-ink-900 hover:border-primary-300"
+          >
+            All seasons
           </a>
-        </p>
-      </section>
-    )
-  }
+        </div>
+      </div>
+      {
+        spotlight.length > 0 && (
+          <ul class={`mt-10 ${SPOTLIGHT_LIST}`}>
+            {spotlight.map((award) => (
+              <li class={SPOTLIGHT_ITEM}>
+                <AwardCard award={award} />
+              </li>
+            ))}
+          </ul>
+        )
+      }
+    </div>
+  </section>
 
-  <section class="mx-auto max-w-content px-6 py-14">
+  <section class="mx-auto max-w-content px-6 py-14" aria-labelledby="ne8-news-heading">
+    <h2 id="ne8-news-heading" class="mb-6 text-h3 font-bold text-ink-900">NE8 News</h2>
     {
       articles.length > 0 ? (
         <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">

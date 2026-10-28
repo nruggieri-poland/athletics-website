@@ -70,7 +70,7 @@ const shareImage = seasons.map(seasonShareImage).find(Boolean);
 
 <BaseLayout
   title={`${schoolYear} NE8 All-Conference Awards`}
-  description={`Every Poland Bulldog honored by the NE8 in the ${schoolYear} school year — ${awards.length} All-Conference honors across Fall, Winter, and Spring.`}
+  description={`NE8 All-Conference awards received by Poland Seminary athletes in the ${schoolYear} school year: ${awards.length} awards across Fall, Winter, and Spring.`}
   image={shareImage}
 >
   <AwardsHero
@@ -81,10 +81,10 @@ const shareImage = seasons.map(seasonShareImage).find(Boolean);
     ]}
     eyebrow="NE8 All-Conference"
     title={`${schoolYear} Awards`}
-    lede="Every Bulldog the NE8 recognized this school year, season by season."
+    lede={`NE8 All-Conference awards received by Poland Seminary athletes in the ${schoolYear} school year.`}
     stats={[
-      { value: awards.length, label: "Total honors" },
-      { value: people, label: "Bulldogs honored" },
+      { value: awards.length, label: "Total awards" },
+      { value: people, label: "Athletes" },
       ...counts
         .filter(({ honor }) => honor.value === "player-of-the-year")
         .map(({ honor, count }) => ({
@@ -123,7 +123,6 @@ const shareImage = seasons.map(seasonShareImage).find(Boolean);
           >
             Players of the Year
           </h2>
-          <p class="mt-2 text-ink-600">The NE8's top honor in each sport.</p>
           <ul class={`mt-8 ${SPOTLIGHT_LIST}`}>
             {spotlight.map(({ award }) => (
               <li class={SPOTLIGHT_ITEM}>
@@ -179,7 +178,7 @@ const shareImage = seasons.map(seasonShareImage).find(Boolean);
                 </ul>
                 <span
                   class="text-2xl font-black text-ink-300 group-hover:text-primary-600"
-                  aria-label={`${row.awards.length} honors`}
+                  aria-label={`${row.awards.length} awards`}
                 >
                   {row.awards.length}
                 </span>

@@ -187,7 +187,10 @@ export interface User {
  */
 export interface Media {
   id: number;
-  alt: string;
+  /**
+   * Describe the image for screen readers. Filled in from the filename if left blank.
+   */
+  alt?: string | null;
   caption?: string | null;
   /**
    * Controls which Resources page(s) this shows on — tags are open, use whichever apply.
@@ -624,13 +627,17 @@ export interface AwardSeason {
    */
   slug?: string | null;
   /**
+   * The Media folder holding this season's finished card images. Once chosen, saving attaches each card's image automatically.
+   */
+  cardFolder?: (number | null) | FolderInterface;
+  /**
    * Optional message at the top of the season page. Leave blank for an automatic one ("28 Bulldogs earned NE8 honors this Winter…").
    */
   intro?: string | null;
   /**
    * Optional photo behind this season's tile and page header. Leave blank and the tile shows a fan of its first few cards.
    */
-  coverImage?: (number | null) | AwardPhoto;
+  coverImage?: (number | null) | Media;
   /**
    * Optional link to the full photo gallery (e.g. a Google Photos album).
    */
@@ -639,10 +646,6 @@ export interface AwardSeason {
    * Copy rows straight out of the awards spreadsheet — columns in the order Name, Grade, Award, Sport (a header row is fine). Each row becomes a card. "Boys"/"Girls" in the sport column is kept, so "Girls Swim and Dive" works.
    */
   pasteList?: string | null;
-  /**
-   * Upload a batch of finished card images named after the athletes (e.g. "aaron-vandervort.png") — each is attached to the matching card on save. An athlete with two awards this season needs the sport in each file name too: "angelo-rinaldi-golf.png", "angelo-rinaldi-basketball.png". Any image still listed here after saving didn't match: rename it, or attach it to its card by hand.
-   */
-  dropPhotos?: (number | AwardPhoto)[] | null;
   /**
    * The order here doesn't matter — the site sorts cards by honor, then sport, then last name.
    */
@@ -661,9 +664,9 @@ export interface AwardSeason {
          */
         honorTitle?: string | null;
         /**
-         * The finished card, designed in Photoshop: 1500 × 2100 px PNG — a trading card at 600 dpi — with anything outside the card shape left transparent. The site adds the tilt, glare and foil.
+         * The finished card, designed in Photoshop: 1500 × 2100 px PNG — a trading card at 600 dpi — with anything outside the card shape left transparent. The site adds the tilt, glare and foil. Usually attached by "Match card images" in the sidebar.
          */
-        photo?: (number | null) | AwardPhoto;
+        photo?: (number | null) | Media;
         id?: string | null;
       }[]
     | null;
@@ -1112,11 +1115,11 @@ export interface AwardSeasonsSelect<T extends boolean = true> {
   schoolYear?: T;
   season?: T;
   slug?: T;
+  cardFolder?: T;
   intro?: T;
   coverImage?: T;
   galleryUrl?: T;
   pasteList?: T;
-  dropPhotos?: T;
   awards?:
     | T
     | {

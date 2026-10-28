@@ -1,17 +1,12 @@
 import type { CollectionBeforeValidateHook, CollectionConfig } from 'payload'
 import { APIError } from 'payload'
+import { matchCardsHandler } from '../endpoints/matchCards.ts'
+import { matchCardImages } from '../lib/cardMatching.ts'
 import {
   afterChangeTriggerRebuild,
   afterDeleteTriggerRebuild,
 } from '../hooks/scheduleRebuildHooks.ts'
-import {
-  GRADES,
-  HONORS,
-  TEMPLATE_CSV,
-  parseAwardRows,
-  awardsForPhoto,
-  type SportOption,
-} from '../lib/awards.ts'
+import { GRADES, HONORS, TEMPLATE_CSV, parseAwardRows, type SportOption } from '../lib/awards.ts'
 
 // One NE8 All-Conference season — e.g. "2025-2026 Winter" — and every award
 // card in it. Publishes to polandathletics.com/ne8/awards/<school-year>/<season>,
@@ -23,9 +18,11 @@ import {
 // name), so the order of rows here doesn't matter.
 //
 // "Quick fill" is the fast path for that: paste rows out of the awards
-// spreadsheet to add cards in bulk, and/or drop in a batch of photos to have
-// each one attached to the athlete whose name is in its filename. Both are
-// consumed on save (see applyQuickFill) — they're inputs, not stored data.
+// spreadsheet to add cards in bulk (consumed on save — see applyQuickFill;
+// it's an input, not stored data). Card images are uploaded to the regular
+// Media library; pick the season's folder in the sidebar and each save
+// attaches any missing card images by filename, with a "Refresh mapping"
+// button to re-match everything (lib/cardMatching.ts).
 
 type AwardRow = {
   athleteName?: string
@@ -85,9 +82,9 @@ const applyQuickFill: CollectionBeforeValidateHook = async ({ data, originalDoc,
   }
 
   const pasted = typeof data.pasteList === 'string' ? data.pasteList.trim() : ''
-  const droppedPhotos: unknown[] = Array.isArray(data.dropPhotos) ? data.dropPhotos : []
-  if (!pasted && droppedPhotos.length === 0) return data
-
+  // Only work on the cards when this save carries them (an admin save always
+  // does); a partial API update without `awards` is left alone.
+  if (!pasted && !Array.isArray(data.awards)) return data
   const awards: AwardRow[] = [...((data.awards ?? originalDoc?.awards ?? []) as AwardRow[])]
 
   if (pasted) {
@@ -112,30 +109,25 @@ const applyQuickFill: CollectionBeforeValidateHook = async ({ data, originalDoc,
     data.pasteList = ''
   }
 
-  if (droppedPhotos.length > 0) {
-    // Sport names, so a two-award athlete's files can say which card is
-    // which ("angelo-rinaldi-golf.png") — see awardsForPhoto.
-    const sports = await req.payload.find({ collection: 'sports', limit: 100, depth: 0, req })
-    const sportNames = new Map(sports.docs.map((sport) => [String(sport.id), String(sport.name)]))
-    const candidates = awards.map((award) => ({
-      athleteName: award.athleteName ?? '',
-      sportName: sportNames.get(String(idOf(award.sport))) ?? '',
-      honor: award.honor,
-    }))
-
-    const unmatched: unknown[] = []
-    for (const dropped of droppedPhotos) {
-      const id = idOf(dropped)
-      if (id === undefined) continue
-      const photo = await req.payload.findByID({ collection: 'award-photos', id, depth: 0, req })
-      const matches = awardsForPhoto(photo?.filename ?? '', candidates)
-      if (matches.length === 0) unmatched.push(id)
-      for (const index of matches) awards[index].photo = id
-    }
-    // Whatever's left here after saving didn't match anyone (or named a
-    // two-award athlete without saying which award) — the field's
-    // description tells the editor to rename it or attach it by hand.
-    data.dropPhotos = unmatched
+  // With a card images folder chosen, every save fills in any card still
+  // missing its image from that folder (never replacing one already there —
+  // the sidebar's "Refresh mapping" button re-matches everything).
+  const folderId = idOf('cardFolder' in data ? data.cardFolder : originalDoc?.cardFolder)
+  if (
+    folderId !== undefined &&
+    schoolYear &&
+    season &&
+    awards.some((award) => !idOf(award.photo))
+  ) {
+    const matched = await matchCardImages(req, {
+      schoolYear: String(schoolYear),
+      season: String(season),
+      awards,
+      folderId,
+      onlyMissing: true,
+    })
+    data.awards = matched.awards
+    return data
   }
 
   data.awards = awards
@@ -182,6 +174,8 @@ export const AwardSeasons: CollectionConfig = {
           },
         }),
     },
+    // Attaches card images from Media — see endpoints/matchCards.ts.
+    { path: '/:id/match-cards', method: 'post', handler: matchCardsHandler },
   ],
   hooks: {
     beforeValidate: [applyQuickFill],
@@ -241,6 +235,29 @@ export const AwardSeasons: CollectionConfig = {
       },
     },
     {
+      name: 'cardFolder',
+      type: 'relationship',
+      relationTo: 'payload-folders',
+      label: 'Card images folder',
+      admin: {
+        position: 'sidebar',
+        description:
+          "The Media folder holding this season's finished card images. Once chosen, saving attaches each card's image automatically.",
+      },
+    },
+    {
+      // Display-only (no stored value): the sidebar's "Refresh mapping"
+      // button — see components/AwardMatchPanel.tsx.
+      name: 'cardMatching',
+      type: 'ui',
+      admin: {
+        position: 'sidebar',
+        components: {
+          Field: './components/AwardMatchPanel.tsx#AwardMatchPanel',
+        },
+      },
+    },
+    {
       name: 'intro',
       type: 'textarea',
       admin: {
@@ -254,7 +271,7 @@ export const AwardSeasons: CollectionConfig = {
         {
           name: 'coverImage',
           type: 'upload',
-          relationTo: 'award-photos',
+          relationTo: 'media',
           admin: {
             width: '50%',
             description:
@@ -277,7 +294,7 @@ export const AwardSeasons: CollectionConfig = {
       admin: {
         initCollapsed: false,
         description:
-          'Both of these are used up when you save — the cards they create show up in Awards below.',
+          'Used up when you save — the cards it creates show up in Awards below. Then upload the finished card images to Media and click "Match card images" in the sidebar.',
       },
       fields: [
         {
@@ -292,17 +309,6 @@ export const AwardSeasons: CollectionConfig = {
             components: {
               afterInput: ['./components/AwardPasteHelp.tsx#AwardPasteHelp'],
             },
-          },
-        },
-        {
-          name: 'dropPhotos',
-          type: 'upload',
-          relationTo: 'award-photos',
-          hasMany: true,
-          label: 'Drop in card images',
-          admin: {
-            description:
-              'Upload a batch of finished card images named after the athletes (e.g. "aaron-vandervort.png") — each is attached to the matching card on save. An athlete with two awards this season needs the sport in each file name too: "angelo-rinaldi-golf.png", "angelo-rinaldi-basketball.png". Any image still listed here after saving didn\'t match: rename it, or attach it to its card by hand.',
           },
         },
       ],
@@ -395,11 +401,11 @@ export const AwardSeasons: CollectionConfig = {
           // card (apps/web/src/components/awards/AwardCard.astro).
           name: 'photo',
           type: 'upload',
-          relationTo: 'award-photos',
+          relationTo: 'media',
           label: 'Card image',
           admin: {
             description:
-              'The finished card, designed in Photoshop: 1500 × 2100 px PNG — a trading card at 600 dpi — with anything outside the card shape left transparent. The site adds the tilt, glare and foil.',
+              'The finished card, designed in Photoshop: 1500 × 2100 px PNG — a trading card at 600 dpi — with anything outside the card shape left transparent. The site adds the tilt, glare and foil. Usually attached by "Match card images" in the sidebar.',
           },
         },
       ],
