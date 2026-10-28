@@ -9,15 +9,9 @@ import {
   HONORS,
   TEMPLATE_CSV,
   parseAwardRows,
-  photoMatchesAthlete,
+  awardsForPhoto,
   type SportOption,
 } from '../lib/awards.ts'
-import {
-  downloadInstagramExport,
-  instagramExportStatus,
-  instagramPreview,
-  startInstagramExport,
-} from '../endpoints/instagramExport.ts'
 
 // One NE8 All-Conference season — e.g. "2025-2026 Winter" — and every award
 // card in it. Publishes to polandathletics.com/ne8/awards/<school-year>/<season>,
@@ -119,19 +113,27 @@ const applyQuickFill: CollectionBeforeValidateHook = async ({ data, originalDoc,
   }
 
   if (droppedPhotos.length > 0) {
+    // Sport names, so a two-award athlete's files can say which card is
+    // which ("angelo-rinaldi-golf.png") — see awardsForPhoto.
+    const sports = await req.payload.find({ collection: 'sports', limit: 100, depth: 0, req })
+    const sportNames = new Map(sports.docs.map((sport) => [String(sport.id), String(sport.name)]))
+    const candidates = awards.map((award) => ({
+      athleteName: award.athleteName ?? '',
+      sportName: sportNames.get(String(idOf(award.sport))) ?? '',
+      honor: award.honor,
+    }))
+
     const unmatched: unknown[] = []
     for (const dropped of droppedPhotos) {
       const id = idOf(dropped)
       if (id === undefined) continue
       const photo = await req.payload.findByID({ collection: 'award-photos', id, depth: 0, req })
-      const filename = photo?.filename ?? ''
-      const matches = awards.filter(
-        (award) => award.athleteName && photoMatchesAthlete(filename, award.athleteName),
-      )
+      const matches = awardsForPhoto(photo?.filename ?? '', candidates)
       if (matches.length === 0) unmatched.push(id)
-      for (const award of matches) award.photo = id
+      for (const index of matches) awards[index].photo = id
     }
-    // Whatever's left here after saving didn't match anyone — the field's
+    // Whatever's left here after saving didn't match anyone (or named a
+    // two-award athlete without saying which award) — the field's
     // description tells the editor to rename it or attach it by hand.
     data.dropPhotos = unmatched
   }
@@ -154,7 +156,7 @@ export const AwardSeasons: CollectionConfig = {
     defaultColumns: ['title', '_status', 'updatedAt'],
     group: 'NE8 Awards',
     description:
-      'One entry per season (e.g. 2025-2026 Winter) holding all of its NE8 All-Conference award cards. Use "Quick fill" to paste the list from the awards spreadsheet and drop in all the photos at once. "Save Draft" while you build it, "Publish" to put it on the site, and "Unpublish" (in the ⋮ menu) to take it back down.',
+      'One entry per season (e.g. 2025-2026 Winter) holding all of its NE8 All-Conference award cards. Use "Quick fill" to paste the list from the awards spreadsheet and drop in all the finished card images at once. "Save Draft" while you build it, "Publish" to put it on the site, and "Unpublish" (in the ⋮ menu) to take it back down.',
   },
   defaultSort: '-slug',
   // Same Publish / Unpublish workflow as Articles and Special Pages. A
@@ -180,11 +182,6 @@ export const AwardSeasons: CollectionConfig = {
           },
         }),
     },
-    // Instagram graphics for one season — see endpoints/instagramExport.ts.
-    { path: '/:id/instagram/exports', method: 'post', handler: startInstagramExport },
-    { path: '/instagram/exports/:jobId', method: 'get', handler: instagramExportStatus },
-    { path: '/instagram/exports/:jobId/download', method: 'get', handler: downloadInstagramExport },
-    { path: '/:id/instagram', method: 'get', handler: instagramPreview },
   ],
   hooks: {
     beforeValidate: [applyQuickFill],
@@ -244,18 +241,6 @@ export const AwardSeasons: CollectionConfig = {
       },
     },
     {
-      // Display-only (no stored value): the sidebar's Instagram download
-      // panel — see components/AwardExportPanel.tsx.
-      name: 'instagramGraphics',
-      type: 'ui',
-      admin: {
-        position: 'sidebar',
-        components: {
-          Field: './components/AwardExportPanel.tsx#AwardExportPanel',
-        },
-      },
-    },
-    {
       name: 'intro',
       type: 'textarea',
       admin: {
@@ -273,7 +258,7 @@ export const AwardSeasons: CollectionConfig = {
           admin: {
             width: '50%',
             description:
-              "Shown on this season's tile and link previews. Leave blank to use a Player of the Year's photo.",
+              "Optional photo behind this season's tile and page header. Leave blank and the tile shows a fan of its first few cards.",
           },
         },
         {
@@ -314,10 +299,10 @@ export const AwardSeasons: CollectionConfig = {
           type: 'upload',
           relationTo: 'award-photos',
           hasMany: true,
-          label: 'Drop in photos',
+          label: 'Drop in card images',
           admin: {
             description:
-              'Upload a batch of photos named after the athletes (e.g. "aaron-vandervort.jpg") — each is attached to the matching card on save. Any photo still listed here after saving didn\'t match a name: rename it, or attach it to its card by hand.',
+              'Upload a batch of finished card images named after the athletes (e.g. "aaron-vandervort.png") — each is attached to the matching card on save. An athlete with two awards this season needs the sport in each file name too: "angelo-rinaldi-golf.png", "angelo-rinaldi-basketball.png". Any image still listed here after saving didn\'t match: rename it, or attach it to its card by hand.',
           },
         },
       ],
@@ -405,9 +390,17 @@ export const AwardSeasons: CollectionConfig = {
           ],
         },
         {
+          // Stored as `photo` (the field's original name) — it holds the
+          // finished card artwork, which the site turns into a reflective
+          // card (apps/web/src/components/awards/AwardCard.astro).
           name: 'photo',
           type: 'upload',
           relationTo: 'award-photos',
+          label: 'Card image',
+          admin: {
+            description:
+              'The finished card, designed in Photoshop: 1500 × 2100 px PNG — a trading card at 600 dpi — with anything outside the card shape left transparent. The site adds the tilt, glare and foil.',
+          },
         },
       ],
     },

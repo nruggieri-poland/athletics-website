@@ -160,7 +160,7 @@ export function initAwardCards(scope = document) {
         const card = cards.get(entry.target);
         // Wait for the photo: catching the light over a still-empty card
         // flashes the bare foil pattern instead of the athlete.
-        const photo = entry.target.querySelector(".profile-card__photo");
+        const photo = entry.target.querySelector(".award-card__art");
         if (photo && !photo.complete) {
           photo.addEventListener("load", () => card?.playIntro(), { once: true });
         } else {

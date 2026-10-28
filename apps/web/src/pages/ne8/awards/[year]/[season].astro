@@ -7,19 +7,23 @@
 import BaseLayout from "../../../../layouts/BaseLayout.astro";
 import AwardsHero from "../../../../components/awards/AwardsHero.astro";
 import AwardCard from "../../../../components/awards/AwardCard.astro";
-import type { AwardSeason } from "../../../../lib/awards";
+import { isPremium } from "@athletics/award-card";
+import type { AwardSeason, HonorValue } from "../../../../lib/awards";
 import {
   GRADES,
   HONORS,
+  CARD_GRID,
   SEASON_ORDER,
+  SPOTLIGHT_ITEM,
+  SPOTLIGHT_LIST,
   awardSportKey,
   awardSportLabel,
   getAwardSeasons,
   honorCounts,
   honoreeCount,
-  photoUrl,
   schoolYearHref,
   seasonCover,
+  seasonShareImage,
   seasonHref,
   seasonName,
   sortAwards,
@@ -81,14 +85,15 @@ const sportOptions = [
 ];
 const gradeOptions = GRADES.filter((grade) => awards.some((award) => award.grade === grade));
 const cover = seasonCover(season);
-const featured = (value: string) => value === "player-of-the-year" || value === "coach-of-the-year";
+const shareImage = seasonShareImage(season);
+const featured = (value: HonorValue) => isPremium(value);
 ---
 
 <BaseLayout
   title={`${name} NE8 All-Conference`}
   description={intro}
-  image={cover ? photoUrl(cover) : undefined}
-  imageAlt={cover ? `${name} NE8 All-Conference honors` : undefined}
+  image={shareImage}
+  imageAlt={shareImage ? `${name} NE8 All-Conference honors` : undefined}
 >
   <AwardsHero
     crumbs={[
@@ -281,21 +286,16 @@ const featured = (value: string) => value === "player-of-the-year" || value === 
                   {sectionAwards.length}
                 </span>
               </div>
-              <ul
-                class={
-                  featured(honor.value)
-                    ? "grid gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8"
-                    : "grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-                }
-              >
+              <ul class={featured(honor.value) ? SPOTLIGHT_LIST : CARD_GRID}>
                 {sectionAwards.map((award) => (
                   <li
+                    class={featured(honor.value) ? SPOTLIGHT_ITEM : undefined}
                     data-award-item
                     data-honor={award.honor}
                     data-sport={awardSportKey(award)}
                     data-grade={award.grade ?? ""}
                   >
-                    <AwardCard award={award} season={season} />
+                    <AwardCard award={award} />
                   </li>
                 ))}
               </ul>

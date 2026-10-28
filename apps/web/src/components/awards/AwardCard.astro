@@ -1,55 +1,73 @@
 ---
-// One NE8 award as a holographic trading card — a port of React Bits'
-// <ProfileCard /> (tilt, cursor glare, holo foil showing through a
-// pattern), without React. The design itself (markup, card.css, and the
-// tilt engine) lives in packages/award-card so the CMS's Instagram export
-// draws exactly the same card; this component maps an Award onto it.
+// One NE8 award as a reflective trading card: the finished card artwork the
+// editor designed and uploaded for this athlete (1500×2100 PNG), with tilt,
+// glare and holographic foil laid over it — see packages/award-card. The
+// card's sport sits just below it, linking to the team.
 //
-// Mapping from ProfileCard: avatarUrl → the athlete's photo (framed by its
-// CMS focal point), name/title → athlete and honor, handle/status → sport
-// and grade, contact button → a link to the sport's page, backdropColor →
-// the honor's color, holo → stronger for Players/Coaches of the Year, and
-// iconUrl → the NE8 pattern the foil shows through.
+// The artwork is copied from the CMS onto this site at build time (Astro's
+// getImage, as a 900px-wide WebP — sharp at 2× for any card size on the
+// page). Not just for speed: the foil and glare are CSS-masked to the
+// artwork's outline, and browsers only apply masks from the page's own
+// origin, which the CMS isn't.
+import { getImage, inferRemoteSize } from "astro:assets";
 import "@athletics/award-card/card.css";
 import { cardHtml } from "@athletics/award-card";
-import type { Award, AwardSeason } from "../../lib/awards";
-import {
-  awardSportLabel,
-  honorLabel,
-  photoPosition,
-  photoUrl,
-  seasonName,
-  seasonYear,
-} from "../../lib/awards";
+import type { Award } from "../../lib/awards";
+import { awardSportLabel, honorLabel, originalUrl } from "../../lib/awards";
 
 interface Props {
   award: Award;
-  season: Pick<AwardSeason, "schoolYear" | "season">;
   // Skip the "catch the light" entrance — for cards inside a carousel or
   // anywhere a dozen of them would all flash at once.
   intro?: boolean;
+  // The sport link under the card; off where cards are small teasers.
+  caption?: boolean;
   class?: string;
 }
 
-const { award, season, intro = true, class: className = "" } = Astro.props;
+const { award, intro = true, caption = true, class: className = "" } = Astro.props;
+const sportLabel = awardSportLabel(award);
+
+const artworkUrl = originalUrl(award.photo);
+let artwork: { src: string; width: number; height: number } | undefined;
+if (artworkUrl) {
+  try {
+    const size = await inferRemoteSize(artworkUrl);
+    const width = Math.min(900, size.width);
+    const height = Math.round((width * size.height) / size.width);
+    const image = await getImage({ src: artworkUrl, width, height, format: "webp" });
+    artwork = { src: image.src, width, height };
+  } catch {
+    // Artwork missing from the CMS's disk — fall back to the placeholder.
+  }
+}
 
 const html = cardHtml({
+  imageSrc: artwork?.src,
+  width: artwork?.width,
+  height: artwork?.height,
   name: award.athleteName,
+  award: honorLabel(award),
   honor: award.honor,
-  honorText: honorLabel(award),
-  sportLabel: awardSportLabel(award),
-  statusText: award.honor === "coach-of-the-year" ? "Head Coach" : award.grade,
-  year: seasonYear(season),
-  seasonLabel: seasonName(season),
-  photoSrc: photoUrl(award.photo) || undefined,
-  photoPosition: photoPosition(award.photo),
-  teamHref: award.sport?.slug ? `/${award.sport.slug}` : undefined,
   intro,
+  lifted: true,
   className,
 });
 ---
 
-<Fragment set:html={html} />
+<div class="flex flex-col items-center gap-3">
+  <Fragment set:html={html} />
+  {
+    caption && sportLabel && (
+      <a
+        href={award.sport?.slug ? `/${award.sport.slug}` : undefined}
+        class="text-sm font-semibold text-ink-600 hover:text-primary-600 hover:underline"
+      >
+        {sportLabel}
+      </a>
+    )
+  }
+</div>
 
 <script>
   import { initAwardCards } from "@athletics/award-card/engine";

@@ -121,6 +121,12 @@ export function schoolYearHref(schoolYear: string): string {
   return `/ne8/awards/${schoolYear}`;
 }
 
+// A card's full-size original upload — the finished artwork, for the
+// website to optimize itself (see components/awards/AwardCard.astro).
+export function originalUrl(photo?: AwardPhoto): string {
+  return photo?.url ? `${PAYLOAD_URL}${photo.url}` : "";
+}
+
 export function photoUrl(photo?: AwardPhoto, size = "card"): string {
   if (!photo?.url) return "";
   const sized = photo.sizes?.[size]?.url;
@@ -134,12 +140,28 @@ export function photoPosition(photo?: AwardPhoto): string {
   return `${photo.focalX}% ${photo.focalY}%`;
 }
 
-// The image a season is represented by on tiles and link previews: its
-// chosen cover, else a Player of the Year's photo, else any card's photo.
+// A season's chosen cover photo (the CMS's "Cover Image"), for the hero and
+// tile backgrounds. No fallback to a card: cards are finished artwork with
+// their own text and frame, which don't work cropped into a background.
 export function seasonCover(season: AwardSeason): AwardPhoto | undefined {
-  if (season.coverImage?.url) return season.coverImage;
-  const sorted = sortAwards(season.awards);
-  return sorted.find((award) => award.photo?.url)?.photo;
+  return season.coverImage?.url ? season.coverImage : undefined;
+}
+
+// What a season's link preview shows: its cover, else its first card's
+// artwork (in the site's order — a Player of the Year when there is one).
+export function seasonShareImage(season: AwardSeason): string | undefined {
+  const cover = seasonCover(season);
+  if (cover) return photoUrl(cover);
+  const card = sortAwards(season.awards).find((award) => award.photo?.url)?.photo;
+  return card ? originalUrl(card) : undefined;
+}
+
+// Cards with artwork, in the site's order — for tile previews.
+export function seasonCardArt(season: AwardSeason, count = 3): AwardPhoto[] {
+  return sortAwards(season.awards)
+    .map((award) => award.photo)
+    .filter((photo): photo is AwardPhoto => Boolean(photo?.url))
+    .slice(0, count);
 }
 
 // Every published season, newest school year first and Fall → Spring
@@ -199,6 +221,14 @@ export function latestSeason(seasons: AwardSeason[]): AwardSeason | undefined {
   const [newestYear] = groupBySchoolYear(seasons);
   return newestYear?.seasons[newestYear.seasons.length - 1];
 }
+
+// Layout for Player/Coach of the Year cards wherever they're listed: centered,
+// at most two to a row and ~448px wide (vs ~270px for the other honors'
+// four-across grid) — the top honors are bigger as well as more premium
+// (see packages/award-card's premium card).
+export const SPOTLIGHT_LIST = "flex flex-wrap justify-center gap-8 lg:gap-12";
+export const SPOTLIGHT_ITEM = "w-full max-w-[28rem] sm:w-[calc(50%-1rem)] lg:w-[28rem]";
+export const CARD_GRID = "grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4";
 
 export function sportAwardsHref(sportSlug: string): string {
   return `/${sportSlug}/all-conference`;

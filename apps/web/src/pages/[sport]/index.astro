@@ -155,7 +155,7 @@ for (const game of seasonGames) {
         </div>
         <ul class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {latestAwards.awards.slice(0, 3).map((award) => (
-            <li><AwardCard award={award} season={latestAwards.season} /></li>
+            <li><AwardCard award={award} /></li>
           ))}
         </ul>
         {latestAwards.awards.length > 3 && (

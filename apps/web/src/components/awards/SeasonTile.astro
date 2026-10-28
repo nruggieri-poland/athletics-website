@@ -1,6 +1,7 @@
 ---
 // A season's doorway from the awards hub and school-year pages: cover
-// photo, season name, and its honor breakdown. With no `season` (not
+// photo (or, without one, a fanned hand of its first few cards), season
+// name, and its honor breakdown. With no `season` (not
 // announced yet, or not published), renders a quiet placeholder in the
 // same footprint so a school year's Fall/Winter/Spring row stays aligned.
 import type { AwardSeason } from "../../lib/awards";
@@ -10,6 +11,7 @@ import {
   honorMeta,
   photoPosition,
   photoUrl,
+  seasonCardArt,
   seasonCover,
   seasonHref,
   seasonYear,
@@ -23,6 +25,13 @@ interface Props {
 
 const { schoolYear, seasonType, season } = Astro.props;
 const cover = season ? seasonCover(season) : undefined;
+const cards = season && !cover ? seasonCardArt(season) : [];
+// Fanned like a hand of cards: outer two tilted out, middle one raised.
+const fan = [
+  "rotate(-12deg) translate(-38%, 6%)",
+  "rotate(0deg) translateY(-4%)",
+  "rotate(12deg) translate(38%, 6%)",
+];
 const counts = season ? honorCounts(season.awards) : [];
 const year = seasonYear({ schoolYear, season: seasonType });
 ---
@@ -44,7 +53,21 @@ const year = seasonYear({ schoolYear, season: seasonType });
           style={`object-position: ${photoPosition(cover)}`}
         />
       ) : (
-        <div class="absolute inset-0 bg-gradient-to-br from-primary-600 to-primary-900" />
+        <div class="absolute inset-0 bg-gradient-to-br from-primary-600 to-primary-900">
+          {cards.length > 0 && (
+            <div class="absolute inset-x-0 top-[12%] h-full transition-[scale] duration-500 ease-out group-hover:scale-105 motion-reduce:transition-none">
+              {cards.map((card, i) => (
+                <img
+                  src={photoUrl(card, "thumbnail")}
+                  alt=""
+                  loading="lazy"
+                  class="absolute left-[29%] w-[42%] drop-shadow-xl"
+                  style={`transform: ${cards.length === 1 ? "none" : fan[cards.length === 2 ? i * 2 : i]}; z-index: ${i === 1 ? 2 : 1}`}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       )}
       <div class="absolute inset-0 bg-gradient-to-b from-black/30 via-black/10 to-black/85" />
 

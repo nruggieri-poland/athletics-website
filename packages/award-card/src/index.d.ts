@@ -13,36 +13,19 @@ export interface HonorMeta {
 
 export const HONORS: HonorMeta[];
 export function honorMeta(value: HonorValue): HonorMeta;
+export function isPremium(value: HonorValue): boolean;
 
 export interface CardProps {
+  imageSrc?: string;
+  width?: number;
+  height?: number;
   name: string;
+  award: string;
   honor: HonorValue;
-  honorText?: string;
-  sportLabel: string;
-  statusText?: string;
-  year: string;
-  seasonLabel: string;
-  photoSrc?: string;
-  photoPosition?: string;
-  teamHref?: string;
   intro?: boolean;
   lazy?: boolean;
+  lifted?: boolean;
   className?: string;
-  style?: string;
 }
 
 export function cardHtml(props: CardProps): string;
-export function poseStyle(pose?: { x?: number; y?: number; light?: number; tilt?: number; parallax?: number }): string;
-
-export type PosterFormat = "feed" | "story";
-export const POSTER_FORMATS: Record<PosterFormat, { width: number; height: number; cardZoom: number }>;
-
-export function posterHtml(options: {
-  format: PosterFormat;
-  card: CardProps;
-  cardCss: string;
-  fontCss?: string;
-  logoSrc?: string;
-  siteName?: string;
-  siteUrl?: string;
-}): string;

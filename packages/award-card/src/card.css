@@ -1,4 +1,11 @@
-.profile-card {
+/* The NE8 award card's reflections, laid over the editor's own finished
+   artwork: a holographic foil (a broad sweeping band of light plus fine
+   prism rays) that slides as the card tilts, and a glare that follows the
+   light. Both are masked to the artwork's alpha (--card-image), so only the
+   card itself shines, whatever its outline. The motion comes from the CSS
+   variables engine.js writes as the pointer moves. */
+
+.award-card {
   --pc-light-x: 50%;
   --pc-light-y: 50%;
   --pc-pointer-x: 50%;
@@ -12,426 +19,357 @@
   --pc-shift-y: 0px;
   --pc-tilt: 0;
   --pc-active: 0;
-  --pc-radius: 16px;
-  --pc-parallax: 8px;
-  --pc-pattern-size: 34% auto;
-
-  /* ProfileCard's dark theme + dark foil — fixed regardless of the site
-     theme, since these are trading cards, not page chrome. */
-  --pc-frame: #1d1b24;
-  --pc-frame-edge: rgba(255, 255, 255, 0.08);
-  --pc-frame-highlight: rgba(255, 255, 255, 0.07);
-  --pc-frame-shadow: 0 22px 44px -20px rgba(0, 0, 0, 0.8), 0 6px 16px -8px rgba(0, 0, 0, 0.5);
-  --pc-tile: linear-gradient(180deg, #3a3644 0%, #27242f 100%);
-  --pc-tile-edge: rgba(255, 255, 255, 0.07);
-  --pc-tile-highlight: rgba(255, 255, 255, 0.12);
-  --pc-tile-shadow: 0 4px 10px -4px rgba(0, 0, 0, 0.7);
-  --pc-ink: #f4f4f5;
-  --pc-muted: rgba(244, 244, 245, 0.6);
-  --pc-hover: brightness(1.12);
-  --pc-press: brightness(0.8);
-  --pc-shade: rgba(0, 0, 0, 0.4);
-  --pc-blend: color-dodge;
-  --pc-holo-filter: hue-rotate(0deg);
-  --pc-sheen: rgba(255, 255, 255, 0.16);
-  --pc-holo-gain: 1.25;
-  --pc-holo-detail: 1;
+  --pc-holo: 0.6;
 
   position: relative;
   width: 100%;
-  perspective: 1000px;
+  /* The recommended artwork size's shape (1500 × 2100, a real trading
+     card); cardHtml() overrides it with each artwork's actual proportions. */
+  aspect-ratio: 5 / 7;
+  perspective: 1200px;
   touch-action: pan-y;
   -webkit-tap-highlight-color: transparent;
 }
 
-.profile-card__body {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 10px;
-  border-radius: calc(var(--pc-radius) + 10px);
-  background: var(--pc-frame);
-  box-shadow: var(--pc-frame-shadow);
+.award-card__body {
+  position: absolute;
+  inset: 0;
   transform: rotateX(var(--pc-rotate-x)) rotateY(var(--pc-rotate-y));
   will-change: transform;
 }
 
-.profile-card__tile {
-  position: relative;
-  aspect-ratio: 4 / 5;
-  border-radius: var(--pc-radius);
-  background: var(--pc-backdrop);
-  box-shadow: var(--pc-tile-shadow);
-  overflow: hidden;
-  isolation: isolate;
-  container-type: inline-size;
+/* A soft shadow that follows the artwork's outline (not a box). */
+.award-card--lifted .award-card__body {
+  filter: drop-shadow(0 14px 18px rgba(0, 10, 30, 0.35)) drop-shadow(0 3px 5px rgba(0, 10, 30, 0.25));
 }
 
-.profile-card__sheen,
-.profile-card__holo,
-.profile-card__scrim,
-.profile-card__tile-rim,
-.profile-card__glare,
-.profile-card__shade,
-.profile-card__rim {
+.award-card__art {
   position: absolute;
   inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-}
-
-.profile-card__sheen {
-  background: radial-gradient(
-    farthest-corner circle at calc(var(--pc-light-x) - 10px) calc(var(--pc-light-y) - 10px),
-    var(--pc-sheen) 0%,
-    transparent 55%
-  );
-  opacity: calc(var(--pc-holo) * var(--pc-active));
-}
-
-.profile-card__holo {
-  --pc-spectrum: repeating-linear-gradient(
-    0deg,
-    hsl(2, 100%, 73%) 5%,
-    hsl(53, 100%, 69%) 10%,
-    hsl(93, 100%, 69%) 15%,
-    hsl(176, 100%, 76%) 20%,
-    hsl(228, 100%, 74%) 25%,
-    hsl(260, 100%, 76%) 30%,
-    hsl(2, 100%, 73%) 35%
-  );
-  --pc-bars: repeating-linear-gradient(
-    -45deg,
-    #0e152e 0%,
-    hsl(180, 10%, 60%) 3.8%,
-    hsl(180, 29%, 66%) 4.5%,
-    hsl(180, 10%, 60%) 5.2%,
-    #0e152e 10%,
-    #0e152e 12%
-  );
-  --pc-falloff: radial-gradient(
-    farthest-corner circle at var(--pc-pointer-x) var(--pc-pointer-y),
-    hsla(0, 0%, 0%, 0.1) 12%,
-    hsla(0, 0%, 0%, 0.15) 20%,
-    hsla(0, 0%, 0%, 0.25) 120%
-  );
-  background-image: var(--pc-spectrum), var(--pc-bars), var(--pc-falloff);
-  background-position:
-    0 var(--pc-band-y),
-    var(--pc-band-x) var(--pc-band-y),
-    center;
-  background-size:
-    500% 500%,
-    300% 300%,
-    200% 200%;
-  background-blend-mode: color, hard-light;
-  mix-blend-mode: var(--pc-blend);
-  filter: brightness(calc(0.66 + 0.19 * var(--pc-active)))
-    contrast(calc(1.33 + 0.17 * var(--pc-active))) saturate(calc(0.33 + 0.17 * var(--pc-active)))
-    var(--pc-holo-filter);
-  opacity: calc(var(--pc-holo) * var(--pc-holo-gain) * (0.5 + 0.5 * var(--pc-active)));
-  -webkit-mask-image: var(--pc-pattern);
-  -webkit-mask-size: var(--pc-pattern-size);
-  -webkit-mask-position: calc(50% - var(--pc-shift-x) * 1.5) calc(65% - var(--pc-shift-y) * 1.5);
-  -webkit-mask-repeat: repeat;
-  mask-image: var(--pc-pattern);
-  mask-size: var(--pc-pattern-size);
-  mask-position: calc(50% - var(--pc-shift-x) * 1.5) calc(65% - var(--pc-shift-y) * 1.5);
-  mask-repeat: repeat;
-}
-
-/* Over a photo the foil is invisible at rest and only shimmers through
-   the NE8 pattern where the light catches it, like a real holo card.
-   Without one, it sits on the bare backdrop — kept, but toned down so
-   the initials stay the focus. */
-.profile-card--photo .profile-card__holo {
-  opacity: calc(var(--pc-holo) * 0.75 * var(--pc-active));
-}
-.profile-card:not(.profile-card--photo) .profile-card__holo {
-  opacity: calc(var(--pc-holo) * (0.18 + 0.4 * var(--pc-active)));
-}
-
-.profile-card__holo-glow,
-.profile-card__holo-shift {
-  position: absolute;
-  inset: 0;
-  opacity: calc(var(--pc-active) * var(--pc-holo-detail));
-}
-
-.profile-card__holo-glow {
-  background-image:
-    linear-gradient(
-      45deg,
-      hsl(176, 100%, 76%),
-      hsl(228, 100%, 74%),
-      hsl(260, 100%, 76%),
-      hsl(2, 100%, 73%),
-      hsl(53, 100%, 69%),
-      hsl(93, 100%, 69%)
-    ),
-    radial-gradient(
-      circle at var(--pc-pointer-x) var(--pc-pointer-y),
-      hsl(0, 0%, 70%) 0%,
-      hsla(0, 0%, 30%, 0.2) 90%
-    ),
-    var(--pc-grain);
-  background-size:
-    250% 250%,
-    100% 100%,
-    220px 220px;
-  background-position:
-    var(--pc-pointer-x) var(--pc-pointer-y),
-    center,
-    0 0;
-  background-blend-mode: color-dodge;
-  filter: brightness(calc(2 - var(--pc-reach))) contrast(calc(var(--pc-reach) + 2))
-    saturate(calc(0.5 + var(--pc-reach)));
-  mix-blend-mode: luminosity;
-}
-
-.profile-card__holo-shift {
-  background-image: var(--pc-spectrum), var(--pc-bars), var(--pc-falloff);
-  background-position:
-    0 var(--pc-band-y),
-    calc(var(--pc-band-x) * 0.4) calc(var(--pc-band-y) * 0.5),
-    center;
-  background-size:
-    200% 300%,
-    700% 700%,
-    100% 100%;
-  background-blend-mode: color, hard-light;
-  mix-blend-mode: difference;
-  filter: brightness(0.8) contrast(1.5);
-}
-
-.profile-card__photo {
-  position: absolute;
-  inset: calc(var(--pc-parallax) * -1);
-  width: calc(100% + var(--pc-parallax) * 2);
-  height: calc(100% + var(--pc-parallax) * 2);
-  object-fit: cover;
-  object-position: var(--pc-photo-position);
-  transform: translate3d(var(--pc-shift-x), var(--pc-shift-y), 0);
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
   pointer-events: none;
   user-select: none;
   -webkit-user-select: none;
 }
 
-/* No photo yet — the athlete's initials, big and quiet, so a season can
-   go live before every headshot is in without leaving holes in the grid. */
-.profile-card__monogram {
+.award-card__sheen,
+.award-card__foil,
+.award-card__glare,
+.award-card__shimmer,
+.award-card__sparkle {
   position: absolute;
   inset: 0;
-  display: grid;
-  place-items: center;
-  padding-bottom: 22%;
-  font-size: clamp(3.5rem, 30cqi, 6rem);
-  font-weight: 900;
-  letter-spacing: -0.04em;
-  color: rgba(255, 255, 255, 0.16);
-  transform: translate3d(var(--pc-shift-x), var(--pc-shift-y), 0);
+  pointer-events: none;
+  -webkit-mask: var(--card-image) center / contain no-repeat;
+  mask: var(--card-image) center / contain no-repeat;
 }
 
-.profile-card__year {
-  position: absolute;
-  top: 14px;
-  left: 16px;
-  display: flex;
-  flex-direction: column;
-  font-size: 26px;
-  font-weight: 900;
-  line-height: 0.88;
-  letter-spacing: -0.03em;
-  color: #ffffff;
-  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
+/* Holographic foil: silver-to-blue light, so it reads as foil on any design.
+   This default is First Team's "refractor" — a sweeping band plus prism rays
+   fanning from the light. Second Team and Honorable Mention swap the rays for
+   their own patterns (below) at the same strength, so each honor looks
+   different without one looking more important than another. */
+.award-card__foil {
+  background-image:
+    linear-gradient(
+      115deg,
+      transparent 28%,
+      rgba(219, 227, 247, 0.55) 42%,
+      rgba(255, 255, 255, 0.85) 46%,
+      rgba(183, 199, 239, 0.55) 50%,
+      transparent 64%
+    ),
+    repeating-conic-gradient(
+      from 0deg at var(--pc-pointer-x) var(--pc-pointer-y),
+      rgba(219, 227, 247, 0.4) 0deg 2deg,
+      transparent 2deg 7deg,
+      rgba(139, 163, 226, 0.32) 7deg 8.5deg,
+      transparent 8.5deg 14deg
+    ),
+    linear-gradient(
+      115deg,
+      rgba(139, 163, 226, 0.5) 0%,
+      rgba(238, 242, 251, 0.6) 25%,
+      rgba(88, 119, 205, 0.45) 50%,
+      rgba(219, 227, 247, 0.55) 75%,
+      rgba(44, 79, 176, 0.45) 100%
+    );
+  background-size:
+    250% 250%,
+    100% 100%,
+    300% 300%;
+  background-position:
+    calc(100% - var(--pc-band-x) * 1.7) var(--pc-band-y),
+    0 0,
+    var(--pc-band-x) var(--pc-band-y);
+  mix-blend-mode: color-dodge;
+  opacity: calc(var(--pc-holo) * (0.1 + 0.5 * var(--pc-active)));
 }
 
-.profile-card__badge {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  padding: 3px 8px;
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.35);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  color: #ffffff;
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
-}
-
-.profile-card__scrim {
-  background: linear-gradient(
-    to top,
-    rgba(0, 0, 0, 0.78) 0%,
-    rgba(0, 0, 0, 0.7) 8%,
-    rgba(0, 0, 0, 0.56) 16%,
-    rgba(0, 0, 0, 0.4) 24%,
-    rgba(0, 0, 0, 0.24) 32%,
-    rgba(0, 0, 0, 0.1) 40%,
-    rgba(0, 0, 0, 0.02) 48%,
-    rgba(0, 0, 0, 0) 54%
+/* Foil can only brighten, so on a white or very light design it has
+   nothing to show. This tints instead: faint blue-silver streaks that read
+   on white (and all but vanish on the dark areas, where the foil shows). */
+.award-card__sheen {
+  background-image: linear-gradient(
+    115deg,
+    transparent 30%,
+    rgba(139, 163, 226, 0.35) 41%,
+    rgba(183, 199, 239, 0.15) 44%,
+    transparent 46%,
+    transparent 49%,
+    rgba(139, 163, 226, 0.28) 52%,
+    transparent 57%
   );
+  background-size: 250% 250%;
+  background-position: calc(100% - var(--pc-band-x) * 1.7) var(--pc-band-y);
+  mix-blend-mode: multiply;
+  opacity: calc(var(--pc-holo) * (0.15 + 0.65 * var(--pc-active)));
 }
 
-.profile-card__info {
-  position: absolute;
-  left: 18px;
-  right: 18px;
-  bottom: 16px;
-  color: #ffffff;
-}
-
-.profile-card__honor {
-  display: inline-block;
-  margin: 0 0 8px;
-  padding: 3px 9px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--pc-accent), transparent 78%);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--pc-accent), transparent 45%);
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--pc-accent);
-}
-
-.profile-card__name {
-  margin: 0;
-  font-size: 22px;
-  font-weight: 800;
-  line-height: 1.1;
-  letter-spacing: -0.015em;
-  color: inherit;
-  text-wrap: balance;
-}
-
-.profile-card__title {
-  margin: 5px 0 0;
-  font-size: 12.5px;
-  line-height: 1.4;
-  color: rgba(255, 255, 255, 0.72);
-}
-
-.profile-card__tile-rim {
-  box-shadow:
-    inset 0 0 0 1px var(--pc-tile-edge),
-    inset 0 1px 0 var(--pc-tile-highlight);
-}
-
-.profile-card__footer {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 0;
-  padding: 4px 10px 6px 12px;
-}
-
-.profile-card__meta {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: 3px;
-  min-width: 0;
-}
-
-/* Two lines rather than an ellipsis — "Girls Swimming & Diving" is
-   the whole point of the line and shouldn't get cut to "Girls Swim…". */
-.profile-card__handle {
-  display: -webkit-box;
-  overflow: hidden;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1.25;
-  color: var(--pc-ink);
-}
-
-.profile-card__status {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12.5px;
-  line-height: 1.25;
-  color: var(--pc-muted);
-  white-space: nowrap;
-}
-
-.profile-card__status::before {
-  content: "";
-  flex: none;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--pc-accent);
-}
-
-.profile-card__contact {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex: none;
-  height: 34px;
-  padding: 0 12px 0 14px;
-  border-radius: 12px;
-  background: var(--pc-tile);
-  box-shadow:
-    inset 0 0 0 1px var(--pc-tile-edge),
-    inset 0 1px 0 var(--pc-tile-highlight),
-    var(--pc-tile-shadow);
-  color: var(--pc-ink);
-  font-size: 13px;
-  font-weight: 600;
-  text-decoration: none;
-  transition:
-    filter 0.2s ease,
-    transform 0.2s ease;
-}
-
-.profile-card__contact:active {
-  filter: var(--pc-press);
-  transform: scale(0.96);
-  transition-duration: 0s;
-}
-
-.profile-card__glare {
+.award-card__glare {
   background: radial-gradient(
     farthest-corner circle at var(--pc-light-x) var(--pc-light-y),
-    rgba(255, 255, 255, 0.8) 0%,
-    rgba(255, 255, 255, 0.36) 20%,
-    rgba(255, 255, 255, 0) 60%
+    rgba(255, 255, 255, 0.75) 0%,
+    rgba(255, 255, 255, 0.28) 22%,
+    rgba(255, 255, 255, 0) 55%
   );
   mix-blend-mode: overlay;
-  opacity: calc(var(--pc-glare) * var(--pc-active));
+  opacity: calc(0.7 * var(--pc-active));
 }
 
-.profile-card__shade {
-  background: radial-gradient(
-    farthest-corner circle at var(--pc-light-x) var(--pc-light-y),
-    transparent 30%,
-    var(--pc-shade) 100%
+/* Until the artwork is uploaded: a plain card with the name and award. */
+.award-card__placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.35em;
+  padding: 10% 8%;
+  border-radius: 5%/3.6%;
+  background: linear-gradient(180deg, #2c4fb0 0%, #00328f 55%, #001d54 100%);
+  box-shadow: inset 0 0 0 2px rgba(219, 227, 247, 0.35);
+  color: #fff;
+  text-align: center;
+  font-family: inherit;
+}
+
+.award-card__placeholder-name {
+  margin: 0;
+  font-size: 1.4em;
+  font-weight: 800;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.award-card__placeholder-award {
+  margin: 0;
+  font-size: 0.85em;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* The placeholder has no artwork to mask to, so its reflections fill the
+   card's own rounded box. */
+.award-card--placeholder .award-card__sheen,
+.award-card--placeholder .award-card__foil,
+.award-card--placeholder .award-card__glare,
+.award-card--placeholder .award-card__shimmer,
+.award-card--placeholder .award-card__sparkle {
+  -webkit-mask: none;
+  mask: none;
+  border-radius: 5%/3.6%;
+}
+
+/* ── Team honors: same strength, different patterns ───────────────────── */
+
+/* Second Team: fine etched diagonal lines that slide with the tilt. */
+.award-card--second-team .award-card__foil {
+  background-image:
+    linear-gradient(
+      115deg,
+      transparent 28%,
+      rgba(219, 227, 247, 0.55) 42%,
+      rgba(255, 255, 255, 0.85) 46%,
+      rgba(183, 199, 239, 0.55) 50%,
+      transparent 64%
+    ),
+    repeating-linear-gradient(-35deg, rgba(219, 227, 247, 0.38) 0 1.5px, transparent 1.5px 7px),
+    linear-gradient(
+      115deg,
+      rgba(139, 163, 226, 0.5) 0%,
+      rgba(238, 242, 251, 0.6) 25%,
+      rgba(88, 119, 205, 0.45) 50%,
+      rgba(219, 227, 247, 0.55) 75%,
+      rgba(44, 79, 176, 0.45) 100%
+    );
+  background-size:
+    250% 250%,
+    140% 140%,
+    300% 300%;
+  background-position:
+    calc(100% - var(--pc-band-x) * 1.7) var(--pc-band-y),
+    var(--pc-band-x) var(--pc-band-y),
+    var(--pc-band-x) var(--pc-band-y);
+}
+
+/* Honorable Mention: ripple rings spreading out from the light. */
+.award-card--honorable-mention .award-card__foil {
+  background-image:
+    linear-gradient(
+      115deg,
+      transparent 28%,
+      rgba(219, 227, 247, 0.55) 42%,
+      rgba(255, 255, 255, 0.85) 46%,
+      rgba(183, 199, 239, 0.55) 50%,
+      transparent 64%
+    ),
+    repeating-radial-gradient(
+      circle at var(--pc-pointer-x) var(--pc-pointer-y),
+      rgba(219, 227, 247, 0.36) 0 2px,
+      transparent 2px 11px
+    ),
+    linear-gradient(
+      115deg,
+      rgba(139, 163, 226, 0.5) 0%,
+      rgba(238, 242, 251, 0.6) 25%,
+      rgba(88, 119, 205, 0.45) 50%,
+      rgba(219, 227, 247, 0.55) 75%,
+      rgba(44, 79, 176, 0.45) 100%
+    );
+}
+
+/* ── Premium: Player / Coach of the Year ──────────────────────────────── */
+
+/* Iridescent foil — the blues run through cyan and violet as it tilts — with
+   finer, denser prism rays, and always a little lit even at rest. */
+.award-card--premium .award-card__foil {
+  background-image:
+    linear-gradient(
+      115deg,
+      transparent 26%,
+      rgba(219, 247, 255, 0.6) 40%,
+      rgba(255, 255, 255, 0.95) 46%,
+      rgba(214, 200, 255, 0.6) 52%,
+      transparent 66%
+    ),
+    repeating-conic-gradient(
+      from 0deg at var(--pc-pointer-x) var(--pc-pointer-y),
+      rgba(219, 247, 255, 0.42) 0deg 1.5deg,
+      transparent 1.5deg 4.5deg,
+      rgba(190, 176, 255, 0.34) 4.5deg 5.5deg,
+      transparent 5.5deg 9deg
+    ),
+    linear-gradient(
+      115deg,
+      rgba(110, 200, 255, 0.55) 0%,
+      rgba(238, 242, 251, 0.65) 18%,
+      rgba(150, 130, 255, 0.5) 36%,
+      rgba(122, 162, 255, 0.55) 54%,
+      rgba(160, 235, 255, 0.55) 72%,
+      rgba(88, 119, 205, 0.5) 100%
+    );
+  opacity: calc(var(--pc-holo) * (0.14 + 0.38 * var(--pc-active)));
+}
+
+/* A band of light that sweeps across the card on its own every few
+   seconds, so the top honors catch the eye before anyone touches them. */
+.award-card__shimmer {
+  display: none;
+  background-image: linear-gradient(
+    115deg,
+    transparent 38%,
+    rgba(255, 255, 255, 0.15) 45%,
+    rgba(255, 255, 255, 0.7) 50%,
+    rgba(255, 255, 255, 0.15) 55%,
+    transparent 62%
   );
-  opacity: calc(var(--pc-glare) * var(--pc-tilt));
+  background-size: 300% 300%;
+  background-position: 150% 50%;
+  mix-blend-mode: overlay;
+  animation: award-card-shimmer 6s ease-in-out infinite;
 }
 
-.profile-card__rim {
-  box-shadow:
-    inset 0 0 0 1px var(--pc-frame-edge),
-    inset 0 1px 0 var(--pc-frame-highlight);
+/* Fine glitter that twinkles, brighter when the card is in the light. */
+.award-card__sparkle {
+  display: none;
+  background-image:
+    radial-gradient(circle, rgba(255, 255, 255, 0.95) 0 0.8px, transparent 1.6px),
+    radial-gradient(circle, rgba(219, 247, 255, 0.9) 0 1.1px, transparent 2px),
+    radial-gradient(circle, rgba(214, 200, 255, 0.85) 0 0.7px, transparent 1.4px);
+  background-size:
+    37px 41px,
+    53px 59px,
+    29px 31px;
+  background-position:
+    calc(var(--pc-band-x) * 0.4) calc(var(--pc-band-y) * 0.4),
+    calc(var(--pc-band-x) * -0.3) 11px,
+    7px calc(var(--pc-band-y) * 0.6);
+  mix-blend-mode: screen;
+  opacity: calc(0.35 + 0.5 * var(--pc-active));
+  animation: award-card-twinkle 3.2s ease-in-out infinite alternate;
 }
 
-@media (hover: hover) {
-  .profile-card__contact:hover {
-    filter: var(--pc-hover);
+.award-card--premium .award-card__shimmer,
+.award-card--premium .award-card__sparkle {
+  display: block;
+}
+
+/* A soft blue glow behind the card. */
+.award-card--premium {
+  isolation: isolate;
+}
+
+.award-card--premium::before {
+  content: "";
+  position: absolute;
+  inset: -5% -6%;
+  z-index: -1;
+  border-radius: 12%;
+  background: radial-gradient(closest-side, rgba(122, 162, 255, 0.55), rgba(88, 119, 205, 0.28) 60%, transparent);
+  filter: blur(18px);
+  animation: award-card-glow 4s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+@keyframes award-card-shimmer {
+  0%,
+  55% {
+    background-position: 150% 50%;
   }
+  85%,
+  100% {
+    background-position: -50% 50%;
+  }
+}
 
-  .profile-card__contact:hover:active {
-    filter: var(--pc-press);
+@keyframes award-card-twinkle {
+  from {
+    filter: brightness(0.7);
+  }
+  to {
+    filter: brightness(1.35);
+  }
+}
+
+@keyframes award-card-glow {
+  from {
+    opacity: 0.6;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .award-card__shimmer,
+  .award-card__sparkle,
+  .award-card--premium::before {
+    animation: none;
   }
 }

@@ -4,23 +4,24 @@ import {
   afterDeleteTriggerRebuild,
 } from '../hooks/scheduleRebuildHooks.ts'
 
-// Athlete photos for NE8 award cards (AwardSeasons.ts), kept out of the main
-// Media library on purpose: ~120 headshots a school year would bury the
-// logos, hero photos, and documents editors actually browse Media for.
+// Finished NE8 award card artwork (one designed image per athlete, used by
+// AwardSeasons.ts), plus any season cover photos — kept out of the main
+// Media library on purpose: ~120 cards a school year would bury the logos,
+// hero photos, and documents editors actually browse Media for.
 //
 // Unlike Media, alt text isn't required up front — it's filled in from the
-// filename ("aaron-vandervort.jpg" → "Aaron Vandervort") so a whole season's
-// photos can be dropped in at once from an award season's Quick fill,
-// without stopping to type 40 alt texts. The card itself also reads the
-// athlete's name from the award, not from here.
+// filename ("aaron-vandervort.png" → "Aaron Vandervort") so a whole season's
+// cards can be dropped in at once from an award season's Quick fill,
+// without stopping to type 40 alt texts. The site's card alt text comes
+// from the award (name and honor), not from here.
 //
 // Files live under the existing media/ upload directory (already
 // gitignored and on the server's disk), in their own subfolder.
 export const AwardPhotos: CollectionConfig = {
   slug: 'award-photos',
   labels: {
-    singular: 'Award Photo',
-    plural: 'Award Photos',
+    singular: 'Card Image',
+    plural: 'Card Images',
   },
   access: {
     read: () => true,
@@ -30,7 +31,7 @@ export const AwardPhotos: CollectionConfig = {
     defaultColumns: ['filename', 'alt', 'updatedAt'],
     group: 'NE8 Awards',
     description:
-      'Photos used on NE8 award cards. Usually added from an award season\'s "Quick fill" box rather than here. Set a focal point on a photo to control how it\'s framed on its card.',
+      'Finished NE8 award card images (1500 × 2100 px PNG — a trading card at 600 dpi — with anything outside the card shape left transparent) and season cover photos. Usually added from an award season\'s "Quick fill" box rather than here.',
   },
   hooks: {
     afterChange: [afterChangeTriggerRebuild],
