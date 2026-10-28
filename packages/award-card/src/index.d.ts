@@ -26,6 +26,7 @@ export interface CardProps {
   lazy?: boolean;
   lifted?: boolean;
   className?: string;
+  alt?: string;
 }
 
 export function cardHtml(props: CardProps): string;

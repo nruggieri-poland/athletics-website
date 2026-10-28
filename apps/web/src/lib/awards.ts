@@ -96,9 +96,19 @@ export function honorCounts(awards: Award[]): { honor: HonorMeta; count: number 
   })).filter(({ count }) => count > 0);
 }
 
-// Distinct people honored — one athlete can earn honors in two sports.
-export function honoreeCount(awards: Award[]): number {
-  return new Set(awards.map((award) => award.athleteName.trim().toLowerCase())).size;
+// The header stats on the awards pages. Counts awards, not athletes — one
+// athlete can earn awards in two sports, and each award counts.
+const STAT_HONORS: HonorValue[] = ["player-of-the-year", "first-team", "second-team"];
+export function awardStats(awards: Award[]): { value: number; label: string; color?: string }[] {
+  return STAT_HONORS.map((value) => {
+    const honor = honorMeta(value);
+    const count = awards.filter((award) => award.honor === value).length;
+    return {
+      value: count,
+      label: count === 1 ? honor.label : honor.plural,
+      color: value === "player-of-the-year" ? honor.accent : undefined,
+    };
+  });
 }
 
 // Fall belongs to a school year's first calendar year, Winter and Spring to

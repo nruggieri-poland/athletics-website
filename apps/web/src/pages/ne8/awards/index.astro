@@ -13,7 +13,6 @@ import {
   getAwardSeasons,
   groupBySchoolYear,
   honorCounts,
-  honoreeCount,
   latestSeason,
   schoolYearHref,
   seasonShareImage,
@@ -30,8 +29,6 @@ try {
 }
 
 const years = groupBySchoolYear(seasons);
-const allAwards = seasons.flatMap((season) => season.awards);
-const playersOfTheYear = allAwards.filter((award) => award.honor === "player-of-the-year").length;
 const latest = latestSeason(seasons);
 const latestCards = latest ? sortAwards(latest.awards).slice(0, 3) : [];
 const latestCounts = latest ? honorCounts(latest.awards) : [];
@@ -40,7 +37,7 @@ const shareImage = latest ? seasonShareImage(latest) : undefined;
 
 <BaseLayout
   title="NE8 All-Conference Awards"
-  description="Every Poland Bulldog honored as NE8 All-Conference — Players of the Year, First Team, and Second Team selections, season by season."
+  description="NE8 All-Conference awards received by Poland Seminary athletes — Player of the Year, First Team, Second Team, and Honorable Mention — by school year and season."
   image={shareImage}
 >
   <AwardsHero
@@ -51,13 +48,6 @@ const shareImage = latest ? seasonShareImage(latest) : undefined;
     eyebrow="Northeast 8 Athletic Conference"
     title="All-Conference Awards"
     lede="NE8 All-Conference awards received by Poland Seminary athletes, by school year and season."
-    stats={seasons.length > 0
-      ? [
-          { value: allAwards.length, label: "All-Conference awards" },
-          { value: playersOfTheYear, label: "Players of the Year", color: "#98d0ff" },
-          { value: seasons.length, label: seasons.length === 1 ? "Season" : "Seasons" },
-        ]
-      : []}
   />
 
   {
@@ -76,8 +66,7 @@ const shareImage = latest ? seasonShareImage(latest) : undefined;
                 {seasonName(latest)}
               </h2>
               <p class="mt-4 text-white/75">
-                {latest.awards.length} NE8 All-Conference awards to {honoreeCount(latest.awards)}{" "}
-                Poland Seminary athletes.
+                {latest.awards.length} NE8 All-Conference awards to Poland Seminary athletes.
               </p>
               {latestCounts.length > 0 && (
                 <ul class="mt-6 flex flex-wrap gap-2">
@@ -138,10 +127,10 @@ const shareImage = latest ? seasonShareImage(latest) : undefined;
                 </a>
               </h2>
               <p class="text-sm text-ink-500">
-                {year.awards.length} awards · {honoreeCount(year.awards)} athletes
+                {year.awards.length} awards
                 <a
                   href={schoolYearHref(year.schoolYear)}
-                  class="mt-1 block font-semibold text-primary-600 hover:underline sm:ml-3 sm:mt-0 sm:inline"
+                  class="mt-1 block font-semibold text-primary-600 underline underline-offset-2 sm:ml-3 sm:mt-0 sm:inline"
                 >
                   School year overview &rarr;
                 </a>

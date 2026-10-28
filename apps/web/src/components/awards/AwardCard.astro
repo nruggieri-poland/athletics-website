@@ -1,8 +1,9 @@
 ---
 // One NE8 award as a reflective trading card: the finished card artwork the
 // editor designed and uploaded for this athlete (1500×2100 PNG), with tilt,
-// glare and holographic foil laid over it — see packages/award-card. The
-// card's sport sits just below it, linking to the team.
+// glare and holographic foil laid over it — see packages/award-card. Below
+// it, a caption repeats the details as text (name, award, grade, sport —
+// the sport linking to the team), since the card itself is an image.
 //
 // The artwork is copied from the CMS onto this site at build time (Astro's
 // getImage, as a 900px-wide WebP — sharp at 2× for any card size on the
@@ -20,7 +21,8 @@ interface Props {
   // Skip the "catch the light" entrance — for cards inside a carousel or
   // anywhere a dozen of them would all flash at once.
   intro?: boolean;
-  // The sport link under the card; off where cards are small teasers.
+  // The details caption under the card; off where cards are small teasers
+  // (the card's image still carries its name and award as alt text).
   caption?: boolean;
   class?: string;
 }
@@ -42,6 +44,7 @@ if (artworkUrl) {
   }
 }
 
+const statusText = award.honor === "coach-of-the-year" ? "Head Coach" : award.grade;
 const html = cardHtml({
   imageSrc: artwork?.src,
   width: artwork?.width,
@@ -52,22 +55,40 @@ const html = cardHtml({
   intro,
   lifted: true,
   className,
+  // With the caption below spelling out the details, the card itself just
+  // needs to say what it is.
+  alt: caption ? `${award.athleteName}'s NE8 All-Conference card` : undefined,
 });
 ---
 
-<div class="flex flex-col items-center gap-3">
+{
+  /* A figure so the details below are tied to the card for assistive tech —
+    and readable as plain text by everyone, whatever the card's design. */
+}
+<figure class="flex flex-col items-center gap-3">
   <Fragment set:html={html} />
   {
-    caption && sportLabel && (
-      <a
-        href={award.sport?.slug ? `/${award.sport.slug}` : undefined}
-        class="text-sm font-semibold text-ink-600 hover:text-primary-600 hover:underline"
-      >
-        {sportLabel}
-      </a>
+    caption && (
+      <figcaption class="text-center leading-snug">
+        <span class="block font-bold text-ink-900">{award.athleteName}</span>
+        <span class="block text-sm text-ink-600">
+          {[honorLabel(award), statusText].filter(Boolean).join(" · ")}
+        </span>
+        {sportLabel &&
+          (award.sport?.slug ? (
+            <a
+              href={`/${award.sport.slug}`}
+              class="text-sm font-semibold text-primary-600 underline-offset-2 hover:underline"
+            >
+              {sportLabel}
+            </a>
+          ) : (
+            <span class="block text-sm text-ink-600">{sportLabel}</span>
+          ))}
+      </figcaption>
     )
   }
-</div>
+</figure>
 
 <script>
   import { initAwardCards } from "@athletics/award-card/engine";

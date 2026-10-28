@@ -12,18 +12,8 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 import ArticleCard from "../../components/articles/ArticleCard.astro";
 import { getArticlesForTag } from "../../lib/payload";
 import type { AwardSeason } from "../../lib/awards";
-import AwardCard from "../../components/awards/AwardCard.astro";
-import { isPremium } from "@athletics/award-card";
-import {
-  SPOTLIGHT_ITEM,
-  SPOTLIGHT_LIST,
-  getAwardSeasons,
-  honoreeCount,
-  latestSeason,
-  seasonHref,
-  seasonName,
-  sortAwards,
-} from "../../lib/awards";
+import SeasonTile from "../../components/awards/SeasonTile.astro";
+import { SEASON_ORDER, getAwardSeasons, groupBySchoolYear, seasonName } from "../../lib/awards";
 
 const articles = await getArticlesForTag("ne8", 50);
 
@@ -33,10 +23,10 @@ try {
 } catch {
   // CMS unreachable at build time — the awards section shows its empty state.
 }
-const latest = latestSeason(seasons);
-// The most recent season's Player/Coach of the Year cards, shown here as a
-// preview of /ne8/awards.
-const spotlight = latest ? sortAwards(latest.awards).filter((award) => isPremium(award.honor)) : [];
+// The newest school year's Fall/Winter/Spring tiles, linking into
+// /ne8/awards — fills itself in as each season is published in the CMS.
+const [currentYear] = groupBySchoolYear(seasons);
+const latest = currentYear?.seasons[currentYear.seasons.length - 1];
 ---
 
 <BaseLayout
@@ -60,42 +50,37 @@ const spotlight = latest ? sortAwards(latest.awards).filter((award) => isPremium
           <h2 id="ne8-awards-heading" class="text-h3 font-bold text-ink-900">
             NE8 All-Conference Awards
           </h2>
-          <p class="mt-2 text-ink-600">
+          <p class="mt-2 max-w-[62ch] text-ink-600">
             {
               latest
-                ? `Most recent: ${seasonName(latest)}, ${latest.awards.length} awards to ${honoreeCount(latest.awards)} Poland Seminary athletes.`
+                ? `Poland Seminary athletes named NE8 All-Conference, by school year and season. Most recent: ${seasonName(latest)}.`
                 : "No awards have been posted yet."
             }
           </p>
         </div>
-        <div class="flex flex-wrap gap-3">
-          {
-            latest && (
-              <a
-                href={seasonHref(latest)}
-                class="rounded-full bg-primary-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-primary-700"
-              >
-                {seasonName(latest)} awards
-              </a>
-            )
-          }
-          <a
-            href="/ne8/awards"
-            class="rounded-full border border-ink-200 bg-surface px-5 py-2.5 text-sm font-bold text-ink-900 hover:border-primary-300"
-          >
-            All seasons
-          </a>
-        </div>
+        <a
+          href="/ne8/awards"
+          class="rounded-full bg-primary-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-primary-700"
+        >
+          All awards
+        </a>
       </div>
       {
-        spotlight.length > 0 && (
-          <ul class={`mt-10 ${SPOTLIGHT_LIST}`}>
-            {spotlight.map((award) => (
-              <li class={SPOTLIGHT_ITEM}>
-                <AwardCard award={award} />
-              </li>
-            ))}
-          </ul>
+        currentYear && (
+          <>
+            <h3 class="mb-4 mt-10 text-sm font-bold uppercase tracking-wider text-ink-600">
+              {currentYear.schoolYear} school year
+            </h3>
+            <div class="grid gap-5 sm:grid-cols-3">
+              {SEASON_ORDER.map((seasonType) => (
+                <SeasonTile
+                  schoolYear={currentYear.schoolYear}
+                  seasonType={seasonType}
+                  season={currentYear.seasons.find((season) => season.season === seasonType)}
+                />
+              ))}
+            </div>
+          </>
         )
       }
     </div>

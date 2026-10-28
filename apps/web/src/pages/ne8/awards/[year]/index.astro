@@ -17,8 +17,7 @@ import {
   awardSportLabel,
   getAwardSeasons,
   groupBySchoolYear,
-  honorCounts,
-  honoreeCount,
+  awardStats,
   schoolYearHref,
   seasonCover,
   seasonShareImage,
@@ -42,8 +41,6 @@ interface Props {
 
 const { group } = Astro.props;
 const { schoolYear, seasons, awards } = group;
-const counts = honorCounts(awards);
-const people = honoreeCount(awards);
 
 const spotlight = seasons.flatMap((season) =>
   sortAwards(season.awards)
@@ -82,17 +79,7 @@ const shareImage = seasons.map(seasonShareImage).find(Boolean);
     eyebrow="NE8 All-Conference"
     title={`${schoolYear} Awards`}
     lede={`NE8 All-Conference awards received by Poland Seminary athletes in the ${schoolYear} school year.`}
-    stats={[
-      { value: awards.length, label: "Total awards" },
-      { value: people, label: "Athletes" },
-      ...counts
-        .filter(({ honor }) => honor.value === "player-of-the-year")
-        .map(({ honor, count }) => ({
-          value: count,
-          label: count === 1 ? honor.label : honor.plural,
-          color: honor.accent,
-        })),
-    ]}
+    stats={awardStats(awards)}
     image={cover}
   />
 
@@ -177,7 +164,7 @@ const shareImage = seasons.map(seasonShareImage).find(Boolean);
                   })}
                 </ul>
                 <span
-                  class="text-2xl font-black text-ink-300 group-hover:text-primary-600"
+                  class="text-2xl font-black text-ink-400 group-hover:text-primary-600"
                   aria-label={`${row.awards.length} awards`}
                 >
                   {row.awards.length}

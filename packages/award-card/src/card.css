@@ -277,8 +277,11 @@
   opacity: calc(var(--pc-holo) * (0.14 + 0.38 * var(--pc-active)));
 }
 
-/* A band of light that sweeps across the card on its own every few
-   seconds, so the top honors catch the eye before anyone touches them. */
+/* A band of light that sweeps across the card on its own — twice, as it
+   scrolls into view — so the top honors catch the eye before anyone touches
+   them. Every self-starting effect here ends within five seconds (WCAG 2.2.2
+   Pause, Stop, Hide); movement after that only follows the visitor's own
+   pointer. */
 .award-card__shimmer {
   display: none;
   background-image: linear-gradient(
@@ -292,10 +295,14 @@
   background-size: 300% 300%;
   background-position: 150% 50%;
   mix-blend-mode: overlay;
-  animation: award-card-shimmer 6s ease-in-out infinite;
 }
 
-/* Fine glitter that twinkles, brighter when the card is in the light. */
+.award-card--in-view .award-card__shimmer {
+  animation: award-card-shimmer 2s ease-in-out 0.5s 2 both;
+}
+
+/* Fine glitter, brighter when the card is in the light; it twinkles a few
+   times as the card comes into view, then holds still. */
 .award-card__sparkle {
   display: none;
   background-image:
@@ -312,7 +319,10 @@
     7px calc(var(--pc-band-y) * 0.6);
   mix-blend-mode: screen;
   opacity: calc(0.35 + 0.5 * var(--pc-active));
-  animation: award-card-twinkle 3.2s ease-in-out infinite alternate;
+}
+
+.award-card--in-view .award-card__sparkle {
+  animation: award-card-twinkle 1.1s ease-in-out 4 alternate both;
 }
 
 .award-card--premium .award-card__shimmer,
@@ -333,43 +343,44 @@
   border-radius: 12%;
   background: radial-gradient(closest-side, rgba(122, 162, 255, 0.55), rgba(88, 119, 205, 0.28) 60%, transparent);
   filter: blur(18px);
-  animation: award-card-glow 4s ease-in-out infinite alternate;
   pointer-events: none;
 }
 
+.award-card--premium.award-card--in-view::before {
+  animation: award-card-glow 2.2s ease-in-out 2 alternate both;
+}
+
 @keyframes award-card-shimmer {
-  0%,
-  55% {
+  from {
     background-position: 150% 50%;
   }
-  85%,
-  100% {
+  to {
     background-position: -50% 50%;
   }
 }
 
 @keyframes award-card-twinkle {
   from {
-    filter: brightness(0.7);
+    filter: brightness(1);
   }
   to {
-    filter: brightness(1.35);
+    filter: brightness(1.45);
   }
 }
 
 @keyframes award-card-glow {
   from {
-    opacity: 0.6;
+    opacity: 1;
   }
   to {
-    opacity: 1;
+    opacity: 0.55;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .award-card__shimmer,
-  .award-card__sparkle,
-  .award-card--premium::before {
+  .award-card--in-view .award-card__shimmer,
+  .award-card--in-view .award-card__sparkle,
+  .award-card--premium.award-card--in-view::before {
     animation: none;
   }
 }

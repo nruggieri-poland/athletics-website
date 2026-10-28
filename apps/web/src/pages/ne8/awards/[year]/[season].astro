@@ -20,7 +20,7 @@ import {
   awardSportLabel,
   getAwardSeasons,
   honorCounts,
-  honoreeCount,
+  awardStats,
   schoolYearHref,
   seasonCover,
   seasonShareImage,
@@ -51,7 +51,6 @@ const { season, all } = Astro.props;
 const name = seasonName(season);
 const awards = sortAwards(season.awards);
 const counts = honorCounts(awards);
-const people = honoreeCount(awards);
 
 // Oldest → newest, so previous/next walk the seasons in the order they
 // were announced, across school-year boundaries.
@@ -68,7 +67,7 @@ const countPhrase = (count: number, singular: string, plural: string) =>
   `${count} ${count === 1 ? singular : plural}`;
 const autoIntro = (() => {
   const poy = awards.filter((award) => award.honor === "player-of-the-year").length;
-  const base = `${countPhrase(people, "Poland Seminary athlete", "Poland Seminary athletes")} received ${countPhrase(awards.length, "NE8 All-Conference award", "NE8 All-Conference awards")} for ${name}`;
+  const base = `Poland Seminary athletes received ${countPhrase(awards.length, "NE8 All-Conference award", "NE8 All-Conference awards")} for ${name}`;
   return poy > 0
     ? `${base}, including ${countPhrase(poy, "Player of the Year award", "Player of the Year awards")}.`
     : `${base}.`;
@@ -105,14 +104,7 @@ const featured = (value: HonorValue) => isPremium(value);
     eyebrow="NE8 All-Conference"
     title={name}
     lede={intro}
-    stats={[
-      { value: people, label: people === 1 ? "Athlete" : "Athletes" },
-      ...counts.map(({ honor, count }) => ({
-        value: count,
-        label: count === 1 ? honor.label : honor.plural,
-        color: honor.accent,
-      })),
-    ]}
+    stats={awardStats(awards)}
     image={cover}
   >
     {
@@ -253,7 +245,7 @@ const featured = (value: HonorValue) => isPremium(value);
               <span data-result-count>{awards.length}</span> of {awards.length}
               <button
                 type="button"
-                class="ml-2 font-semibold text-primary-600 hover:underline"
+                class="ml-2 font-semibold text-primary-600 underline underline-offset-2"
                 data-clear-filters
                 hidden
               >

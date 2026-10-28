@@ -101,9 +101,13 @@ export function cardHtml({
   lazy = true,
   lifted = false,
   className = "",
+  alt,
 }) {
   const meta = honorMeta(honor);
-  const label = [name, award].filter(Boolean).join(", ");
+  // The card's accessible name. Callers that print the details in a visible
+  // caption next to the card pass a shorter `alt`, so screen readers don't
+  // hear everything twice.
+  const label = alt ?? [name, award].filter(Boolean).join(", ");
   const classes = [
     "award-card",
     // Picks the foil pattern (card.css): refractor rays for First Team,
@@ -130,9 +134,9 @@ export function cardHtml({
 
   const face = imageSrc
     ? `<img class="award-card__art" src="${escapeHtml(imageSrc)}"${width && height ? ` width="${width}" height="${height}"` : ""} alt="${escapeHtml(label)}"${lazyAttrs} draggable="false" />`
-    : `<div class="award-card__placeholder"><p class="award-card__placeholder-name">${escapeHtml(name)}</p><p class="award-card__placeholder-award">${escapeHtml(award)}</p></div>`;
+    : `<div class="award-card__placeholder" role="img" aria-label="${escapeHtml(label)}"><p class="award-card__placeholder-name" aria-hidden="true">${escapeHtml(name)}</p><p class="award-card__placeholder-award" aria-hidden="true">${escapeHtml(award)}</p></div>`;
 
-  return `<article class="${escapeHtml(classes)}" style="${escapeHtml(vars)}" data-award-card data-intro="${intro ? "true" : "false"}"${imageSrc ? "" : ` aria-label="${escapeHtml(label)}"`}>
+  return `<div class="${escapeHtml(classes)}" style="${escapeHtml(vars)}" data-award-card data-intro="${intro ? "true" : "false"}">
   <div class="award-card__body">
     ${face}
     <span class="award-card__sheen" aria-hidden="true"></span>
@@ -141,5 +145,5 @@ export function cardHtml({
     <span class="award-card__shimmer" aria-hidden="true"></span>
     <span class="award-card__sparkle" aria-hidden="true"></span>
   </div>
-</article>`;
+</div>`;
 }
