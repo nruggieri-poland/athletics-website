@@ -152,11 +152,16 @@ export function initAwardCards(scope = document) {
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const cards = new Map();
 
+  // When a card first scrolls into view: mark it (card.css starts the
+  // premium cards' one-time shimmer then — kept under five seconds, per WCAG
+  // 2.2.2, rather than looping) and play the "catch the light" intro.
   const introObserver = new IntersectionObserver(
     (entries) => {
       for (const entry of entries) {
         if (!entry.isIntersecting) continue;
         introObserver.unobserve(entry.target);
+        entry.target.classList.add("award-card--in-view");
+        if (entry.target.dataset.intro !== "true") continue;
         const card = cards.get(entry.target);
         // Wait for the photo: catching the light over a still-empty card
         // flashes the bare foil pattern instead of the athlete.
@@ -175,6 +180,6 @@ export function initAwardCards(scope = document) {
     if (root.dataset.awardCardReady) return;
     root.dataset.awardCardReady = "true";
     cards.set(root, initCard(root, reduced));
-    if (root.dataset.intro === "true") introObserver.observe(root);
+    introObserver.observe(root);
   });
 }

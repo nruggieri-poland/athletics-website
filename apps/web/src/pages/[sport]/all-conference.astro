@@ -18,12 +18,12 @@ import {
   SPOTLIGHT_ITEM,
   SPOTLIGHT_LIST,
   awardSportKey,
+  awardStats,
   awardsForSport,
   getAwardSeasons,
   honorCounts,
   honorLabel,
   honorMeta,
-  honoreeCount,
   originalUrl,
   seasonHref,
   seasonName,
@@ -48,7 +48,6 @@ export async function getStaticPaths() {
 
 const { sport, years } = Astro.props;
 const allAwards = years.flatMap((year) => year.awards);
-const playersOfTheYear = allAwards.filter((award) => award.honor === "player-of-the-year").length;
 const divisions = (["Boys", "Girls"] as const).filter((division) =>
   allAwards.some((award) => award.division === division),
 );
@@ -71,25 +70,7 @@ const shortYear = (schoolYear: string) => schoolYear.replace(/^(\d{4})-\d{2}(\d{
     eyebrow="NE8 All-Conference"
     title={`${sport.name} Honors`}
     lede={`NE8 All-Conference awards received by Poland Seminary athletes in ${sport.name}, by school year.`}
-    stats={allAwards.length > 0
-      ? [
-          {
-            value: allAwards.length,
-            label: allAwards.length === 1 ? "Award" : "All-Conference awards",
-          },
-          { value: honoreeCount(allAwards), label: "Athletes" },
-          ...(playersOfTheYear > 0
-            ? [
-                {
-                  value: playersOfTheYear,
-                  label: playersOfTheYear === 1 ? "Player of the Year" : "Players of the Year",
-                  color: "#98d0ff",
-                },
-              ]
-            : []),
-          { value: new Set(years.map((year) => year.schoolYear)).size, label: "Years" },
-        ]
-      : []}
+    stats={allAwards.length > 0 ? awardStats(allAwards) : []}
   >
     <a
       href="/ne8/awards"
@@ -197,7 +178,7 @@ const shortYear = (schoolYear: string) => schoolYear.replace(/^(\d{4})-\d{2}(\d{
                     ))}
                     <a
                       href={`${seasonHref(year.season)}?sport=${awardSportKey(year.awards[0])}`}
-                      class="ml-1 text-sm font-semibold text-primary-600 hover:underline"
+                      class="ml-1 text-sm font-semibold text-primary-600 underline underline-offset-2"
                     >
                       Full {seasonName(year.season)} season &rarr;
                     </a>
@@ -286,7 +267,7 @@ const shortYear = (schoolYear: string) => schoolYear.replace(/^(\d{4})-\d{2}(\d{
         </p>
         <p class="mt-2 text-ink-500">
           They'll show up here as soon as a season is published. Meanwhile,{" "}
-          <a href="/ne8/awards" class="font-semibold text-primary-600 hover:underline">
+          <a href="/ne8/awards" class="font-semibold text-primary-600 underline underline-offset-2">
             browse every sport's awards
           </a>
           .
