@@ -34,6 +34,12 @@
 .award-card__body {
   position: absolute;
   inset: 0;
+}
+
+/* Tilted (a 3D layer) only while it's moving — engine.js adds --live then.
+   A page of 40 permanently 3D cards is more graphics memory than a phone
+   will give a tab. */
+.award-card--live .award-card__body {
   transform: rotateX(var(--pc-rotate-x)) rotateY(var(--pc-rotate-y));
   will-change: transform;
 }
@@ -64,6 +70,18 @@
   pointer-events: none;
   -webkit-mask: var(--card-image) center / contain no-repeat;
   mask: var(--card-image) center / contain no-repeat;
+}
+
+/* Cards well off screen (engine.js marks them --far) drop their reflection
+   layers, and the glare only exists while a card is lit — each layer is a
+   full-size masked, blended surface, and a long page of them crashes
+   mobile Safari when scrolled fast. */
+.award-card--far .award-card__sheen,
+.award-card--far .award-card__foil,
+.award-card--far .award-card__shimmer,
+.award-card--far .award-card__sparkle,
+.award-card:not(.award-card--live) .award-card__glare {
+  display: none;
 }
 
 /* Holographic foil: silver-to-blue light, so it reads as foil on any design.
@@ -325,8 +343,8 @@
   animation: award-card-twinkle 1.1s ease-in-out 4 alternate both;
 }
 
-.award-card--premium .award-card__shimmer,
-.award-card--premium .award-card__sparkle {
+.award-card--premium:not(.award-card--far) .award-card__shimmer,
+.award-card--premium:not(.award-card--far) .award-card__sparkle {
   display: block;
 }
 
@@ -335,7 +353,7 @@
   isolation: isolate;
 }
 
-.award-card--premium::before {
+.award-card--premium:not(.award-card--far)::before {
   content: "";
   position: absolute;
   inset: -5% -6%;

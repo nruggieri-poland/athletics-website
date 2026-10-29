@@ -200,6 +200,63 @@ function levelLabel(level: TeamLevel): string {
         </div>
       </div>
 
+      <div class="group relative -my-4 flex items-center self-stretch py-4" data-menu-group>
+        <a href="/ne8" aria-haspopup="true" aria-expanded="false" data-menu-trigger class="flex items-center gap-1 text-sm font-medium text-ink-700 hover:text-primary-600">
+          NE8
+          <svg class="h-3 w-3" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+            <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+          </svg>
+        </a>
+        <div class="invisible absolute right-0 top-full w-80 rounded-xl border border-ink-100 bg-surface opacity-0 shadow-lg transition group-focus-within:visible group-focus-within:opacity-100" data-menu-panel>
+          <div class="flex flex-col gap-0.5 p-2.5">
+            <a href="/ne8" class="flex items-center gap-3 rounded-lg p-3 hover:bg-ink-50">
+              <span class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary-50 text-primary-700">
+                <svg class="h-[18px] w-[18px]" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                  <path d="M4 4h12v12H4zM7 8h6M7 11h6M7 14h3" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </span>
+              <span>
+                <span class="block text-sm font-semibold text-ink-900">NE8 News</span>
+                <span class="block text-xs text-ink-500">Conference news and updates.</span>
+              </span>
+            </a>
+            <a href="/ne8/awards" class="flex items-center gap-3 rounded-lg p-3 hover:bg-ink-50">
+              <span class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary-50 text-primary-700">
+                <svg class="h-[18px] w-[18px]" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                  <path d="M10 2.5l2.2 4.5 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5L2.8 7.7l5-.7z" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </span>
+              <span>
+                <span class="block text-sm font-semibold text-ink-900">All-Conference Awards</span>
+                <span class="block text-xs text-ink-500">Poland Seminary athletes named NE8 All-Conference.</span>
+              </span>
+            </a>
+            <a href="/ne8/champions" class="flex items-center gap-3 rounded-lg p-3 hover:bg-ink-50">
+              <span class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary-50 text-primary-700">
+                <svg class="h-[18px] w-[18px]" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                  <path d="M7 17h6M10 13.5V17M6 3h8v4a4 4 0 0 1-8 0V3ZM6 5H3.5v.5A2.5 2.5 0 0 0 6 8M14 5h2.5v.5A2.5 2.5 0 0 1 14 8" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </span>
+              <span>
+                <span class="block text-sm font-semibold text-ink-900">NE8 Champions</span>
+                <span class="block text-xs text-ink-500">Championships won by Poland Seminary teams.</span>
+              </span>
+            </a>
+            <a href="https://ne8athletics.org" target="_blank" rel="noopener noreferrer" class="flex items-center gap-3 rounded-lg p-3 hover:bg-ink-50">
+              <span class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary-50 text-primary-700">
+                <svg class="h-[18px] w-[18px]" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                  <path d="M10 17.5a7.5 7.5 0 1 0 0-15 7.5 7.5 0 0 0 0 15ZM2.5 10h15M10 2.5c2 2 3 4.6 3 7.5s-1 5.5-3 7.5c-2-2-3-4.6-3-7.5s1-5.5 3-7.5Z" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </span>
+              <span>
+                <span class="block text-sm font-semibold text-ink-900">NE8 Athletics website <span aria-hidden="true">&nearr;</span><span class="sr-only"> (opens in a new tab)</span></span>
+                <span class="block text-xs text-ink-500">Standings, schedules, and results from the conference.</span>
+              </span>
+            </a>
+          </div>
+        </div>
+      </div>
+
       {headerLinks.map((link) => (
         <a href={link.url} class="text-sm font-medium text-ink-700 hover:text-primary-600">
           {link.label}
@@ -329,6 +386,23 @@ function levelLabel(level: TeamLevel): string {
         <a href="/resources/parents" class="block text-sm font-medium text-ink-700">Parents</a>
         <a href="/resources/coaches" class="block text-sm font-medium text-ink-700">Coaches</a>
         <a href="/resources/fans" class="block text-sm font-medium text-ink-700">Fans &amp; Community</a>
+      </div>
+    </details>
+
+    <details class="group border-b border-ink-100 px-6">
+      <summary class="mobile-menu-summary flex cursor-pointer items-center justify-between py-4 text-sm font-semibold text-ink-900">
+        NE8
+        <svg class="h-3 w-3 shrink-0 text-ink-400 transition-transform group-open:rotate-180" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+          <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+        </svg>
+      </summary>
+      <div class="space-y-3 pb-5">
+        <a href="/ne8" class="block text-sm font-medium text-ink-700">NE8 News</a>
+        <a href="/ne8/awards" class="block text-sm font-medium text-ink-700">All-Conference Awards</a>
+        <a href="/ne8/champions" class="block text-sm font-medium text-ink-700">NE8 Champions</a>
+        <a href="https://ne8athletics.org" target="_blank" rel="noopener noreferrer" class="block text-sm font-medium text-ink-700">
+          NE8 Athletics website <span aria-hidden="true">&nearr;</span><span class="sr-only"> (opens in a new tab)</span>
+        </a>
       </div>
     </details>
 

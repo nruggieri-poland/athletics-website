@@ -4,9 +4,7 @@
 // variables card.css reads. Each card's loop only runs while something is
 // moving, so a page of 40 idle cards costs nothing.
 //
-// Browser-only. The website runs it on every page with cards; the
-// Instagram export (posterHtml in index.js) doesn't — it sets a fixed pose
-// with poseStyle() instead, since a still image has no pointer.
+// Browser-only; the website runs it on every page with cards.
 
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 const TILT = 12;
@@ -73,10 +71,13 @@ function initCard(root, reduced) {
       light.p = light.target;
       write();
       raf = 0;
+      // Back flat and unlit: drop the 3D layer (card.css).
+      if (!x.p && !y.p && !light.p) root.classList.remove("award-card--live");
     }
   };
 
   const wake = () => {
+    root.classList.add("award-card--live");
     if (raf) return;
     last = performance.now();
     raf = requestAnimationFrame(frame);
@@ -176,10 +177,20 @@ export function initAwardCards(scope = document) {
     { threshold: 0.35 },
   );
 
+  // Cards more than a screen away go --far, which drops their reflection
+  // layers (card.css) — keeps a long page within a phone's graphics memory.
+  const nearObserver = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) entry.target.classList.toggle("award-card--far", !entry.isIntersecting);
+    },
+    { rootMargin: "100% 0px" },
+  );
+
   scope.querySelectorAll("[data-award-card]").forEach((root) => {
     if (root.dataset.awardCardReady) return;
     root.dataset.awardCardReady = "true";
     cards.set(root, initCard(root, reduced));
     introObserver.observe(root);
+    nearObserver.observe(root);
   });
 }

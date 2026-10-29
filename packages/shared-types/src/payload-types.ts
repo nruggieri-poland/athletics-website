@@ -80,6 +80,7 @@ export interface Config {
     galleries: Gallery;
     'special-pages': SpecialPage;
     'award-seasons': AwardSeason;
+    'ne8-championships': Ne8Championship;
     'award-photos': AwardPhoto;
     'payload-kv': PayloadKv;
     'payload-folders': FolderInterface;
@@ -106,6 +107,7 @@ export interface Config {
     galleries: GalleriesSelect<false> | GalleriesSelect<true>;
     'special-pages': SpecialPagesSelect<false> | SpecialPagesSelect<true>;
     'award-seasons': AwardSeasonsSelect<false> | AwardSeasonsSelect<true>;
+    'ne8-championships': Ne8ChampionshipsSelect<false> | Ne8ChampionshipsSelect<true>;
     'award-photos': AwardPhotosSelect<false> | AwardPhotosSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-folders': PayloadFoldersSelect<false> | PayloadFoldersSelect<true>;
@@ -675,6 +677,36 @@ export interface AwardSeason {
   _status?: ('draft' | 'published') | null;
 }
 /**
+ * One entry for each NE8 championship a Poland Seminary team has won. Add past years too — each one shows on the NE8 Champions page and on that sport’s page.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ne8-championships".
+ */
+export interface Ne8Championship {
+  id: number;
+  name?: string | null;
+  sport: number | Sport;
+  /**
+   * e.g. "2025-2026"
+   */
+  schoolYear: string;
+  title: 'champions' | 'co-champions' | 'tournament-champions';
+  /**
+   * Only for Cross Country, Swimming & Diving, and Track & Field.
+   */
+  division?: ('Boys' | 'Girls') | null;
+  /**
+   * Optional, e.g. "7-0 in the NE8".
+   */
+  record?: string | null;
+  /**
+   * Optional team photo.
+   */
+  teamPhoto?: (number | null) | Media;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * Finished NE8 award card images (1500 × 2100 px PNG — a trading card at 600 dpi — with anything outside the card shape left transparent) and season cover photos. Usually added from an award season's "Quick fill" box rather than here.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -791,6 +823,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'award-seasons';
         value: number | AwardSeason;
+      } | null)
+    | ({
+        relationTo: 'ne8-championships';
+        value: number | Ne8Championship;
       } | null)
     | ({
         relationTo: 'award-photos';
@@ -1135,6 +1171,21 @@ export interface AwardSeasonsSelect<T extends boolean = true> {
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ne8-championships_select".
+ */
+export interface Ne8ChampionshipsSelect<T extends boolean = true> {
+  name?: T;
+  sport?: T;
+  schoolYear?: T;
+  title?: T;
+  division?: T;
+  record?: T;
+  teamPhoto?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

@@ -26,7 +26,7 @@ export const AwardPhotos: CollectionConfig = {
     hidden: true,
     useAsTitle: 'alt',
     defaultColumns: ['filename', 'alt', 'updatedAt'],
-    group: 'NE8 Awards',
+    group: 'NE8',
     description:
       'Finished NE8 award card images (1500 × 2100 px PNG — a trading card at 600 dpi — with anything outside the card shape left transparent) and season cover photos. Usually added from an award season\'s "Quick fill" box rather than here.',
   },

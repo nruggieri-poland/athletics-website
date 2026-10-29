@@ -1,0 +1,169 @@
+---
+// polandathletics.com/ne8/champions — every NE8 championship a Poland
+// Seminary team has won, by school year (newest first), then a by-sport
+// summary table. Entries come from the CMS's NE8 Championships list, so
+// adding a title there is the only upkeep.
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import AwardsHero from "../../components/awards/AwardsHero.astro";
+import { mediaUrl } from "../../lib/payload";
+import {
+  TITLE_LABELS,
+  championshipTeam,
+  getChampionships,
+  groupChampionshipsByYear,
+  shortSchoolYear,
+} from "../../lib/championships";
+
+const championships = await getChampionships();
+const years = groupChampionshipsByYear(championships);
+
+// One row per team (division + sport) for the summary table, in the
+// sports' own order, with every year it won.
+const bySport = new Map<
+  string,
+  { team: string; slug: string; sortOrder: number; years: string[] }
+>();
+for (const championship of championships) {
+  const team = championshipTeam(championship);
+  const row = bySport.get(team) ?? {
+    team,
+    slug: championship.sport.slug,
+    sortOrder: championship.sport.sortOrder ?? 0,
+    years: [],
+  };
+  row.years.push(shortSchoolYear(championship.schoolYear));
+  bySport.set(team, row);
+}
+const sportRows = [...bySport.values()].sort(
+  (a, b) => a.sortOrder - b.sortOrder || a.team.localeCompare(b.team),
+);
+---
+
+<BaseLayout
+  title="NE8 Champions"
+  description="NE8 championships won by Poland Seminary teams, by school year and by sport."
+>
+  <AwardsHero
+    crumbs={[
+      { label: "NE8", href: "/ne8" },
+      { label: "Champions", href: "/ne8/champions" },
+    ]}
+    eyebrow="Northeast 8 Athletic Conference"
+    title="NE8 Champions"
+    lede="NE8 championships won by Poland Seminary teams, by school year and by sport."
+  />
+
+  {
+    years.length > 0 ? (
+      <>
+        {years.map((year) => (
+          <section
+            class="mx-auto max-w-content px-6 pt-14"
+            aria-labelledby={`year-${year.schoolYear}`}
+          >
+            <h2
+              id={`year-${year.schoolYear}`}
+              class="mb-6 border-b border-ink-100 pb-3 text-h2 font-black tracking-tight text-ink-900"
+            >
+              {year.schoolYear}
+            </h2>
+            <ul class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {year.championships.map((championship) => (
+                <li class="flex overflow-hidden rounded-xl border border-ink-100 bg-surface">
+                  {championship.teamPhoto?.url ? (
+                    <img
+                      src={mediaUrl(championship.teamPhoto)}
+                      alt={`${year.schoolYear} ${championshipTeam(championship)} team`}
+                      loading="lazy"
+                      class="w-28 shrink-0 object-cover sm:w-32"
+                    />
+                  ) : (
+                    <span
+                      class="grid w-16 shrink-0 place-items-center bg-primary-900 text-secondary"
+                      aria-hidden="true"
+                    >
+                      <svg
+                        class="h-7 w-7"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.6"
+                      >
+                        <path
+                          d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4ZM7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                      </svg>
+                    </span>
+                  )}
+                  <div class="p-4">
+                    <a
+                      href={`/${championship.sport.slug}`}
+                      class="font-bold text-ink-900 underline-offset-2 hover:text-primary-600 hover:underline"
+                    >
+                      {championshipTeam(championship)}
+                    </a>
+                    <p class="mt-1 text-sm font-semibold text-primary-600">
+                      {TITLE_LABELS[championship.title]}
+                    </p>
+                    {championship.record && (
+                      <p class="mt-1 text-sm text-ink-600">{championship.record}</p>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))}
+
+        <section class="mx-auto max-w-content px-6 py-14" aria-labelledby="by-sport-heading">
+          <h2
+            id="by-sport-heading"
+            class="mb-6 border-b border-ink-100 pb-3 text-h2 font-black tracking-tight text-ink-900"
+          >
+            By sport
+          </h2>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+              <caption class="sr-only">NE8 championships by sport</caption>
+              <thead>
+                <tr class="border-b border-ink-200 text-xs uppercase tracking-wide text-ink-600">
+                  <th scope="col" class="py-2 pr-4 font-semibold">
+                    Team
+                  </th>
+                  <th scope="col" class="py-2 pr-4 font-semibold">
+                    Titles
+                  </th>
+                  <th scope="col" class="py-2 font-semibold">
+                    School years
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {sportRows.map((row) => (
+                  <tr class="border-b border-ink-100">
+                    <th scope="row" class="py-3 pr-4 font-semibold">
+                      <a
+                        href={`/${row.slug}`}
+                        class="text-ink-900 underline-offset-2 hover:text-primary-600 hover:underline"
+                      >
+                        {row.team}
+                      </a>
+                    </th>
+                    <td class="py-3 pr-4 text-ink-900">{row.years.length}</td>
+                    <td class="py-3 text-ink-600">{row.years.join(", ")}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </>
+    ) : (
+      <section class="mx-auto max-w-content px-6 py-20 text-center">
+        <p class="text-lg font-semibold text-ink-900">No championships have been added yet.</p>
+      </section>
+    )
+  }
+</BaseLayout>

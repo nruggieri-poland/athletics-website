@@ -18,6 +18,7 @@ import { Links } from './collections/Links.ts'
 import { Galleries } from './collections/Galleries.ts'
 import { SpecialPages } from './collections/SpecialPages.ts'
 import { AwardSeasons } from './collections/AwardSeasons.ts'
+import { NE8Championships } from './collections/NE8Championships.ts'
 import { AwardPhotos } from './collections/AwardPhotos.ts'
 import { SiteSettings } from './globals/SiteSettings.ts'
 import { Navigation } from './globals/Navigation.ts'
@@ -84,6 +85,7 @@ export default buildConfig({
     Galleries,
     SpecialPages,
     AwardSeasons,
+    NE8Championships,
     AwardPhotos,
   ],
   globals: [SiteSettings, Navigation, SyncStatus],
@@ -122,6 +124,12 @@ export default buildConfig({
     pool: {
       connectionString: process.env.DATABASE_URI || '',
     },
+    // Schema changes only ever come from migrations, locally as on the
+    // server. Payload's default dev-mode push quietly alters the local
+    // database to match the config, which then clashes with the migration
+    // for that change ("column already exists") and leaves a "dev" marker
+    // that makes migrate:create prompt. After pulling, run `npm run migrate`.
+    push: false,
   }),
   sharp,
   typescript: {
