@@ -22,6 +22,7 @@ import * as migration_20261026_130112_add_ne8_awards from './20261026_130112_add
 import * as migration_20261027_022230_award_seasons_publishing from './20261027_022230_award_seasons_publishing';
 import * as migration_20261028_210051_award_cards_in_media from './20261028_210051_award_cards_in_media';
 import * as migration_20261028_210654_award_season_card_folder from './20261028_210654_award_season_card_folder';
+import * as migration_20261029_020603_ne8_championships from './20261029_020603_ne8_championships';
 
 export const migrations = [
   {
@@ -143,5 +144,10 @@ export const migrations = [
     up: migration_20261028_210654_award_season_card_folder.up,
     down: migration_20261028_210654_award_season_card_folder.down,
     name: '20261028_210654_award_season_card_folder',
+  },
+  {
+    up: migration_20261029_020603_ne8_championships.up,
+    down: migration_20261029_020603_ne8_championships.down,
+    name: '20261029_020603_ne8_championships',
   },
 ];

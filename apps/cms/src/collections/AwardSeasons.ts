@@ -146,7 +146,7 @@ export const AwardSeasons: CollectionConfig = {
   admin: {
     useAsTitle: 'title',
     defaultColumns: ['title', '_status', 'updatedAt'],
-    group: 'NE8 Awards',
+    group: 'NE8',
     description:
       'One entry per season (e.g. 2025-2026 Winter) holding all of its NE8 All-Conference award cards. Use "Quick fill" to paste the list from the awards spreadsheet and drop in all the finished card images at once. "Save Draft" while you build it, "Publish" to put it on the site, and "Unpublish" (in the ⋮ menu) to take it back down.',
   },

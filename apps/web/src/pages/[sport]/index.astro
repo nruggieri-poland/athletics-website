@@ -6,7 +6,6 @@ import GamesCarousel from "../../components/home/GamesCarousel.astro";
 import ScheduleList from "../../components/team/ScheduleList.astro";
 import EventLinkPromo from "../../components/shared/EventLinkPromo.astro";
 import ArticleCard from "../../components/articles/ArticleCard.astro";
-import AwardCard from "../../components/awards/AwardCard.astro";
 import {
   getSports,
   getTeamsBySport,
@@ -19,7 +18,14 @@ import {
 } from "../../lib/payload";
 import type { Game } from "../../lib/payload";
 import type { AwardSeason } from "../../lib/awards";
-import { awardsForSport, getAwardSeasons, seasonName, sportAwardsHref } from "../../lib/awards";
+import { awardStats, awardsForSport, getAwardSeasons, photoUrl, seasonName, sportAwardsHref } from "../../lib/awards";
+import type { Championship } from "../../lib/championships";
+import {
+  TITLE_LABELS,
+  championshipsForSport,
+  getChampionships,
+  shortSchoolYear,
+} from "../../lib/championships";
 
 export async function getStaticPaths() {
   const sports = await getSports();
@@ -29,6 +35,7 @@ export async function getStaticPaths() {
   } catch {
     // CMS unreachable at build time — the All-Conference section just doesn't render.
   }
+  const championships = await getChampionships();
   return Promise.all(
     sports.map(async (sport) => ({
       params: { sport: sport.slug },
@@ -39,15 +46,28 @@ export async function getStaticPaths() {
         upcomingGames: await getUpcomingGamesForSport(sport.id, 10),
         seasonGames: await getSchoolYearGamesForSport(sport.id),
         awardYears: awardsForSport(awardSeasons, sport.slug),
+        championships: championshipsForSport(championships, sport.slug),
       },
     })),
   );
 }
 
-const { sport, teams, articles, upcomingGames, seasonGames, awardYears } = Astro.props;
-// The sport's most recent NE8 honors as a teaser for /[sport]/all-conference.
+const { sport, teams, articles, upcomingGames, seasonGames, awardYears, championships } = Astro.props;
+// The NE8 block near the bottom: this sport's championships, and its most
+// recent All-Conference season as a short summary linking to
+// /[sport]/all-conference.
 const latestAwards = awardYears[0];
-const totalAwards = awardYears.reduce((sum, year) => sum + year.awards.length, 0);
+const latestStats = latestAwards ? awardStats(latestAwards.awards).filter((stat) => stat.value > 0) : [];
+const latestThumbs = (latestAwards?.awards ?? []).filter((award) => award.photo?.url).slice(0, 3);
+// "Girls 2024-25", "2023-24 (Co-Champions)"
+const championshipLabel = (championship: Championship) =>
+  [
+    championship.division,
+    shortSchoolYear(championship.schoolYear),
+    championship.title !== "champions" ? `(${TITLE_LABELS[championship.title].replace("NE8 ", "")})` : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 const activeTeams = sortTeamsByLevel(teams.filter((t) => t.isActive));
 
 // One ScheduleList per level, cycled via the tabs below rather than
@@ -139,32 +159,54 @@ for (const game of seasonGames) {
     </section>
   )}
 
-  {latestAwards && (
-    <section class="border-t border-ink-100 bg-ink-50">
-      <div class="mx-auto max-w-content px-6 py-14">
-        <div class="mb-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
-          <div>
-            <p class="text-xs font-semibold uppercase tracking-wide text-primary-600">NE8 All-Conference</p>
-            <h2 class="text-h3 font-semibold text-ink-900">{seasonName(latestAwards.season)} Awards</h2>
-          </div>
-          <a href={sportAwardsHref(sport.slug)} class="text-sm font-semibold text-primary-600 hover:underline">
-            {totalAwards > latestAwards.awards.length
-              ? `All ${totalAwards} ${sport.name} awards →`
-              : `All ${sport.name} awards →`}
-          </a>
+  {(latestAwards || championships.length > 0) && (
+    <section class="border-t border-ink-100" aria-labelledby="ne8-heading">
+      <div class="mx-auto max-w-content px-6 py-10">
+        <h2 id="ne8-heading" class="mb-5 text-lg font-bold text-ink-900">
+          {sport.name} in the NE8
+        </h2>
+        <div class="grid gap-4 md:grid-cols-2">
+          {championships.length > 0 && (
+            <div class="rounded-xl border border-ink-100 bg-ink-50 p-5">
+              <h3 class="text-xs font-semibold uppercase tracking-wide text-ink-600">
+                NE8 Championships
+              </h3>
+              <ul class="mt-3 flex flex-wrap gap-2">
+                {championships.map((championship) => (
+                  <li class="rounded-full bg-primary-900 px-3 py-1 text-sm font-semibold text-white">
+                    {championshipLabel(championship)}
+                  </li>
+                ))}
+              </ul>
+              <a href="/ne8/champions" class="mt-4 inline-block text-sm font-semibold text-primary-600 underline underline-offset-2">
+                All NE8 champions
+              </a>
+            </div>
+          )}
+          {latestAwards && (
+            <div class="flex gap-4 rounded-xl border border-ink-100 bg-ink-50 p-5">
+              <div class="min-w-0 flex-1">
+                <h3 class="text-xs font-semibold uppercase tracking-wide text-ink-600">
+                  NE8 All-Conference · {seasonName(latestAwards.season)}
+                </h3>
+                <p class="mt-3 text-sm text-ink-900">
+                  {latestAwards.awards.length} {latestAwards.awards.length === 1 ? "award" : "awards"}
+                  {latestStats.length > 0 && `: ${latestStats.map((stat) => `${stat.value} ${stat.label}`).join(", ")}`}
+                </p>
+                <a href={sportAwardsHref(sport.slug)} class="mt-4 inline-block text-sm font-semibold text-primary-600 underline underline-offset-2">
+                  {sport.name} All-Conference awards
+                </a>
+              </div>
+              {latestThumbs.length > 0 && (
+                <div class="flex shrink-0 -space-x-6" aria-hidden="true">
+                  {latestThumbs.map((award) => (
+                    <img src={photoUrl(award.photo, "thumbnail")} alt="" loading="lazy" class="h-24 w-auto drop-shadow" />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
-        <ul class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {latestAwards.awards.slice(0, 3).map((award) => (
-            <li><AwardCard award={award} /></li>
-          ))}
-        </ul>
-        {latestAwards.awards.length > 3 && (
-          <p class="mt-6 text-center">
-            <a href={sportAwardsHref(sport.slug)} class="inline-flex rounded-full bg-primary-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-primary-700">
-              View all {latestAwards.awards.length} {seasonName(latestAwards.season)} awards
-            </a>
-          </p>
-        )}
       </div>
     </section>
   )}
