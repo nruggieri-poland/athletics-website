@@ -20,6 +20,7 @@ import type { Game } from "../../lib/payload";
 import type { AwardSeason } from "../../lib/awards";
 import { awardStats, awardsForSport, getAwardSeasons, photoUrl, seasonName, sportAwardsHref } from "../../lib/awards";
 import type { Championship } from "../../lib/championships";
+import { getRecordBooks, recordBookHref, shownRecords } from "../../lib/schoolRecords";
 import {
   TITLE_LABELS,
   championshipsForSport,
@@ -36,6 +37,7 @@ export async function getStaticPaths() {
     // CMS unreachable at build time — the All-Conference section just doesn't render.
   }
   const championships = await getChampionships();
+  const recordBooks = await getRecordBooks();
   return Promise.all(
     sports.map(async (sport) => ({
       params: { sport: sport.slug },
@@ -47,12 +49,19 @@ export async function getStaticPaths() {
         seasonGames: await getSchoolYearGamesForSport(sport.id),
         awardYears: awardsForSport(awardSeasons, sport.slug),
         championships: championshipsForSport(championships, sport.slug),
+        recordBooks: recordBooks.filter((book) => book.sport.slug === sport.slug),
       },
     })),
   );
 }
 
-const { sport, teams, articles, upcomingGames, seasonGames, awardYears, championships } = Astro.props;
+const { sport, teams, articles, upcomingGames, seasonGames, awardYears, championships, recordBooks } =
+  Astro.props;
+// School records block: only for a sport whose record book is on the
+// website. A few of its records as a teaser, linking to /[sport]/records.
+const schoolRecords = recordBooks.flatMap((book) =>
+  shownRecords(book).map((record) => ({ ...record, division: book.division })),
+);
 // The NE8 block near the bottom: this sport's championships, and its most
 // recent All-Conference season as a short summary linking to
 // /[sport]/all-conference.
@@ -155,6 +164,34 @@ for (const game of seasonGames) {
       <h2 class="mb-6 text-h3 font-semibold text-ink-900">{sport.name} News</h2>
       <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {articles.map((article) => <ArticleCard article={article} />)}
+      </div>
+    </section>
+  )}
+
+  {schoolRecords.length > 0 && (
+    <section class="border-t border-ink-100" aria-labelledby="records-heading">
+      <div class="mx-auto max-w-content px-6 py-10">
+        <div class="mb-5 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
+          <h2 id="records-heading" class="text-lg font-bold text-ink-900">
+            {sport.name} School Records
+          </h2>
+          <a href={recordBookHref(sport.slug)} class="text-sm font-semibold text-primary-600 underline underline-offset-2">
+            All {schoolRecords.length} {sport.name} records
+          </a>
+        </div>
+        <ul class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {schoolRecords.slice(0, 4).map((record) => (
+            <li class="rounded-xl border border-ink-100 bg-ink-50 p-5">
+              <h3 class="text-xs font-semibold uppercase tracking-wide text-ink-600">
+                {[record.division, record.category].filter(Boolean).join(" · ")}
+              </h3>
+              <p class="mt-2 text-2xl font-black tracking-tight text-primary-600 tabular-nums">{record.mark}</p>
+              <p class="mt-1 text-sm text-ink-900">
+                {record.performances.flatMap((performance) => performance.holders.map((holder) => holder.name)).join(", ")}
+              </p>
+            </li>
+          ))}
+        </ul>
       </div>
     </section>
   )}

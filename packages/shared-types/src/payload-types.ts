@@ -82,6 +82,7 @@ export interface Config {
     'award-seasons': AwardSeason;
     'ne8-championships': Ne8Championship;
     'award-photos': AwardPhoto;
+    'record-books': RecordBook;
     'payload-kv': PayloadKv;
     'payload-folders': FolderInterface;
     'payload-locked-documents': PayloadLockedDocument;
@@ -109,6 +110,7 @@ export interface Config {
     'award-seasons': AwardSeasonsSelect<false> | AwardSeasonsSelect<true>;
     'ne8-championships': Ne8ChampionshipsSelect<false> | Ne8ChampionshipsSelect<true>;
     'award-photos': AwardPhotosSelect<false> | AwardPhotosSelect<true>;
+    'record-books': RecordBooksSelect<false> | RecordBooksSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-folders': PayloadFoldersSelect<false> | PayloadFoldersSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -749,6 +751,78 @@ export interface AwardPhoto {
   };
 }
 /**
+ * One record book per sport. Add each record-setting or record-tying performance once — the site works out who holds each record now. Books stay private until "Show on the website" is checked.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "record-books".
+ */
+export interface RecordBook {
+  id: number;
+  name?: string | null;
+  sport: number | Sport;
+  /**
+   * Only for Cross Country, Swimming & Diving, and Track & Field — one book for Boys, one for Girls.
+   */
+  division?: ('Boys' | 'Girls') | null;
+  /**
+   * Leave unchecked to keep this record book private — only admins can see it. Checked, its current records show on the sport's Records page and on /records.
+   */
+  isPublic?: boolean | null;
+  currentRecords?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Columns in the order Status, Record, Holder(s), Mark, Date, Notes (a header row is fine). Leave Status blank and the first entry in each record becomes Original, the rest Broken.
+   */
+  pasteList?: string | null;
+  /**
+   * One row per record kept for this sport (e.g. "18 Holes, Individual"), in the order the site should list them. Drag to reorder.
+   */
+  categories?:
+    | {
+        name: string;
+        /**
+         * Optional — lets the Record check catch a "Broken" mark that doesn't actually beat the record.
+         */
+        betterWhen?: ('none' | 'lower' | 'higher') | null;
+        /**
+         * Every time this record was set, broken, or tied — in any order; the site sorts by date.
+         */
+        entries?:
+          | {
+              status: 'original' | 'broken' | 'tied';
+              mark: string;
+              date: string;
+              /**
+               * One row per athlete — a team record lists every member.
+               */
+              holders?:
+                | {
+                    name: string;
+                    classOf?: number | null;
+                    id?: string | null;
+                  }[]
+                | null;
+              /**
+               * Optional — the course or venue, the meet, anything worth noting.
+               */
+              notes?: string | null;
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
@@ -831,6 +905,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'award-photos';
         value: number | AwardPhoto;
+      } | null)
+    | ({
+        relationTo: 'record-books';
+        value: number | RecordBook;
       } | null)
     | ({
         relationTo: 'payload-folders';
@@ -1228,6 +1306,43 @@ export interface AwardPhotosSelect<T extends boolean = true> {
               filename?: T;
             };
       };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "record-books_select".
+ */
+export interface RecordBooksSelect<T extends boolean = true> {
+  name?: T;
+  sport?: T;
+  division?: T;
+  isPublic?: T;
+  currentRecords?: T;
+  pasteList?: T;
+  categories?:
+    | T
+    | {
+        name?: T;
+        betterWhen?: T;
+        entries?:
+          | T
+          | {
+              status?: T;
+              mark?: T;
+              date?: T;
+              holders?:
+                | T
+                | {
+                    name?: T;
+                    classOf?: T;
+                    id?: T;
+                  };
+              notes?: T;
+              id?: T;
+            };
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

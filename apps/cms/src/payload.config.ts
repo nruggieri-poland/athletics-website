@@ -20,6 +20,7 @@ import { SpecialPages } from './collections/SpecialPages.ts'
 import { AwardSeasons } from './collections/AwardSeasons.ts'
 import { NE8Championships } from './collections/NE8Championships.ts'
 import { AwardPhotos } from './collections/AwardPhotos.ts'
+import { RecordBooks } from './collections/RecordBooks.ts'
 import { SiteSettings } from './globals/SiteSettings.ts'
 import { Navigation } from './globals/Navigation.ts'
 import { SyncStatus } from './globals/SyncStatus.ts'
@@ -87,6 +88,7 @@ export default buildConfig({
     AwardSeasons,
     NE8Championships,
     AwardPhotos,
+    RecordBooks,
   ],
   globals: [SiteSettings, Navigation, SyncStatus],
   // Public read access on the auto-generated payload-folders collection —

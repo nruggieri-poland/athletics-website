@@ -1,0 +1,97 @@
+---
+// polandathletics.com/records — every sport whose school record book is on
+// the website, by season, each linking to its /<sport>/records page. Books
+// are kept in the CMS (School Records); private ones never appear here.
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import AwardsHero from "../../components/awards/AwardsHero.astro";
+import type { SeasonType } from "../../lib/payload";
+import {
+  bookTitle,
+  getRecordBooks,
+  isNewThisYear,
+  recordBookHref,
+  shownRecords,
+} from "../../lib/schoolRecords";
+
+const books = await getRecordBooks();
+const SEASONS: SeasonType[] = ["Fall", "Winter", "Spring"];
+const seasons = SEASONS.map((season) => ({
+  season,
+  books: books.filter((book) => book.sport.seasonType === season),
+})).filter((group) => group.books.length > 0);
+
+const totalRecords = books.reduce((sum, book) => sum + shownRecords(book).length, 0);
+const totalNew = books.reduce(
+  (sum, book) => sum + shownRecords(book).filter((record) => isNewThisYear(record)).length,
+  0,
+);
+---
+
+<BaseLayout
+  title="School Records"
+  description="Poland Seminary school records in every sport, and the athletes who hold them."
+>
+  <AwardsHero
+    crumbs={[{ label: "School Records", href: "/records" }]}
+    eyebrow="Poland Seminary Athletics"
+    title="School Records"
+    lede="The best marks in Poland Seminary history, sport by sport."
+    stats={totalRecords > 0
+      ? [
+          { value: totalRecords, label: totalRecords === 1 ? "record" : "records" },
+          ...(totalNew > 0 ? [{ value: totalNew, label: "set this school year" }] : []),
+        ]
+      : []}
+  />
+
+  {
+    seasons.length > 0 ? (
+      <div class="pb-16">
+        {seasons.map((group) => (
+          <section
+            class="mx-auto max-w-content px-6 pt-12"
+            aria-labelledby={`season-${group.season}`}
+          >
+            <h2
+              id={`season-${group.season}`}
+              class="mb-6 border-b border-ink-100 pb-3 text-h2 font-black tracking-tight text-ink-900"
+            >
+              {group.season}
+            </h2>
+            <ul class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {group.books.map((book) => {
+                const records = shownRecords(book);
+                const fresh = records.filter((record) => isNewThisYear(record)).length;
+                return (
+                  <li>
+                    <a
+                      href={`${recordBookHref(book.sport.slug)}${book.division ? `#records-${book.division.toLowerCase()}` : ""}`}
+                      class="group flex h-full flex-col rounded-xl border border-ink-100 bg-surface p-5 transition hover:border-primary-600"
+                    >
+                      <span class="font-bold text-ink-900 group-hover:text-primary-600">
+                        {bookTitle(book)}
+                      </span>
+                      <span class="mt-1 text-sm text-ink-600">
+                        {records.length} {records.length === 1 ? "record" : "records"}
+                      </span>
+                      {fresh > 0 && (
+                        <span class="mt-3 self-start rounded-full bg-secondary px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-primary-900">
+                          {fresh} new this year
+                        </span>
+                      )}
+                    </a>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        ))}
+      </div>
+    ) : (
+      <section class="mx-auto max-w-content px-6 py-20 text-center">
+        <p class="text-lg font-semibold text-ink-900">School records are on their way.</p>
+        <p class="mt-2 text-ink-600">Check back soon.</p>
+      </section>
+    )
+  }
+</BaseLayout>
