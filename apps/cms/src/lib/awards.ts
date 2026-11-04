@@ -128,7 +128,7 @@ export const TEMPLATE_CSV = 'Name,Grade,Award,Sport\r\n'
 // One spreadsheet row's cells. Tab-separated when copied out of a
 // spreadsheet; otherwise CSV, where a quoted cell may contain commas
 // ("Smith, Jr.") and "" stands for a literal quote.
-function splitCells(line: string): string[] {
+export function splitCells(line: string): string[] {
   if (line.includes('\t')) return line.split('\t').map((cell) => cell.trim())
   const cells: string[] = []
   let cell = ''

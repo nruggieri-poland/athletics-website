@@ -1,0 +1,132 @@
+---
+// polandathletics.com/boys-golf/records — one sport's school records: each
+// record's current mark and whoever holds it (everyone, when it's been tied).
+// From the CMS's School Records (apps/cms/src/collections/RecordBooks.ts);
+// only books marked "Show on the website" get a page at all, and only
+// current records are shown — the history stays in the CMS. Co-ed sports
+// get a Boys and a Girls section.
+//
+// A static route beside [level]/ — Astro ranks a static segment above a
+// dynamic one, so this never collides with a team level's page.
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import AwardsHero from "../../components/awards/AwardsHero.astro";
+import {
+  bookTitle,
+  classOfLabel,
+  getRecordBooks,
+  isNewThisYear,
+  recordBookHref,
+  shownRecords,
+} from "../../lib/schoolRecords";
+
+export async function getStaticPaths() {
+  const books = await getRecordBooks();
+  const bySport = new Map<string, typeof books>();
+  for (const book of books) {
+    bySport.set(book.sport.slug, [...(bySport.get(book.sport.slug) ?? []), book]);
+  }
+  return [...bySport.values()].map((sportBooks) => ({
+    params: { sport: sportBooks[0].sport.slug },
+    props: { sport: sportBooks[0].sport, books: sportBooks },
+  }));
+}
+
+const { sport, books } = Astro.props;
+const allRecords = books.flatMap(shownRecords);
+const newCount = allRecords.filter((record) => isNewThisYear(record)).length;
+const showDivisions = books.length > 1 || books.some((book) => book.division);
+const sectionId = (division?: string) => `records-${(division ?? "all").toLowerCase()}`;
+---
+
+<BaseLayout
+  title={`${sport.name} School Records`}
+  description={`Poland Seminary ${sport.name} school records and the athletes who hold them.`}
+>
+  <AwardsHero
+    crumbs={[
+      { label: sport.name, href: `/${sport.slug}` },
+      { label: "Records", href: recordBookHref(sport.slug) },
+    ]}
+    eyebrow="Poland Seminary School Records"
+    title={`${sport.name} Records`}
+    lede={`The best marks in Poland Seminary ${sport.name} history, and the athletes who hold them.`}
+    stats={[
+      { value: allRecords.length, label: allRecords.length === 1 ? "record" : "records" },
+      ...(newCount > 0 ? [{ value: newCount, label: "set this school year" }] : []),
+    ]}
+  >
+    <a
+      href="/records"
+      class="mt-10 inline-flex items-center gap-2 text-sm font-semibold text-white/80 hover:text-white hover:underline"
+    >
+      School records, every sport &rarr;
+    </a>
+  </AwardsHero>
+
+  {
+    books.map((book) => (
+      <section
+        class="mx-auto max-w-content px-6 pt-12 last:pb-16"
+        aria-labelledby={showDivisions ? sectionId(book.division) : undefined}
+        aria-label={showDivisions ? undefined : `${bookTitle(book)} records`}
+      >
+        {showDivisions && (
+          <h2
+            id={sectionId(book.division)}
+            class="mb-6 border-b border-ink-100 pb-3 text-h2 font-black tracking-tight text-ink-900"
+          >
+            {bookTitle(book)}
+          </h2>
+        )}
+        <ul class="grid gap-5 md:grid-cols-2">
+          {shownRecords(book).map((record) => {
+            const tied = record.performances.length > 1;
+            return (
+              <li class="flex flex-col rounded-xl border border-ink-100 bg-surface p-5 sm:p-6">
+                <div class="flex flex-wrap items-center gap-2">
+                  <h3 class="text-xs font-semibold uppercase tracking-wide text-ink-600">
+                    {record.category}
+                  </h3>
+                  {tied && (
+                    <span class="rounded-full bg-ink-100 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-ink-700">
+                      Tied
+                    </span>
+                  )}
+                  {isNewThisYear(record) && (
+                    <span class="rounded-full bg-secondary px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-primary-900">
+                      New
+                    </span>
+                  )}
+                </div>
+                <p class="mt-2 break-words text-4xl font-black tracking-tight text-primary-600 tabular-nums">
+                  {record.mark}
+                </p>
+                <ul class="mt-4 space-y-3 border-t border-ink-100 pt-4">
+                  {record.performances.map((performance) => (
+                    <li>
+                      <ul class="flex flex-wrap gap-x-5 gap-y-1">
+                        {performance.holders.map((holder) => (
+                          <li>
+                            <span class="font-semibold text-ink-900">{holder.name}</span>
+                            {holder.classOf && (
+                              <span class="ml-1.5 text-xs font-medium text-ink-500">
+                                {classOfLabel(holder)}
+                              </span>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                      <p class="mt-0.5 text-sm text-ink-600">
+                        {[performance.date, performance.notes].filter(Boolean).join(" · ")}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+    ))
+  }
+</BaseLayout>
