@@ -24,6 +24,7 @@ import * as migration_20261028_210051_award_cards_in_media from './20261028_2100
 import * as migration_20261028_210654_award_season_card_folder from './20261028_210654_award_season_card_folder';
 import * as migration_20261029_020603_ne8_championships from './20261029_020603_ne8_championships';
 import * as migration_20261104_150216_add_record_books from './20261104_150216_add_record_books';
+import * as migration_20261108_173022_media_titles from './20261108_173022_media_titles';
 
 export const migrations = [
   {
@@ -154,6 +155,11 @@ export const migrations = [
   {
     up: migration_20261104_150216_add_record_books.up,
     down: migration_20261104_150216_add_record_books.down,
-    name: '20261104_150216_add_record_books'
+    name: '20261104_150216_add_record_books',
+  },
+  {
+    up: migration_20261108_173022_media_titles.up,
+    down: migration_20261108_173022_media_titles.down,
+    name: '20261108_173022_media_titles'
   },
 ];

@@ -5,6 +5,20 @@ import {
 } from '../hooks/scheduleRebuildHooks.ts'
 import { tagsField } from '../lib/fields/tagsField.ts'
 
+// "2026-fall-angelo-rinaldi.png" → "2026 Fall Angelo Rinaldi". Fills in a
+// blank Title or Alt Text on save, so a batch upload never needs typing.
+// The 20261108 media-titles migration uses the same rule for its backfill.
+export function nameFromFilename(filename: unknown): string {
+  return typeof filename === 'string'
+    ? filename
+        .replace(/\.[a-z0-9]+$/i, '')
+        .replace(/[-_]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .replace(/\b\w/g, (letter: string) => letter.toUpperCase())
+    : ''
+}
+
 export const Media: CollectionConfig = {
   slug: 'media',
   // Public read access — images/uploads need to be servable directly to the
@@ -13,7 +27,12 @@ export const Media: CollectionConfig = {
     read: () => true,
   },
   admin: {
-    useAsTitle: 'alt',
+    // Title (not Alt Text) names each file in the admin — list view, sorting,
+    // and every "choose media" picker. Alt Text is for screen readers and is
+    // often a full sentence, which made a poor name.
+    useAsTitle: 'title',
+    defaultColumns: ['title', 'filename', 'updatedAt'],
+    listSearchableFields: ['title', 'alt', 'filename'],
     group: 'Resources',
   },
   // Native Payload folders, same as Documents — lets an admin drag uploads
@@ -64,6 +83,17 @@ export const Media: CollectionConfig = {
   },
   fields: [
     {
+      name: 'title',
+      type: 'text',
+      admin: {
+        description:
+          'Short name shown on the site (download lists, PDF buttons) and used to find this file in the admin. Filled in from the filename if left blank.',
+      },
+      hooks: {
+        beforeChange: [({ value, data }) => value || nameFromFilename(data?.filename) || value],
+      },
+    },
+    {
       name: 'alt',
       type: 'text',
       // Not required up front, so a whole batch can be uploaded at once
@@ -77,18 +107,7 @@ export const Media: CollectionConfig = {
       },
       hooks: {
         beforeChange: [
-          ({ value, data }) => {
-            if (value) return value
-            const filename = typeof data?.filename === 'string' ? data.filename : ''
-            return (
-              filename
-                .replace(/\.[a-z0-9]+$/i, '')
-                .replace(/[-_]+/g, ' ')
-                .replace(/\s+/g, ' ')
-                .trim()
-                .replace(/\b\w/g, (letter: string) => letter.toUpperCase()) || value
-            )
-          },
+          ({ value, data }) => value || nameFromFilename(data?.filename) || value,
         ],
       },
     },
@@ -112,14 +131,6 @@ export const Media: CollectionConfig = {
         tagsField(
           'Controls which Resources page(s) this shows on — tags are open, use whichever apply.',
         ),
-        {
-          name: 'title',
-          type: 'text',
-          admin: {
-            description:
-              'Display title in Resources listings — distinct from Alt Text above, which is for screen readers.',
-          },
-        },
         {
           name: 'description',
           type: 'textarea',
