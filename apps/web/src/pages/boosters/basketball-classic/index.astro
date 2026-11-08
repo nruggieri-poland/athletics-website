@@ -5,8 +5,8 @@
 // - the PDF whose title contains "Rules", then the one whose title contains
 //   "Registration", each get a live preview with an Open/Download button
 // - everything else in the section renders below as a plain download list
-// Until that section has items, the page shows "coming soon" and the
-// Boosters sidebar doesn't link to it.
+// The tournament details block below the flyer is hardcoded (see `facts`).
+// The Boosters sidebar only links here once the gallery section has items.
 import BaseLayout from "../../../layouts/BaseLayout.astro";
 import GalleryView from "../../../components/galleries/GalleryView.astro";
 import PdfPreview from "../../../components/shared/PdfPreview.astro";
@@ -26,6 +26,17 @@ const previews = [
 
 const featuredIds = new Set([flyer, ...previews.map((p) => p.pdf)].flatMap((m) => (m ? [m.id] : [])));
 const rest = items.filter(({ item }) => !(item.relationTo === "media" && featuredIds.has(item.value.id)));
+// Tournament details, transcribed from the 2027 flyer. Update here (not in
+// Payload) when the details change.
+const contact = { name: "Brian Antal", email: "PolandBoosterTourney@gmail.com", phone: "(330) 690-8435" };
+const facts = [
+  { label: "Dates", value: "Jan 30–31 & Feb 6–7, 2027", note: "Two weekends, Saturday & Sunday" },
+  { label: "Divisions", value: "4th, 5th & 6th grade", note: "Boys & girls" },
+  { label: "Entry fee", value: "$200 per team", note: "Trophies for winning teams included" },
+  { label: "Format", value: "3 games minimum", note: "2 pool-play games + single-elimination tournament" },
+];
+const venues = ["Poland McKinley Elementary", "Poland Middle School", "Poland Seminary High School"];
+
 const documents = data && rest.length > 0 ? { ...data.gallery, description: undefined, sections: [{ items: rest }] } : null;
 ---
 
@@ -40,36 +51,73 @@ const documents = data && rest.length > 0 ? { ...data.gallery, description: unde
 
     <div class="grid gap-10 py-14 md:grid-cols-[1fr_280px]">
       <div class="min-w-0 space-y-14">
-        {!data ? (
-          <p class="text-ink-400">Tournament details coming soon — check back shortly.</p>
-        ) : (
-          <>
-            {flyer && (
-              <section>
-                <a href={mediaUrl(flyer)} target="_blank" rel="noopener noreferrer" class="block">
-                  <img
-                    src={mediaUrl(flyer)}
-                    alt={flyer.alt || "Basketball Classic flyer"}
-                    class="mx-auto w-full max-w-2xl rounded-xl border border-ink-100 shadow-sm"
-                  />
-                </a>
-              </section>
-            )}
+        {flyer && (
+          <section>
+            <a href={mediaUrl(flyer)} target="_blank" rel="noopener noreferrer" class="block">
+              <img
+                src={mediaUrl(flyer)}
+                alt={flyer.alt || "Basketball Classic flyer"}
+                class="mx-auto w-full max-w-2xl rounded-xl border border-ink-100 shadow-sm"
+              />
+            </a>
+          </section>
+        )}
 
-            {previews.map(({ heading, pdf }) => (
-              <section>
-                <h2 class="text-h3 font-bold text-ink-900">{heading}</h2>
-                <PdfPreview media={pdf} />
-              </section>
+        <section>
+          <h2 class="mb-6 text-h3 font-bold text-ink-900">Tournament Details</h2>
+          <dl class="grid gap-4 sm:grid-cols-2">
+            {facts.map((fact) => (
+              <div class="rounded-xl border border-ink-100 bg-surface p-5">
+                <dt class="text-xs font-semibold uppercase tracking-wide text-primary-600">{fact.label}</dt>
+                <dd class="mt-1 text-lg font-bold text-ink-900">{fact.value}</dd>
+                <dd class="mt-0.5 text-sm text-ink-500">{fact.note}</dd>
+              </div>
             ))}
+          </dl>
 
-            {documents && (
-              <section>
-                <h2 class="mb-6 text-h3 font-bold text-ink-900">Documents</h2>
-                <GalleryView gallery={documents} />
-              </section>
-            )}
-          </>
+          <div class="mt-4 grid gap-4 sm:grid-cols-2">
+            <div class="rounded-xl border border-ink-100 bg-surface p-5">
+              <p class="text-xs font-semibold uppercase tracking-wide text-primary-600">Game locations</p>
+              <ul class="mt-2 space-y-1 text-sm font-semibold text-ink-900">
+                {venues.map((venue) => <li>{venue}</li>)}
+              </ul>
+            </div>
+            <div class="rounded-xl border border-ink-100 bg-surface p-5">
+              <p class="text-xs font-semibold uppercase tracking-wide text-primary-600">Scores & schedules</p>
+              <p class="mt-2 text-sm text-ink-700">
+                Scores, schedules, and rankings are posted on the <span class="font-semibold text-ink-900">SportsEngine Tourney</span> app.
+              </p>
+            </div>
+          </div>
+
+          <div class="mt-4 flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-primary-600 px-7 py-6 text-white">
+            <div>
+              <p class="text-lg font-extrabold">Questions?</p>
+              <p class="mt-0.5 text-sm text-white/85">Contact {contact.name}</p>
+            </div>
+            <div class="flex flex-wrap gap-3">
+              <a href={`mailto:${contact.email}`} class="rounded-lg bg-white px-4 py-2.5 text-sm font-bold text-primary-700 hover:bg-primary-50">
+                {contact.email}
+              </a>
+              <a href={`tel:${contact.phone.replace(/\D/g, "")}`} class="rounded-lg bg-white px-4 py-2.5 text-sm font-bold text-primary-700 hover:bg-primary-50">
+                {contact.phone}
+              </a>
+            </div>
+          </div>
+        </section>
+
+        {previews.map(({ heading, pdf }) => (
+          <section>
+            <h2 class="text-h3 font-bold text-ink-900">{heading}</h2>
+            <PdfPreview media={pdf} />
+          </section>
+        ))}
+
+        {documents && (
+          <section>
+            <h2 class="mb-6 text-h3 font-bold text-ink-900">Documents</h2>
+            <GalleryView gallery={documents} />
+          </section>
         )}
       </div>
 
