@@ -192,6 +192,10 @@ export interface User {
 export interface Media {
   id: number;
   /**
+   * Short name shown on the site (download lists, PDF buttons) and used to find this file in the admin. Filled in from the filename if left blank.
+   */
+  title?: string | null;
+  /**
    * Describe the image for screen readers. Filled in from the filename if left blank.
    */
   alt?: string | null;
@@ -200,10 +204,6 @@ export interface Media {
    * Controls which Resources page(s) this shows on — tags are open, use whichever apply.
    */
   tags?: (number | Tag)[] | null;
-  /**
-   * Display title in Resources listings — distinct from Alt Text above, which is for screen readers.
-   */
-  title?: string | null;
   description?: string | null;
   sortOrder?: number | null;
   isPublic?: boolean | null;
@@ -984,10 +984,10 @@ export interface UsersSelect<T extends boolean = true> {
  * via the `definition` "media_select".
  */
 export interface MediaSelect<T extends boolean = true> {
+  title?: T;
   alt?: T;
   caption?: T;
   tags?: T;
-  title?: T;
   description?: T;
   sortOrder?: T;
   isPublic?: T;
