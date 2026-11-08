@@ -1,0 +1,79 @@
+---
+// Content comes from the "Basketball Classic" section of the All-Sports
+// Booster Club gallery in Payload (see lib/basketballClassic.ts):
+// - the first image in the section is the flyer, shown big at the top
+// - the PDF whose title contains "Rules", then the one whose title contains
+//   "Registration", each get a live preview with an Open/Download button
+// - everything else in the section renders below as a plain download list
+// Until that section has items, the page shows "coming soon" and the
+// Boosters sidebar doesn't link to it.
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import GalleryView from "../../../components/galleries/GalleryView.astro";
+import PdfPreview from "../../../components/shared/PdfPreview.astro";
+import BoosterSidebar from "../../../components/boosters/BoosterSidebar.astro";
+import { mediaUrl, type Media } from "../../../lib/payload";
+import { getBasketballClassicItems, isImage, isPdf, mediaTitle } from "../../../lib/basketballClassic";
+
+const data = await getBasketballClassicItems();
+const items = data?.items ?? [];
+const media = items.flatMap(({ item }) => (item.relationTo === "media" ? [item.value] : []));
+
+const flyer = media.find(isImage);
+const previews = [
+  { heading: "Rules", pdf: media.find((m) => isPdf(m) && mediaTitle(m).includes("rules")) },
+  { heading: "Registration", pdf: media.find((m) => isPdf(m) && mediaTitle(m).includes("registration")) },
+].filter((p): p is { heading: string; pdf: Media } => !!p.pdf);
+
+const featuredIds = new Set([flyer, ...previews.map((p) => p.pdf)].flatMap((m) => (m ? [m.id] : [])));
+const rest = items.filter(({ item }) => !(item.relationTo === "media" && featuredIds.has(item.value.id)));
+const documents = data && rest.length > 0 ? { ...data.gallery, description: undefined, sections: [{ items: rest }] } : null;
+---
+
+<BaseLayout title="Basketball Classic" description="Flyer, rules, registration, and team documents for the All-Sports Boosters Basketball Classic.">
+  <div class="mx-auto max-w-content px-6">
+    <div class="border-b border-ink-100 py-12">
+      <p class="mb-3 text-xs font-semibold uppercase tracking-wide text-primary-600">
+        <a href="/boosters" class="hover:text-primary-700">All-Sports Boosters</a> / Basketball Classic
+      </p>
+      <h1 class="max-w-[20ch] text-h1 font-bold text-ink-900">Basketball Classic</h1>
+    </div>
+
+    <div class="grid gap-10 py-14 md:grid-cols-[1fr_280px]">
+      <div class="min-w-0 space-y-14">
+        {!data ? (
+          <p class="text-ink-400">Tournament details coming soon — check back shortly.</p>
+        ) : (
+          <>
+            {flyer && (
+              <section>
+                <a href={mediaUrl(flyer)} target="_blank" rel="noopener noreferrer" class="block">
+                  <img
+                    src={mediaUrl(flyer)}
+                    alt={flyer.alt || "Basketball Classic flyer"}
+                    class="mx-auto w-full max-w-2xl rounded-xl border border-ink-100 shadow-sm"
+                  />
+                </a>
+              </section>
+            )}
+
+            {previews.map(({ heading, pdf }) => (
+              <section>
+                <h2 class="text-h3 font-bold text-ink-900">{heading}</h2>
+                <PdfPreview media={pdf} />
+              </section>
+            ))}
+
+            {documents && (
+              <section>
+                <h2 class="mb-6 text-h3 font-bold text-ink-900">Documents</h2>
+                <GalleryView gallery={documents} />
+              </section>
+            )}
+          </>
+        )}
+      </div>
+
+      <BoosterSidebar current="/boosters/basketball-classic" />
+    </div>
+  </div>
+</BaseLayout>
