@@ -1,9 +1,18 @@
 ---
+import { getGalleryBySlug } from "../../lib/payload";
+
+// The Basketball Classic link only shows once its Payload gallery is
+// marked "Visible on the live site" — that checkbox is its publish switch.
+const basketballClassic = await getGalleryBySlug("basketball-classic");
+
 const links = [
   { href: "/boosters", label: "About the Boosters", description: "History, mission & impact" },
   { href: "/boosters/resources", label: "Resources", description: "Forms, agreements & documents" },
   { href: "/boosters/program-ads", label: "Program Ads", description: "Fall Athletic Program ad space" },
   { href: "/boosters/sponsorships", label: "Sponsorships", description: "Become a Bulldog Athletics sponsor" },
+  ...(basketballClassic
+    ? [{ href: "/boosters/basketball-classic", label: "Basketball Classic", description: "Tournament flyer & team documents" }]
+    : []),
 ];
 
 interface Props {

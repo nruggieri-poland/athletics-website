@@ -1,0 +1,95 @@
+---
+// Content comes entirely from the "basketball-classic" Gallery in Payload,
+// laid out by section heading (capitalization doesn't matter):
+// - "Flyer": its first item is shown big at the top as an image
+// - "Rules", then "Registration": each PDF in them gets a live preview with
+//   an Open/Download button
+// - every other section renders below as a plain download list
+// The page (and its Boosters sidebar link) stays in "coming soon" mode until
+// the gallery's "Visible on the live site" box is checked.
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import GalleryView from "../../../components/galleries/GalleryView.astro";
+import PdfPreview from "../../../components/shared/PdfPreview.astro";
+import BoosterSidebar from "../../../components/boosters/BoosterSidebar.astro";
+import { getGalleryBySlug, mediaUrl, type GallerySection, type Media } from "../../../lib/payload";
+
+const gallery = await getGalleryBySlug("basketball-classic");
+
+const headingIs = (section: GallerySection, name: string) => section.heading?.trim().toLowerCase() === name;
+const sectionNamed = (name: string) => gallery?.sections.find((s) => headingIs(s, name));
+const mediaIn = (section?: GallerySection): Media[] =>
+  (section?.items ?? []).flatMap(({ item }) => (item.relationTo === "media" ? [item.value] : []));
+
+const flyer = mediaIn(sectionNamed("flyer"))[0];
+const flyerIsImage = !!flyer?.mimeType?.startsWith("image/");
+
+const previewSections = ["rules", "registration"]
+  .map((name) => sectionNamed(name))
+  .filter((s): s is GallerySection => !!s)
+  .map((s) => ({ heading: s.heading!.trim(), pdfs: mediaIn(s).filter((m) => m.mimeType === "application/pdf") }))
+  .filter((s) => s.pdfs.length > 0);
+
+const featured = ["flyer", "rules", "registration"];
+const documents = gallery
+  ? { ...gallery, description: undefined, sections: gallery.sections.filter((s) => !featured.some((n) => headingIs(s, n))) }
+  : null;
+const hasDocuments = !!documents?.sections.some((s) => s.items.length > 0);
+
+const isEmpty = !flyer && previewSections.length === 0 && !hasDocuments;
+---
+
+<BaseLayout title="Basketball Classic" description="Flyer, rules, registration, and team documents for the All-Sports Boosters Basketball Classic.">
+  <div class="mx-auto max-w-content px-6">
+    <div class="border-b border-ink-100 py-12">
+      <p class="mb-3 text-xs font-semibold uppercase tracking-wide text-primary-600">
+        <a href="/boosters" class="hover:text-primary-700">All-Sports Boosters</a> / Basketball Classic
+      </p>
+      <h1 class="max-w-[20ch] text-h1 font-bold text-ink-900">Basketball Classic</h1>
+      {gallery?.description && <p class="mt-3 max-w-[62ch] text-lg text-ink-600">{gallery.description}</p>}
+    </div>
+
+    <div class="grid gap-10 py-14 md:grid-cols-[1fr_280px]">
+      <div class="min-w-0 space-y-14">
+        {isEmpty ? (
+          <p class="text-ink-400">Tournament details coming soon — check back shortly.</p>
+        ) : (
+          <>
+            {flyer && (
+              <section>
+                {flyerIsImage ? (
+                  <a href={mediaUrl(flyer)} target="_blank" rel="noopener noreferrer" class="block">
+                    <img
+                      src={mediaUrl(flyer)}
+                      alt={flyer.alt || "Basketball Classic flyer"}
+                      class="mx-auto w-full max-w-2xl rounded-xl border border-ink-100 shadow-sm"
+                    />
+                  </a>
+                ) : (
+                  <PdfPreview media={flyer} />
+                )}
+              </section>
+            )}
+
+            {previewSections.map((section) => (
+              <section>
+                <h2 class="text-h3 font-bold text-ink-900">{section.heading}</h2>
+                {section.pdfs.map((pdf) => (
+                  <PdfPreview media={pdf} />
+                ))}
+              </section>
+            ))}
+
+            {hasDocuments && documents && (
+              <section>
+                <h2 class="mb-6 text-h3 font-bold text-ink-900">Documents</h2>
+                <GalleryView gallery={documents} />
+              </section>
+            )}
+          </>
+        )}
+      </div>
+
+      <BoosterSidebar current="/boosters/basketball-classic" />
+    </div>
+  </div>
+</BaseLayout>
