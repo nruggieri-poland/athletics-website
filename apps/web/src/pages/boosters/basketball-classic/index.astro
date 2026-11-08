@@ -28,7 +28,7 @@ const featuredIds = new Set([flyer, ...previews.map((p) => p.pdf)].flatMap((m) =
 const rest = items.filter(({ item }) => !(item.relationTo === "media" && featuredIds.has(item.value.id)));
 // Tournament details, transcribed from the 2027 flyer. Update here (not in
 // Payload) when the details change.
-const contact = { name: "Brian Antal", email: "PolandBoosterTourney@gmail.com", phone: "(330) 690-8435" };
+const contact = { name: "Brian Antal", email: "PolandBoosterTourney@gmail.com" };
 const facts = [
   { label: "Dates", value: "Jan 30–31 & Feb 6–7, 2027", note: "Two weekends, Saturday & Sunday" },
   { label: "Divisions", value: "4th, 5th & 6th grade", note: "Boys & girls" },
@@ -99,9 +99,6 @@ const documents = data && rest.length > 0 ? { ...data.gallery, description: unde
               <a href={`mailto:${contact.email}`} class="rounded-lg bg-white px-4 py-2.5 text-sm font-bold text-primary-700 hover:bg-primary-50">
                 {contact.email}
               </a>
-              <a href={`tel:${contact.phone.replace(/\D/g, "")}`} class="rounded-lg bg-white px-4 py-2.5 text-sm font-bold text-primary-700 hover:bg-primary-50">
-                {contact.phone}
-              </a>
             </div>
           </div>
         </section>
@@ -109,7 +106,7 @@ const documents = data && rest.length > 0 ? { ...data.gallery, description: unde
         {previews.map(({ heading, pdf }) => (
           <section>
             <h2 class="text-h3 font-bold text-ink-900">{heading}</h2>
-            <PdfPreview media={pdf} />
+            <PdfPreview media={pdf} label={pdf.title || `Basketball Classic ${heading}`} />
           </section>
         ))}
 
