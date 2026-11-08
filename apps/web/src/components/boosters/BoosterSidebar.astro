@@ -1,9 +1,9 @@
 ---
-import { getGalleryBySlug } from "../../lib/payload";
+import { getBasketballClassicItems } from "../../lib/basketballClassic";
 
-// The Basketball Classic link only shows once its Payload gallery is
-// marked "Visible on the live site" — that checkbox is its publish switch.
-const basketballClassic = await getGalleryBySlug("basketball-classic");
+// The Basketball Classic link only shows once the All-Sports Booster Club
+// gallery has a "Basketball Classic" section with something in it.
+const basketballClassic = await getBasketballClassicItems();
 
 const links = [
   { href: "/boosters", label: "About the Boosters", description: "History, mission & impact" },
