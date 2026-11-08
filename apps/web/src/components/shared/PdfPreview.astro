@@ -8,11 +8,14 @@ import { mediaUrl, type Media } from "../../lib/payload";
 
 interface Props {
   media: Media;
+  // Overrides the bar's label — pages that know what the PDF is can pass a
+  // short name instead of falling back to the (often long) alt text.
+  label?: string;
 }
 
-const { media } = Astro.props;
+const { media, label: labelOverride } = Astro.props;
 const src = mediaUrl(media);
-const label = media.title || media.alt || "PDF document";
+const label = labelOverride || media.title || media.alt || "PDF document";
 ---
 
 <div class="my-8">
