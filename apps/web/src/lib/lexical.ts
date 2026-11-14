@@ -251,15 +251,22 @@ function renderPhotoGrid(fields: LexicalNode["fields"]): string {
   const { heading, photos = [] } = (fields ?? {}) as PhotoGridFields;
   const valid = photos.filter((p) => p.image?.url);
   if (valid.length === 0) return "";
+  // Masonry-style columns rather than a fixed-aspect grid, so every photo
+  // shows uncropped at its own shape (portrait and landscape mixed). Each
+  // photo links to the original full-size upload in a new tab — the same
+  // pattern gallery items use.
   const photosHtml = valid
     .map((p) => {
       const src = escapeHtml(sanitizeUrl(mediaUrl(p.image, "card")));
+      const full = escapeHtml(sanitizeUrl(mediaUrl(p.image)));
       const alt = escapeHtml(p.image?.alt ?? "");
+      const dims = p.image?.sizes?.card;
+      const sizeAttrs = dims?.width && dims?.height ? ` width="${dims.width}" height="${dims.height}"` : "";
       const caption = p.caption ? `<figcaption class="mt-1 text-xs text-ink-500">${escapeHtml(p.caption)}</figcaption>` : "";
-      return `<figure class="overflow-hidden"><img src="${src}" alt="${alt}" class="aspect-[4/3] w-full rounded-lg object-cover" loading="lazy" />${caption}</figure>`;
+      return `<figure class="mb-3 break-inside-avoid"><a href="${full}" target="_blank" rel="noopener noreferrer" class="block overflow-hidden rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"><img src="${src}" alt="${alt}"${sizeAttrs} class="h-auto w-full transition-opacity hover:opacity-90" loading="lazy" /><span class="sr-only"> (open full-size photo in a new tab)</span></a>${caption}</figure>`;
     })
     .join("");
-  return `<div class="my-6 not-prose">${heading ? `<h3 class="mb-3 text-base font-semibold text-ink-900">${escapeHtml(heading)}</h3>` : ""}<div class="grid grid-cols-2 gap-3 sm:grid-cols-3">${photosHtml}</div></div>`;
+  return `<div class="my-6 not-prose">${heading ? `<h3 class="mb-3 text-base font-semibold text-ink-900">${escapeHtml(heading)}</h3>` : ""}<div class="columns-2 gap-3 sm:columns-3">${photosHtml}</div></div>`;
 }
 
 // ---------------------------------------------------------------------
